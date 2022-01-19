@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="Node0.12和Node0.10的C++API方面发生了重大变化，nodejs官方文档中给出仅仅是几个简单例子，在具体使用过程中依靠这几个例子是不够的，当初在将Node0.10的扩展迁移到Node0.12时遇到了各种问题，直到遇到了这篇文章，我想我不得不将它翻译出来共享给大家了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="即将面临的Node0.12中的C++API的改变">
+<meta property="og:url" content="https://blog.whyun.com/posts/node0-12capi/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="Node0.12和Node0.10的C++API方面发生了重大变化，nodejs官方文档中给出仅仅是几个简单例子，在具体使用过程中依靠这几个例子是不够的，当初在将Node0.10的扩展迁移到Node0.12时遇到了各种问题，直到遇到了这篇文章，我想我不得不将它翻译出来共享给大家了">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-05-19T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-19T07:15:30.545Z">
+<meta property="article:author" content="yunnysunny">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/node0-12capi/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/node0-12capi/","path":"posts/node0-12capi/","title":"即将面临的Node0.12中的C++API的改变"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>即将面临的Node0.12中的C++API的改变 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E7%94%9F%E5%87%BD%E6%95%B0%E7%9A%84%E5%8F%82%E6%95%B0%E5%B7%B2%E7%BB%8F%E8%A2%AB%E6%9B%B4%E6%94%B9"><span class="nav-text">原生函数的参数已经被更改</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%A7%E9%83%A8%E5%88%86V8-API%E7%8E%B0%E5%9C%A8%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8v8-Isolate"><span class="nav-text">大部分V8 API现在需要使用v8::Isolate*</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#V8-string%E5%87%BD%E6%95%B0%E7%8E%B0%E5%9C%A8%E9%9C%80%E8%A6%81%E6%98%BE%E5%BC%8F%E5%A3%B0%E6%98%8E%E7%BC%96%E7%A0%81"><span class="nav-text">V8 string函数现在需要显式声明编码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%BB%E9%99%A4%E4%BA%86v8-String-NewSymbol-%E5%92%8Cv8-String-NewUndetectable"><span class="nav-text">去除了v8::String::NewSymbol()和v8::String::NewUndetectable()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%BB%E9%99%A4%E4%BA%86v8-String-AsciiValue"><span class="nav-text">去除了v8::String::AsciiValue</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%BB%E9%99%A4%E4%BA%86v8-HandleScope-Close"><span class="nav-text">去除了v8::HandleScope::Close()</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#v8-Persistent%E4%B8%8D%E5%86%8D%E7%BB%A7%E6%89%BF%E8%87%AAv8-Handle"><span class="nav-text">v8::Persistent不再继承自v8::Handle</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%B1%E5%BC%95%E7%94%A8persistent%E5%8F%A5%E6%9F%84%E7%9A%84%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0%E5%8F%82%E6%95%B0%E6%9B%B4%E6%94%B9"><span class="nav-text">弱引用persistent句柄的回调函数参数更改</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#v8-ThrowException-%E7%8E%B0%E5%9C%A8%E5%8F%98%E6%88%90%E4%BA%86-v8-Isolate-ThrowException"><span class="nav-text">v8::ThrowException()现在变成了 v8::Isolate::ThrowException()</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/node0-12capi/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          即将面临的Node0.12中的C++API的改变
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2015-05-19 00:00:00" itemprop="dateCreated datePublished" datetime="2015-05-19T00:00:00+00:00">2015-05-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-01-19 07:15:30" itemprop="dateModified" datetime="2022-01-19T07:15:30+00:00">2022-01-19</time>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">Node0.12和Node0.10的C++API方面发生了重大变化，nodejs官方文档中给出仅仅是几个简单例子，在具体使用过程中依靠这几个例子是不够的，当初在将Node0.10的扩展迁移到Node0.12时遇到了各种问题，直到遇到了这篇文章，我想我不得不将它翻译出来共享给大家了</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>原文地址：<a target="_blank" rel="noopener" href="https://strongloop.com/strongblog/node-js-v0-12-c-apis-breaking/">https://strongloop.com/strongblog/node-js-v0-12-c-apis-breaking/</a></p>
+<blockquote>
+<p>编者注：欢迎阅读旨在帮你快速了解，在即将发布的node0.12中（ <em>作者写这篇文章的时候Node0.12还没有发布，译者注</em> ）的API变化三系列教程的第三部分。在<a target="_blank" rel="noopener" href="http://strongloop.com/strongblog/node-js-v0-12-new-apis/">第一部分</a>，<a target="_blank" rel="noopener" href="https://github.com/alexgorbatchev">Alex Gorbatchev</a>列出来没有变化的API，在<a target="_blank" rel="noopener" href="http://strongloop.com/strongblog/node-js-v0-12-apis-breaking/">第二部分</a>中他指出了变化的部分。在第三部分，<a target="_blank" rel="noopener" href="http://strongloop.com/strongblog/node-js-v0-12-apis-breaking/">Ben Noordhuis</a>将会详细描述C++API部分的差别。  </p>
+</blockquote>
+<p>在Node v0.10和v0.12之间有大量的差异。我不会试图把每一个细节都点出来，我将把这些差异分类，按照从“更重要”到“次重要”的次序进行排序，然后解释怎样合理的更新你的代码。<br>本文大部分讲述V8 API，因为这正是大量差异出现的地方。欢迎通过<a href="mailto:ben@strongloop.com">ben at strongloop.com</a>来给我提供建议和反馈。  </p>
+<h2 id="原生函数的参数已经被更改"><a href="#原生函数的参数已经被更改" class="headerlink" title="原生函数的参数已经被更改"></a>原生函数的参数已经被更改</h2><p>在node v0.10中你这么写： </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Handle&lt;v8::Value&gt;FortyTwo(const v8::Arguments&amp;args)&#123;
+  v8::HandleScope handle_scope;
+  returnhandle_scope.Close(v8::Integer::New(42));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void FortyTwo(const v8::FunctionCallbackInfo&lt;v8::Value&gt;&amp;info)&#123;
+  &#x2F;&#x2F; Don&#39;t need a HandleScope in this particular example.
+  info.GetReturnValue().Set(42);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>一些重要的变化如下:  </p>
+<ol>
+<li>返回类型是<code>void</code>。</li>
+<li>返回值通过<code>v8::ReturnValue::Set()</code>,<code>v8::ReturnValue::SetEmptyString()</code>,<code>v8::ReturnValue::SetNull()</code>,<code>v8::ReturnValue::SetUndefined()</code>来设置。</li>
+<li>如果没有显式的设置返回值，将会返回<code>undefined</code>。</li>
+</ol>
+<p><code>v8::ReturnValue::Set()</code>拥有一个数字类型的重载函数可以是使用不同的数据类型。如果你的编译器处理时出现问题或者报歧义错误，那么就是使用<code>static_cast&lt;&gt;</code>来将参数转为支持的类型：  </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void FortyTwo(const v8::FunctionCallbackInfo&lt;v8::Value&gt;&amp; info) &#123;
+  const int64_t value &#x3D; 42;
+  &#x2F;&#x2F; error: call of overloaded &#39;Set(const int64_t&amp;)&#39; is ambiguous
+  info.GetReturnValue().Set(value);
+  &#x2F;&#x2F; but this works
+  info.GetReturnValue().Set(static_cast&lt;int32_t&gt;(value));
+  &#x2F;&#x2F; as does this
+  info.GetReturnValue().Set(static_cast&lt;double&gt;(value));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>当然你需要挑选合适的类型来转换。当转化为窄数据类型，以至于无法承载原始数据据时，将会产生不可预期的结果。<br>注意，<code>v8::FunctionCallbackInfo&lt;v8::Value&gt;</code>是对于<code>v8::Arguments</code>的重命名和参数化（parameterized ）。除了名字和额外的<code>GetReturnValue()</code>函数，他们没有表面上的差别。</p>
+<h2 id="大部分V8-API现在需要使用v8-Isolate"><a href="#大部分V8-API现在需要使用v8-Isolate" class="headerlink" title="大部分V8 API现在需要使用v8::Isolate*"></a>大部分V8 API现在需要使用v8::Isolate*</h2><p>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Integer&gt; a &#x3D; v8::Integer::New(42);
+v8::Local&lt;v8::Number&gt; b &#x3D; v8::Number::New(13.37);
+v8::Local&lt;v8::FunctionTemplate&gt; ft &#x3D; v8::FunctionTemplate::New(Foo);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
+v8::Local&lt;v8::Integer&gt; a &#x3D; v8::Integer::New(isolate, 42);
+v8::Local&lt;v8::Number&gt; b &#x3D; v8::Number::New(isolate, 13.37);
+v8::Local&lt;v8::FunctionTemplate&gt; ft &#x3D; v8::FunctionTemplate::New(isolate, Foo);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>你可以通过若干的方法获取当前的<code>v8::Isolate</code>的指针：  </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void FortyTwo(const v8::FunctionCallbackInfo&lt;v8::Value&gt;&amp; info) &#123;
+  v8::Isolate* isolate;
+  isolate &#x3D; info.GetIsolate();
+  &#x2F;&#x2F; or:
+  isolate &#x3D; info.GetReturnValue().GetIsolate();
+  &#x2F;&#x2F; or even:
+  isolate &#x3D; v8::Isolate::GetCurrent();
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意，V8团队已经指出，<code>v8::Isolate::GetCurrent()</code>将会被逐步淘汰。如果你想编写向后兼容的代码，你最好显式的传递isolate参数。</p>
+<h2 id="V8-string函数现在需要显式声明编码"><a href="#V8-string函数现在需要显式声明编码" class="headerlink" title="V8 string函数现在需要显式声明编码"></a>V8 string函数现在需要显式声明编码</h2><p>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; create a UTF-8 string
+v8::Local&lt;v8::String&gt; utf8 &#x3D; v8::String::New(&quot;42&quot;);
+&#x2F;&#x2F; create a UTF-16 string from input in system endianness
+static const uint16_t chars[] &#x3D; &#123; &#39;4&#39;, &#39;2&#39;, 0 &#125;;
+v8::Local&lt;v8::String&gt; utf16 &#x3D; v8::String::New(chars);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
+&#x2F;&#x2F; create a UTF-8 string
+v8::Local&lt;v8::String&gt; utf8 &#x3D; v8::String::NewFromUtf8(isolate, &quot;42&quot;);
+&#x2F;&#x2F; create a UTF-16 string from input in system endianness
+static const uint16_t chars[] &#x3D; &#123; &#39;4&#39;, &#39;2&#39;, 0 &#125;;
+v8::Local&lt;v8::String&gt; utf16 &#x3D; v8::String::NewFromTwoByte(isolate, chars);
+&#x2F;&#x2F; create a ISO-8859-1 a.k.a. Latin1 string
+const uint8_t* octets &#x3D; reinterpret_cast&lt;const uint8_t*&gt;(&quot;42&quot;);
+v8::Local&lt;v8::String&gt; latin1 &#x3D; v8::String::NewFromOneByte(isolate, octets);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><code>v8::String::NewFromTwoByte()</code>稍微有点命名的不合适，因为他并不是一个严格的双字节编码。他能够识别surrogate pairs【 链接：<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dd374069(v=vs.85).aspx">https://msdn.microsoft.com/en-us/library/windows/desktop/dd374069(v=vs.85).aspx</a> 】， 所以它应该被称作<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/UTF-16">UTF-16</a>，而不是<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/Universal_Character_Set">UCS-2</a>。</p>
+<h2 id="去除了v8-String-NewSymbol-和v8-String-NewUndetectable"><a href="#去除了v8-String-NewSymbol-和v8-String-NewUndetectable" class="headerlink" title="去除了v8::String::NewSymbol()和v8::String::NewUndetectable()"></a>去除了v8::String::NewSymbol()和v8::String::NewUndetectable()</h2><p>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::String&gt; symbol &#x3D; v8::String::NewSymbol(&quot;42&quot;);
+v8::Local&lt;v8::String&gt; hidden &#x3D; v8::String::NewUndetectable(&quot;42&quot;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
+v8::Local&lt;v8::String&gt; symbol &#x3D;
+    v8::String::NewFromUtf8(isolate, &quot;42&quot;, v8::String::kInternalizedString);
+v8::Local&lt;v8::String&gt; hidden &#x3D;
+    v8::String::NewFromUtf8(isolate, &quot;42&quot;, v8::String::kUndetectableString);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="去除了v8-String-AsciiValue"><a href="#去除了v8-String-AsciiValue" class="headerlink" title="去除了v8::String::AsciiValue"></a>去除了v8::String::AsciiValue</h2><p>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::String&gt; string &#x3D; &#x2F;* ... *&#x2F;;
+v8::String::AsciiValue s(string);
+puts(s);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：<br>Nothing! <code>v8::String::AsciiValue</code>本来就有问题：它的名字告诉大家要返回7比特的ASCII数据，但是实际上返回8比特的二进制数据。同时它搞混了多字节字符的字节序。<br>使用<code>v8::String::Utf8Value</code>或者<code>v8::String::Value</code>(适用于UTF-16)来进行替代。如果你想获取一个字符串的原始二进制数据，你可以这么做：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::String&gt; string &#x3D; &#x2F;* ... *&#x2F;;
+const int length &#x3D; string-&gt;Utf8Length() + 1;  &#x2F;&#x2F; Add one for trailing zero byte.
+uint8_t* buffer &#x3D; new uint8_t[length];
+string-&gt;WriteOneByte(buffer, &#x2F;* start *&#x2F; 0, length);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意：<code>v8::String::Utf8Length()</code>会迭代字符串中的每一个字符，这就是为啥对于大字符串来说会(很)慢的原因。</p>
+<h2 id="去除了v8-HandleScope-Close"><a href="#去除了v8-HandleScope-Close" class="headerlink" title="去除了v8::HandleScope::Close()"></a>去除了v8::HandleScope::Close()</h2><p>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; Example() &#123;
+  v8::HandleScope handle_scope;
+  return handle_scope.Close(v8::Integer::New(42));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; Example(v8::Isolate* isolate) &#123;
+  v8::EscapableHandleScope handle_scope(isolate);
+  return handle_scope.Escape(v8::Integer::New(isolate, 42));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="v8-Persistent不再继承自v8-Handle"><a href="#v8-Persistent不再继承自v8-Handle" class="headerlink" title="v8::Persistent不再继承自v8::Handle"></a>v8::Persistent<T>不再继承自v8::Handle<T></h2><p><code>v8::Persistent&lt;T&gt;</code>不再是<code>v8::Handle&lt;T&gt;</code>类型的对象。这就意味着，你不能在直接访问指向的句柄了。做出如此大变革的动机是由于在v0.10中这么操作太容易导致资源泄露或者导致在释放之后再访问其存储的内容。<br>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
+v8::Persistent&lt;v8::Value&gt; persistent &#x3D; v8::Persistent&lt;v8::Value&gt;::New(value);
+&#x2F;&#x2F; ...
+v8::Local&lt;v8::Value&gt; value_again &#x3D; *persistent;
+&#x2F;&#x2F; ...
+persistent.Dispose();
+persistent.Clear();<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;
+v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
+v8::Persistent&lt;v8::Value&gt; persistent(isolate, value);
+&#x2F;&#x2F; or:
+v8::Persistent&lt;v8::Value&gt; persistent;
+persistent.Reset(isolate, value);
+&#x2F;&#x2F; ...
+v8::Local&lt;v8::Value&gt; value_again &#x3D;
+    v8::Local&lt;v8::Value&gt;::New(isolate, persistent);  &#x2F;&#x2F; rematerialize handle
+&#x2F;&#x2F; ...
+persistent.Reset();<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>另外一个变化是，persistent 句柄现在不能被拷贝。在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
+v8::Persistent&lt;v8::Value&gt; a &#x3D; v8::Persistent&lt;v8::Value&gt;::New(value);
+v8::Persistent&lt;v8::Value&gt; b &#x3D; a;  &#x2F;&#x2F; a and b now point to |value|<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;
+v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
+v8::Persistent&lt;v8::Value&gt; a(isolate, value);
+v8::Persistent&lt;v8::Value&gt; b(isolate, a);
+&#x2F;&#x2F; or:
+v8::Persistent&lt;v8::Value&gt; b;
+b.Reset(isolate, a);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>由于<code>v8::Persistent&lt;T&gt;</code>没有在语法上提供拷贝功能，所以现在使用STL容器类的时候会更困难。鉴于此，V8在<code>v8-util.h</code>中提供了若干工具类。</p>
+<p>举个例子：  </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">#include &quot;v8-util.h&quot;
+ 
+void Example(v8:Isolate* isolate) &#123;
+  v8::StdPersistentValueMap&lt;int, v8::String&gt; map(isolate);
+  v8::Local&lt;v8::String&gt; value &#x3D; v8::String::NewFromUtf8(isolate, &quot;fortytwo&quot;);
+  map.Set(42, value);
+  assert(map.Contains(42));
+  assert(map.Get(42)-&gt;StrictEquals(value));
+  assert(map.Get(21).IsEmpty());
+  assert(1 &#x3D;&#x3D; map.Size());
+  map.Remove(42);
+  assert(0 &#x3D;&#x3D; map.Size());
+  map.Clear();  &#x2F;&#x2F; or we could just call .Clear()
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果你使用<code>[C++](https://zh.wikipedia.org/wiki/CBB11 &quot;%3&quot;)</code>,你可以在标准容器类的<a target="_blank" rel="noopener" href="http://www.cprogramming.com/c++11/rvalue-references-and-move-semantics-in-c++11.html">移动语义</a>中使用<code>v8::UniquePersistent&lt;T&gt;</code>。<br>或者，你可以通过具有拷贝特性的<code>v8::Persistent&lt;T&gt;</code>,但是要保证这么做不会导致资源泄露或者在释放后再使用的问题：  </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
+v8::CopyablePersistentTraits&lt;v8::Value&gt;::CopyablePersistent persistent;
+persistent.Reset(isolate, &#x2F;* ... *&#x2F;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h2 id="弱引用persistent句柄的回调函数参数更改"><a href="#弱引用persistent句柄的回调函数参数更改" class="headerlink" title="弱引用persistent句柄的回调函数参数更改"></a>弱引用persistent句柄的回调函数参数更改</h2><p>一个正常的persistent句柄会被垃圾回收器忽略掉，一直到程序手动释放才会被回收。<br>相反，弱引用persistent句柄会被垃圾回收器跟踪，当需要回收时，回收器会通过回调函数通知程序。接着程序释放掉关联的资源或者复用这个句柄如果对象还要在后续使用的话。<br>在Node v0.10中这么写：  </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void WeakCallback(v8::Persistent&lt;v8::Value&gt; object, void* arg) &#123;
+  puts(static_cast&lt;const char*&gt;(arg));
+  object.Dispose();  &#x2F;&#x2F; or .ClearWeak() if you want to keep it around
+&#125;
+ 
+void Example() &#123;
+  v8::HandleScope handle_scope;
+  v8::Local&lt;v8::Object&gt; object &#x3D; v8::Object::New();
+  v8::Persistent&lt;v8::Object&gt; persistent &#x3D;
+      v8::Persistent&lt;v8::Object&gt;::New(object);
+  persistent.MakeWeak(const_cast&lt;char*&gt;(&quot;fortytwo&quot;), WeakCallback);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void WeakCallback(const v8::WeakCallbackData&lt;v8::Value, const char*&gt;&amp; data) &#123;
+  puts(data.GetParameter());
+  &#x2F;&#x2F;persistent的存储单元将会自动清除。
+  &#x2F;&#x2F;如果你想保持对原始v8::Persistent&lt;T&gt;的引用，你可以使用.ClearWeak()来复用它。
+&#125;
+ 
+void Example(v8::Isolate* isolate) &#123;
+  v8::HandleScope handle_scope(isolate);
+  v8::Local&lt;v8::Object&gt; object &#x3D; v8::Object::New(isolate);
+  v8::Persistent&lt;v8::Object&gt; persistent(isolate, object);
+  persistent.SetWeak(&quot;fortytwo&quot;, WeakCallback);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="v8-ThrowException-现在变成了-v8-Isolate-ThrowException"><a href="#v8-ThrowException-现在变成了-v8-Isolate-ThrowException" class="headerlink" title="v8::ThrowException()现在变成了 v8::Isolate::ThrowException()"></a>v8::ThrowException()现在变成了 v8::Isolate::ThrowException()</h2><p>在Node v0.10中这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; exception &#x3D; &#x2F;* ... *&#x2F;;
+v8::ThrowException(exception);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>在Node v0.12中这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;
+v8::Local&lt;v8::Value&gt; exception &#x3D; &#x2F;* ... *&#x2F;;
+isolate-&gt;ThrowException(exception);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/node0-12capi/" title="即将面临的Node0.12中的C++API的改变">https://blog.whyun.com/posts/node0-12capi/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/js/" rel="prev" title="js异步之惑">
+                  <i class="fa fa-chevron-left"></i> js异步之惑
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/nan/" rel="next" title="nan入门教程">
+                  nan入门教程 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

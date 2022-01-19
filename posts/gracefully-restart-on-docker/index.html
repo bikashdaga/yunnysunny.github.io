@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="当我们将编写的程序部署到服务器之后，免不了会面临未知 bug 导致的程序崩溃退出问题，这个时候快速的将程序进行重启，显得尤为重要，特别是那种在后端和用户之间维持会话的服务。这篇文章就是讲一下，如果你的程序部署到 docker 后，如何做到优雅重启。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="docker 容器的优雅重启方案">
+<meta property="og:url" content="https://blog.whyun.com/posts/gracefully-restart-on-docker/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="当我们将编写的程序部署到服务器之后，免不了会面临未知 bug 导致的程序崩溃退出问题，这个时候快速的将程序进行重启，显得尤为重要，特别是那种在后端和用户之间维持会话的服务。这篇文章就是讲一下，如果你的程序部署到 docker 后，如何做到优雅重启。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-10-12T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-19T07:15:30.545Z">
+<meta property="article:author" content="yunnysunny">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/gracefully-restart-on-docker/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/gracefully-restart-on-docker/","path":"posts/gracefully-restart-on-docker/","title":"docker 容器的优雅重启方案"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>docker 容器的优雅重启方案 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%87%AA%E5%B8%A6%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-text">1. 自带解决方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%AE%BF%E4%B8%BB%E6%9C%BA%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B"><span class="nav-text">2. 宿主机守护进程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E5%AE%B9%E5%99%A8%E5%86%85%E9%83%A8%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B"><span class="nav-text">3. 容器内部守护进程</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/gracefully-restart-on-docker/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          docker 容器的优雅重启方案
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-10-12 00:00:00" itemprop="dateCreated datePublished" datetime="2021-10-12T00:00:00+00:00">2021-10-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-01-19 07:15:30" itemprop="dateModified" datetime="2022-01-19T07:15:30+00:00">2022-01-19</time>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">当我们将编写的程序部署到服务器之后，免不了会面临未知 bug 导致的程序崩溃退出问题，这个时候快速的将程序进行重启，显得尤为重要，特别是那种在后端和用户之间维持会话的服务。这篇文章就是讲一下，如果你的程序部署到 docker 后，如何做到优雅重启。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>当我们将编写的程序部署到服务器之后，免不了会面临未知 bug 导致的程序崩溃退出问题，这个时候快速的将程序进行重启，显得尤为重要，特别是那种在后端和用户之间维持会话的服务。这篇文章就是讲一下，如果你的程序部署到 docker 后，如何做到优雅重启。</p>
+<h2 id="1-自带解决方案"><a href="#1-自带解决方案" class="headerlink" title="1. 自带解决方案"></a>1. 自带解决方案</h2><p>docker 本身在启动的时候，会可以加参数做到容器崩溃后自动重启的，在 <code>docker run</code> 的时候增加 <code>--restart always</code> 即可。但是并不是在所有情况下，docker 的重启策略都会生效，官方还给出了以下几点要求</p>
+<p>重启只能是在容器启动成功后才能生效，并且给出了容器启动成功的指标，那就是容器起码正常启动 10s，在这期间没有发生退出。</p>
+<p>如果你手动使用 <code>docker stop</code> 命令关闭了容器，那么重启策略也会失效。</p>
+<p>还有一点是跟 docker swarm 相关的，由于这个组件现在用的比较少，这里略过。</p>
+<p>下面是一个例子用来演示在给定的时间后异常退出当前进程。</p>
+<blockquote>
+<p>当前例子的代码都可以从<a target="_blank" rel="noopener" href="https://gitlab.com/yunnysunny/docker-start/-/tree/main/start_always">这里</a>找到</p>
+</blockquote>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"fmt"</span>
+	<span class="token string">"os"</span>
+	<span class="token string">"strconv"</span>
+	<span class="token string">"time"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"begin"</span><span class="token punctuation">,</span> time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Format</span><span class="token punctuation">(</span><span class="token string">"2006-01-02 15:04:05"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	seconds <span class="token operator">:=</span> <span class="token number">11</span>
+	<span class="token keyword">if</span> <span class="token builtin">len</span> <span class="token punctuation">(</span>os<span class="token punctuation">.</span>Args<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">2</span> <span class="token punctuation">&#123;</span>
+		secondsFromCli<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> strconv<span class="token punctuation">.</span><span class="token function">Atoi</span><span class="token punctuation">(</span> os<span class="token punctuation">.</span>Args<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token punctuation">)</span>
+		<span class="token keyword">if</span> secondsFromCli <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">&#123;</span>
+			seconds <span class="token operator">=</span> secondsFromCli
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span>
+	time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span><span class="token function">Duration</span><span class="token punctuation">(</span>seconds<span class="token punctuation">)</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"exit"</span><span class="token punctuation">,</span> time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Format</span><span class="token punctuation">(</span><span class="token string">"2006-01-02 15:04:05"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	os<span class="token punctuation">.</span><span class="token function">Exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.1 delay_exit.go</strong></p>
+<p>我们制作一个 <a target="_blank" rel="noopener" href="https://gitlab.com/yunnysunny/docker-start/-/blob/main/start_always/start_always.Dockerfile">dockerfile</a> (详细代码参见<a target="_blank" rel="noopener" href="https://gitlab.com/yunnysunny/docker-start/-/blob/main/start_always/start_always.Dockerfile">链接</a>)，指定 entrypoint 脚本内容如下</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">#!&#x2F;bin&#x2F;bash
+
+date
+&#x2F;opt&#x2F;delay-exit &quot;$@&quot;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.2 start.sh</strong></p>
+<p>将 <strong>代码 1.1</strong> 构建，生成可执行文件，放置于 /opt/delay-exit 。我们在 docker run 的时候可以指定任意一个进程退出的等待时间，如果不指定则 11s 后退出。</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">#!&#x2F;bin&#x2F;bash
+
+source .&#x2F;common.sh
+docker run --restart always --name always-test $TAG_LATEST &quot;$@&quot;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.3 test_always.sh</strong></p>
+<p><strong>代码 1.3</strong> 是我们准备好的测试文件，其中 <code>$TAG_LATEST</code> 是制作好的，含有 delay_exit.go 的编译生成可执行程序的镜像。</p>
+<p>首先看正常 11s 退出的情况，<code>./test_always.sh</code> 即可启动容器，然后通过 <code>docker logs always-test</code> 来看启动容器的运行日志：</p>
+<pre class="line-numbers language-none"><code class="language-none">Tue Oct 12 16:20:24 CST 2021
+begin 2021-10-12 16:20:24
+exit 2021-10-12 16:20:35
+Tue Oct 12 16:20:35 CST 2021
+begin 2021-10-12 16:20:35
+exit 2021-10-12 16:20:46
+Tue Oct 12 16:20:47 CST 2021
+begin 2021-10-12 16:20:47
+exit 2021-10-12 16:20:58
+Tue Oct 12 16:20:59 CST 2021
+begin 2021-10-12 16:20:59
+exit 2021-10-12 16:21:10
+Tue Oct 12 16:21:10 CST 2021
+begin 2021-10-12 16:21:10
+exit 2021-10-12 16:21:21
+Tue Oct 12 16:21:22 CST 2021
+begin 2021-10-12 16:21:22
+exit 2021-10-12 16:21:33
+Tue Oct 12 16:21:33 CST 2021
+begin 2021-10-12 16:21:33
+exit 2021-10-12 16:21:44
+Tue Oct 12 16:21:45 CST 2021
+begin 2021-10-12 16:21:45
+exit 2021-10-12 16:21:56
+Tue Oct 12 16:21:56 CST 2021
+begin 2021-10-12 16:21:56
+exit 2021-10-12 16:22:07
+Tue Oct 12 16:22:08 CST 2021<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>exit 语句下面是 /start.sh 脚本中 <code>date</code> 命令的输出内容，可以看到容器退出到重启在 1s 之内完成，说明还是挺高效的。</p>
+<p>使用 <code>docker stop always-test &amp;&amp; docker rm always-test</code>，删除当前容器，重新启动，这次增加一个启动参数 <code>./test_always.sh 2</code>，即更改默认退出等待时间为 2s 。再次查看容器日志：</p>
+<pre class="line-numbers language-none"><code class="language-none">Tue Oct 12 16:16:14 CST 2021
+begin 2021-10-12 16:16:14
+exit 2021-10-12 16:16:16
+Tue Oct 12 16:16:16 CST 2021
+begin 2021-10-12 16:16:16
+exit 2021-10-12 16:16:18
+Tue Oct 12 16:16:19 CST 2021
+begin 2021-10-12 16:16:19
+exit 2021-10-12 16:16:21
+Tue Oct 12 16:16:21 CST 2021
+begin 2021-10-12 16:16:21
+exit 2021-10-12 16:16:23 #从这一次开始重启等待时间被拉长
+Tue Oct 12 16:16:25 CST 2021
+begin 2021-10-12 16:16:25
+exit 2021-10-12 16:16:27
+Tue Oct 12 16:16:29 CST 2021
+begin 2021-10-12 16:16:29
+exit 2021-10-12 16:16:31
+Tue Oct 12 16:16:34 CST 2021
+begin 2021-10-12 16:16:34
+exit 2021-10-12 16:16:36
+Tue Oct 12 16:16:43 CST 2021<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>会发现启动时间不足 10s，docker 不会立即重启退出的容器，随着重启次数增多，会逐渐拉长启动时间。</p>
+<h2 id="2-宿主机守护进程"><a href="#2-宿主机守护进程" class="headerlink" title="2. 宿主机守护进程"></a>2. 宿主机守护进程</h2><p>docker 容器启动时，会在启动 docker 容器的宿主机上产生一个进程，如果 docker 容器异常退出，这个进程也会退出，所以我们也可以在宿主机上使用 <a target="_blank" rel="noopener" href="https://freedesktop.org/wiki/Software/systemd/">systemd</a> <a target="_blank" rel="noopener" href="http://upstart.ubuntu.com/">upstart</a> <a target="_blank" rel="noopener" href="http://supervisord.org/">supervisor</a> 等工具通过监听进程状态来达到重启目的，但是从使用便捷性上来说不如直接使用 <code>docker run</code> 的 <code>--restart always</code> 参数。</p>
+<h2 id="3-容器内部守护进程"><a href="#3-容器内部守护进程" class="headerlink" title="3. 容器内部守护进程"></a>3. 容器内部守护进程</h2><p>还有最后一个途径，就是直接将进程重启监听放置到 docker 容器内部，这个做法官方是不推荐的，因为这样子 docker 守护进程本身无法感知到应用的运行状态。但是考虑到这种情况，为了保障服务的高可用性，我们一般会配合使用日志收集、异常启动报警、性能指标采集、服务发现等组件。如果你使用 <a target="_blank" rel="noopener" href="https://kubernetes.io/">Kubernetes</a> 这种容器编排系统的时候，可以把上述组件每个组成单独的容器，然后和应用容器共享同一个 pod 的模式来进行统一管理。但是目前很多中小型公司，并没有在使用 Kubernetes；再考虑一种更复杂的情况，有一些公司的部署结构是混合的，一部分位于 Kubernetes 集群中，另一部分运行在老旧的、不支持编排的容器系统中，但是出于通用性和可维护性的考量，又不想引入太多异构的部署模型。这些上述描述情况，看上去最合适的解决方案就是将这些组件也内置到容器内部，那么使用容器内部的进程重启监控程序，就显得更加适合。这里我们选择使用 supervisor，因为这个程序是在 docker 中安装方便，只需要有 python 即可，如果使用 systemd 的话，需要 docker 开启特殊权限，并且有一些公司的运维出于安全考虑还会禁用掉特权模式。</p>
+<p>首先是构建 supervisor 的基础镜像</p>
+<blockquote>
+<p>本小节中的代码都能从<a href="">这里</a>找到源代码</p>
+</blockquote>
+<pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">FROM centos:7 as base
+
+# 更改 yum 源
+RUN mv &#x2F;etc&#x2F;yum.repos.d&#x2F;CentOS-Base.repo &#x2F;etc&#x2F;yum.repos.d&#x2F;CentOS-Base.repo.backup
+COPY docker&#x2F;etc&#x2F;yum.repos.d &#x2F;etc&#x2F;yum.repos.d
+RUN sed -i -e &#39;&#x2F;plugins&#x3D;1&#x2F;d&#39; -e &#39;&#x2F;plugins&#x3D;0&#x2F;d&#39; &#x2F;etc&#x2F;yum.conf
+RUN yum clean all
+
+RUN yum install epel-release -y
+RUN yum install wget curl make tcpdump net-tools bind-utils telnet python3 python3-pip logrotate ca-certificates which crontabs -y
+
+# 安装 supervisor
+COPY docker&#x2F;root&#x2F;.pip &#x2F;root&#x2F;.pip
+RUN pip3 install supervisor
+RUN mkdir -p &#x2F;data&#x2F;supervisor&#x2F;log
+COPY docker&#x2F;etc&#x2F;supervisord.conf &#x2F;etc
+COPY docker&#x2F;etc&#x2F;supervisor.d &#x2F;etc&#x2F;supervisor.d
+# 配置 logrotate
+COPY docker&#x2F;etc&#x2F;logrotate.d &#x2F;etc&#x2F;logrotate.d
+
+# 使用东八区时区
+RUN ln -sf &#x2F;usr&#x2F;share&#x2F;zoneinfo&#x2F;Asia&#x2F;Shanghai &#x2F;etc&#x2F;localtime
+# 必须添加这两个环境变量，否则 supervisor 无法在 python3 下启动
+ENV LC_ALL &quot;en_US.UTF-8&quot;
+ENV LANG &quot;en_US.UTF-8&quot;
+
+# 添加启动脚本
+COPY docker&#x2F;app_init.sh &#x2F;
+COPY docker&#x2F;app.init.d  &#x2F;app.init.d
+COPY docker&#x2F;entrypoint.sh &#x2F;
+ENTRYPOINT [ &quot;&#x2F;entrypoint.sh&quot; ]<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 3.1</strong></p>
+<p>supervisor 是一个 python 2.7 编写的工具，由于 python 2.7 已经处在停止维护阶段，这里选择安装了 python 3。但是发现如果不设置 <code>LC_ALL</code> <code>LANG</code> 这两个环境变量的话，会报错：</p>
+<pre class="line-numbers language-none"><code class="language-none">Error: &#39;ascii&#39; codec can&#39;t decode byte<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>所以在 <strong>代码 3.1</strong> 中专门设置了这两个环境变量。</p>
+<p>接着看入口文件 entrypoint.sh:</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token shebang important">#!/bin/bash</span>
+
+/app_init.sh
+
+<span class="token string">"<span class="token variable">$@</span>"</span>
+<span class="token comment"># 前台 启动 supervisor 的守护进程 supervisord</span>
+<span class="token builtin class-name">exec</span> supervisord -c /etc/supervisord.conf -n<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 3.2 entrypoint.sh</strong></p>
+<p>首先看最后一行 exec 的用法。我们使用 supervisor 作为守护进程，也就是说对于使用这个镜像的容器来说，它所运行的应用是 supervisor，那么在 supervisor 异常退出之后，当前容器是不可用的，也就是说我们应该让 docker 感知到当前 supervisor 是否可用。docker 感知容器是否正常的方式，就是容器内部 pid 为 1 的进程是否退出，这个 pid 为 1 的进程，就是通过 ENTRYPOINT （如果没有 ENTRYPOINT 的话，是CMD ）指令指定的程序运行后产生的。显然这里我们要做的是要将 supervisord 的运行进程 ID 置为 1。如果我们在 entrypoint.sh 脚本中运行 supervisord 时没有使用 exec 的话，进程 ID 为 1 的进程，将是 entrypoint.sh ，而使用 exec 后，entrypoint.sh 进程将会被 supervisord 替代，也就是说 supervisord 就会成为 1 号进程。最终也就实现了 supervisord 进程退出能被 docker 感知到的目的。</p>
+<p>我们将所有通过 supervisor 收录的应用的配置文件统一放置在目录 /etc/supervisor.d 中，在我们的镜像中安装了 crontabs ，并通过 supervisor 对其守护，下面是它的配置文件：</p>
+<pre class="line-numbers language-ini" data-language="ini"><code class="language-ini"><span class="token comment"># crond 为项目名，可以根据实际情况制定</span>
+<span class="token header"><span class="token punctuation">[</span><span class="token section-name selector">program:crond</span><span class="token punctuation">]</span></span>
+<span class="token comment">#脚本目录</span>
+<span class="token key attr-name">directory</span><span class="token punctuation">=</span><span class="token value attr-value">/usr/sbin</span>
+<span class="token comment">#脚本执行命令</span>
+<span class="token key attr-name">command</span><span class="token punctuation">=</span><span class="token value attr-value">/usr/sbin/crond -n</span>
+
+<span class="token comment">#supervisor启动的时候是否随着同时启动，默认true</span>
+<span class="token key attr-name">autostart</span><span class="token punctuation">=</span><span class="token value attr-value">true</span>
+<span class="token comment">#当程序exit的时候，这个program不会自动重启,默认unexpected，设置子进程挂掉后自动重启的情况，有三个选项，false,unexpected和true。如果为false的时候，无论什么情况下，都不会被重新启动，如果为unexpected，只有当进程的退出码不在下面的exitcodes里面定义的</span>
+<span class="token key attr-name">autorestart</span><span class="token punctuation">=</span><span class="token value attr-value">true</span>
+<span class="token comment">#这个选项是子进程启动多少秒之后，此时状态如果是running，则我们认为启动成功了。默认值为1</span>
+<span class="token key attr-name">startsecs</span><span class="token punctuation">=</span><span class="token value attr-value">1</span>
+
+<span class="token comment">#设置日志输出 </span>
+<span class="token key attr-name">stdout_logfile</span><span class="token punctuation">=</span><span class="token value attr-value">/data/supervisor/log/crond.log</span> 
+<span class="token key attr-name">stderr_logfile</span><span class="token punctuation">=</span><span class="token value attr-value">/data/supervisor/log/crond.log</span> 
+<span class="token comment">#把stderr重定向到stdout，默认 false</span>
+<span class="token comment"># redirect_stderr = false</span>
+<span class="token comment">#stdout日志文件大小，由于我们配置了 logrotate 进行日志拆分，所以这里设置为 0</span>
+<span class="token key attr-name">stdout_logfile_maxbytes</span> <span class="token punctuation">=</span> <span class="token value attr-value">0</span>
+<span class="token comment">#stdout日志文件备份数</span>
+<span class="token key attr-name">stdout_logfile_backups</span> <span class="token punctuation">=</span> <span class="token value attr-value">0</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 3.3 crontab.ini</strong></p>
+<p>首先要留意 command 属性，我们在启动 crond 程序的时候添加了 <code>-n</code> 参数，这代表 crond 要在前台运行，也就是说如果你手动在命令行中运行 <code>crond -n</code> 时，当前命令行不退出，必须手动执行 CTRL + C 才能退出当前程序。supervisor 是应用级别的守护进程，跟 systemd 这种系统级别的守护进程还是有区别的，后者启动程序后在后台运行也能识别出来运行状态，但是 supervisor 如果启动程序在后台运行，它是识别不出来运行的程序是哪个的，这也导致你的应用必须得在前台运行。具体到 <strong>代码 3.3</strong>，我们给 crond 的启动加 <code>-n</code> 参数，就是这个原因。再举一个例子，如果你用 supervisor 启动 nginx 的话，也需要指定参数 <code>-g &quot;daemon off;&quot;</code> 让其在前台启动，否则你就会发现 supervisor 会报 nginx 启动失败。</p>
+<p>接着就是日志配置，supervisor 默认支持日志拆分功能，这里我们将其禁用掉（<code>stdout_logfile_maxbytes</code> 和 <code>stdout_logfile_backups</code> 都设置为零），因为我们在系统中添加了 logrotate，我们将日志切分工作交给了 logrotate 来处理。</p>
+<p>最终如果你开发了一个新的应用做部署的时候，可以基于这个 supervisor 镜像来制作一个子镜像，然后将配置文件放置到 /etc/supervisor.d 目录下即可。如果感觉编译麻烦也可以直接用笔者制作好的镜像：registry.cn-hangzhou.aliyuncs.com/whyun/base:supervisor-latest。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/gracefully-restart-on-docker/" title="docker 容器的优雅重启方案">https://blog.whyun.com/posts/gracefully-restart-on-docker/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/dockerfile-tutorials/" rel="prev" title="dockerfile 使用教程">
+                  <i class="fa fa-chevron-left"></i> dockerfile 使用教程
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/docker-compose-tutorial/" rel="next" title="docker compose 教程">
+                  docker compose 教程 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

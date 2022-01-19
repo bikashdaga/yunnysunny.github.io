@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="request 请求时 DNS 解析超时的问题探究，包括若干 node 源码的解读">
+<meta property="og:type" content="article">
+<meta property="og:title" content="request 包中出现 DNS 解析超时的探究">
+<meta property="og:url" content="https://blog.whyun.com/posts/request-dns/the-problem-of-dns-timeout-on-request-package/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="request 请求时 DNS 解析超时的问题探究，包括若干 node 源码的解读">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20210909150643988.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20210909145827042.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20210909145948090.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20210909150206942.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20210909150312046.png">
+<meta property="article:published_time" content="2019-09-25T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-19T07:15:30.549Z">
+<meta property="article:author" content="yunnysunny">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.whyun.com/images/image-20210909150643988.png">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/request-dns/the-problem-of-dns-timeout-on-request-package/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/request-dns/the-problem-of-dns-timeout-on-request-package/","path":"posts/request-dns/the-problem-of-dns-timeout-on-request-package/","title":"request 包中出现 DNS 解析超时的探究"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>request 包中出现 DNS 解析超时的探究 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/request-dns/the-problem-of-dns-timeout-on-request-package/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          request 包中出现 DNS 解析超时的探究
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2019-09-25 00:00:00" itemprop="dateCreated datePublished" datetime="2019-09-25T00:00:00+00:00">2019-09-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-01-19 07:15:30" itemprop="dateModified" datetime="2022-01-19T07:15:30+00:00">2022-01-19</time>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">request 请求时 DNS 解析超时的问题探究，包括若干 node 源码的解读</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>事情的起因是这样的，公司使用自建 dns 服务器，但是有一个致命缺陷，不支持 ipv6 格式的地址解析，而 node 的 DNS 解析默认是同时请求 v4 和 v6 的地址的，这样会导致偶尔在解析  v6 地址的时候出现超时。</p>
+<blockquote>
+<p>本文链接地址 <a href="https://blog.whyun.com/posts/request-dns/the-problem-of-dns-timeout-on-request-package/index.html">https://blog.whyun.com/posts/request-dns/the-problem-of-dns-timeout-on-request-package/index.html</a> ，转载请注明出处。</p>
+</blockquote>
+<p>我们的程序中是使用的 <a target="_blank" rel="noopener" href="https://github.com/request/request">request</a> 这个包，查看了一下官方文档，请求 options 中并没有涉及跟 DNS 有关的配置，于是乎求教运维同事。运维同事告诉我在 docker run 的时候加参数 <code>--sysctl net.ipv6.conf.all.disable_ipv6=1</code>，试用了一下，并且写出来如下测试代码：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span> dns <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'dns'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> domain <span class="token operator">=</span> process<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">||</span> <span class="token string">'baidu.com'</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> begin <span class="token operator">=</span> Date<span class="token punctuation">.</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+dns<span class="token punctuation">.</span><span class="token function">lookup</span><span class="token punctuation">(</span>domain<span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">err <span class="token punctuation">,</span>address <span class="token punctuation">,</span> family</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'耗时'</span><span class="token punctuation">,</span>Date<span class="token punctuation">.</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> begin<span class="token punctuation">,</span> err <span class="token punctuation">,</span>address <span class="token punctuation">,</span> family<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.1 DNS 查询测试代码</strong></p>
+<p>运行 <strong>代码 1.1</strong> ，同时使用命令 <code>tcpdump -i eth0 -n -s 500 port domain</code> 来抓取 DNS 解析的数据包：</p>
+<pre class="line-numbers language-none"><code class="language-none">20:47:28.917563 IP 10.6.13.67.38050 &gt; 10.7.11.219.domain: 40621+ A? baidu.com. (27)
+20:47:28.917582 IP 10.6.13.67.38050 &gt; 10.7.11.219.domain: 32393+ AAAA? baidu.com. (27)
+20:47:28.921061 IP 10.7.11.219.domain &gt; 10.6.13.67.38050: 40621 2&#x2F;0&#x2F;0 A 220.181.38.148, A 39.156.69.79 (59)
+20:47:28.921114 IP 10.7.11.219.domain &gt; 10.6.13.67.38050: 32393 0&#x2F;1&#x2F;0 (70)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>从输出来看依然会请求 ipv6 的地址解析，所以当时我的判断是运维的配置是不生效的。</p>
+<p>后来又有了些空闲的时间，所以研究了一下官方文档，看看是否有参数可以控制 http 请求的 DNS 协议版本，没有想到还真有，<a target="_blank" rel="noopener" href="https://nodejs.org/dist/latest-v10.x/docs/api/http.html#http_http_request_options_callback">http.request</a> 的 options 中可以设置 family 参数，可选值为 <code>4</code> <code>6</code>, 即 ipv4 或者 ipv6，如果不指定这个参数，将同时使用 ipv4 和 ipv6。按理来说看到这里，我就应该死心了，如果不传这个参数，肯定会同时做 ipv4 和 ipv6 的地址解析，但是我还是抱着试试看的态度写下了如下测试代码：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">var</span> domain <span class="token operator">=</span> process<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">||</span> <span class="token string">'baidu.com'</span><span class="token punctuation">;</span>
+<span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'http'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">request</span><span class="token punctuation">(</span><span class="token string">'http://'</span> <span class="token operator">+</span> domain<span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">res</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">STATUS: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">$&#123;</span>res<span class="token punctuation">.</span>statusCode<span class="token interpolation-punctuation punctuation">&#125;</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">HEADERS: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">$&#123;</span><span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>res<span class="token punctuation">.</span>headers<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">&#125;</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  res<span class="token punctuation">.</span><span class="token function">setEncoding</span><span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  res<span class="token punctuation">.</span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string">'data'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token parameter">chunk</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">&#123;</span>
+    <span class="token comment">//console.log(`BODY: $&#123;chunk&#125;`);</span>
+  <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  res<span class="token punctuation">.</span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string">'end'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=></span> <span class="token punctuation">&#123;</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'No more data in response.'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>代码 1.2 http 请求测试</strong></p>
+<p>没有想到 <strong>代码 1.2</strong> 执行完成后竟然只做了 ipv4 的解析：</p>
+<pre class="line-numbers language-none"><code class="language-none">21:01:06.593429 IP 10.6.12.158.48479 &gt; 10.7.11.219.domain: 10352+ A? baidu.com. (27)
+21:01:06.596978 IP 10.7.11.219.domain &gt; 10.6.12.158.48479: 10352 2&#x2F;0&#x2F;0 A 39.156.69.79, A 220.181.38.148 (59)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>这就很神奇了，node 的 http 的代码封装中肯定做了什么！带着这个疑问，我阅读了 node 的源码，首先看 ClientRequest 的初始化代码中，连接初始化部分：</p>
+<p><img src="/images/image-20210909150643988.png" alt="image-20210909150643988"></p>
+<p><strong>代码 1.3 <a target="_blank" rel="noopener" href="https://sourcegraph.com/github.com/nodejs/node/-/blob/lib/_http_client.js#L274">ClientRequest 类的连接初始化</a></strong></p>
+<p>http.request 没有加任何参数的情况，默认走到 <code>this.onSocket(net.createConnection(options));</code> 这句话，然后看 net 包的代码，其中一端跟 DNS 相关的代码：</p>
+<p><img src="/images/image-20210909145827042.png" alt="image-20210909145827042"></p>
+<p><strong>代码 1.4 <a target="_blank" rel="noopener" href="https://sourcegraph.com/github.com/nodejs/node/-/blob/lib/net.js#L1010">net 包中 DNS 查询参数代码</a></strong></p>
+<p>然后我们再看 lookup 函数的源码：</p>
+<p><img src="/images/image-20210909145948090.png" alt="image-20210909145948090"></p>
+<p><strong>代码 1.5 <a target="_blank" rel="noopener" href="https://sourcegraph.com/github.com/nodejs/node/-/blob/lib/dns.js#L88">lookup 函数源码</a></strong></p>
+<p>通过代码 1.5 发现最终 DNS 查询是要调用 C++ 绑定类的，于是我又查看了 C++ 的代码：</p>
+<p><img src="/images/image-20210909150206942.png" alt="image-20210909150206942"></p>
+<p><strong>代码 1.6 <a target="_blank" rel="noopener" href="https://sourcegraph.com/github.com/nodejs/node/-/blob/src/cares_wrap.cc#L1940">C++ 中 DNS 的查询代码</a></strong></p>
+<p>注意 <strong>代码 1.5</strong> 中的 family hints 最终会分别转化为 结构体变量 struct addrinfo hints 中的 ai_family 和 ai_flags。</p>
+<p>最终这个结构体 hints 会层层传递到 libuv 中：</p>
+<p><img src="/images/image-20210909150312046.png" alt="image-20210909150312046"></p>
+<p><strong>代码 1.7 <a target="_blank" rel="noopener" href="https://sourcegraph.com/github.com/nodejs/node@c5f5f84a33967862036c7d87f4bbde6a59d3820a/-/blob/deps/uv/src/unix/getaddrinfo.c#L101">libuv 中的 dns 查询函数代码</a></strong></p>
+<p>注意到我们在 <strong>代码 1.4</strong> 中的 hints 参数，最终会作为 req-&gt;hints-&gt;ai_flags 参数，最终我在 man7 文档上找到了 <a target="_blank" rel="noopener" href="http://man7.org/linux/man-pages/man3/getaddrinfo.3.html">AI_ADDRCONFIG</a>  的这个参数的说明：</p>
+<pre class="line-numbers language-none"><code class="language-none">If hints.ai_flags includes the AI_ADDRCONFIG flag, then IPv4
+addresses are returned in the list pointed to by res only if the
+local system has at least one IPv4 address configured, and IPv6
+addresses are returned only if the local system has at least one IPv6
+address configured.  The loopback address is not considered for this
+case as valid as a configured address.  This flag is useful on, for
+example, IPv4-only systems, to ensure that getaddrinfo() does not
+return IPv6 socket addresses that would always fail in connect(2) or
+bind(2).<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>大体意思是说，系统配置了 ipv4 才返回 ipv4的地址，系统配置了 ipv6 才返回 ipv6 的地址，而 docker 的启动参数 <code>--sysctl net.ipv6.conf.all.disable_ipv6=1</code> 等同于系统只支持 ipv4 的声明，所以操作系统函数 <code>getaddrinfo</code> 就只返回 ipv4 的地址。</p>
+<p>重新验证这个问题，将代码 1.1 做改造：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">const</span> dns <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'dns'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> domain <span class="token operator">=</span> process<span class="token punctuation">.</span>argv<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span> <span class="token operator">||</span> <span class="token string">'baidu.com'</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> begin <span class="token operator">=</span> Date<span class="token punctuation">.</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+dns<span class="token punctuation">.</span><span class="token function">lookup</span><span class="token punctuation">(</span>domain<span class="token punctuation">,</span><span class="token punctuation">&#123;</span>hints<span class="token operator">:</span><span class="token number">32</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span><span class="token keyword">function</span><span class="token punctuation">(</span><span class="token parameter">err <span class="token punctuation">,</span>address <span class="token punctuation">,</span> family</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'耗时'</span><span class="token punctuation">,</span>Date<span class="token punctuation">.</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> begin<span class="token punctuation">,</span> err <span class="token punctuation">,</span>address <span class="token punctuation">,</span> family<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.8 使用 ADDRCONFIG 参数做 DNS 查询</strong></p>
+<blockquote>
+<p>这里面之所以取值的 hints:32，是因为 <code>AI_ADDRCONFIG</code> 的值为32。通过设置环境变量 NODE_DEBUG=net 后启动 <strong>代码1.2</strong> ，会发现 <code>debug(&#39;connect: dns options&#39;, dnsopts);</code> 打印的 hints 值为 32。</p>
+</blockquote>
+<p>重新运行，发现果然只查询了 ipv4 的地址。</p>
+<p>到此为止，其实可以算是圆满收官了，但是对于 request 包还是不死心，心想如果当前开源源码不支持，是否可以做一个 pull request  呢，于是我看了一下他们的官方源码，结果就发现了新大陆：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript"><span class="token keyword">var</span> reqOptions <span class="token operator">=</span> <span class="token function">copy</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span>
+<span class="token keyword">delete</span> reqOptions<span class="token punctuation">.</span>auth
+
+<span class="token function">debug</span><span class="token punctuation">(</span><span class="token string">'make request'</span><span class="token punctuation">,</span> self<span class="token punctuation">.</span>uri<span class="token punctuation">.</span>href<span class="token punctuation">)</span>
+
+<span class="token comment">// node v6.8.0 now supports a `timeout` value in `http.request()`, but we</span>
+<span class="token comment">// should delete it for now since we handle timeouts manually for better</span>
+<span class="token comment">// consistency with node versions before v6.8.0</span>
+<span class="token keyword">delete</span> reqOptions<span class="token punctuation">.</span>timeout
+
+<span class="token keyword">try</span> <span class="token punctuation">&#123;</span>
+  self<span class="token punctuation">.</span>req <span class="token operator">=</span> self<span class="token punctuation">.</span>httpModule<span class="token punctuation">.</span><span class="token function">request</span><span class="token punctuation">(</span>reqOptions<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+  self<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span><span class="token string">'error'</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+  <span class="token keyword">return</span>
+<span class="token punctuation">&#125;</span>
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.9 request 源码片段</strong></p>
+<p><code>self.httpModule.request(reqOptions)</code> 等同于 <code>http.request(reqOptions)</code> 或者 <code>https.request(reqOptions)</code>，也就是说 http 模块的所有参数其实在 request 上也是适用的，但是 request 的官方文档却没有指出！</p>
+<p>最圆满的方案出炉了，在调用 request 函数的时候，指定 family 为 4，也可以通过 node 代码层面屏蔽 ipv6 解析。不过鉴于启动 docker 时已经添加 <code>sysctl</code> 参数，即使 node 不指定使用  ipv4，请求 http 也会只返回 ipv4 的地址。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/request-dns/the-problem-of-dns-timeout-on-request-package/" title="request 包中出现 DNS 解析超时的探究">https://blog.whyun.com/posts/request-dns/the-problem-of-dns-timeout-on-request-package/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/node/the-cache-design-in-node/" rel="prev" title="Node 缓存优化之路">
+                  <i class="fa fa-chevron-left"></i> Node 缓存优化之路
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/wsl-and-docker-desktop-install/" rel="next" title="wsl 和 docker desktop 的安装教程">
+                  wsl 和 docker desktop 的安装教程 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

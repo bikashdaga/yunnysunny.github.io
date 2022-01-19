@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="随着互联网业务的发展，互联网用户基数越来越大，对于服务提供者来说带来的并发压力也越来越大。以往通过单机提供服务的方式已经被淘汰，多机冗余、负载均衡等名词也已经成为当前服务开发的基本要求。如何感知到一个服务的多个节点，如何平滑的对于服务进行扩容，如何保证负载均衡的高效性，传统的负载均衡基础设施面对越来越多的挑战。而服务发现技术的出现，对于上述问题带来了一个更有的解决方案。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="服务发现揭秘">
+<meta property="og:url" content="https://blog.whyun.com/posts/service-discovery-start/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="随着互联网业务的发展，互联网用户基数越来越大，对于服务提供者来说带来的并发压力也越来越大。以往通过单机提供服务的方式已经被淘汰，多机冗余、负载均衡等名词也已经成为当前服务开发的基本要求。如何感知到一个服务的多个节点，如何平滑的对于服务进行扩容，如何保证负载均衡的高效性，传统的负载均衡基础设施面对越来越多的挑战。而服务发现技术的出现，对于上述问题带来了一个更有的解决方案。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.whyun.com/images/balancer_classic.png">
+<meta property="og:image" content="https://blog.whyun.com/images/register_and_watch.png">
+<meta property="og:image" content="https://blog.whyun.com/images/edge_to_cluster.png">
+<meta property="og:image" content="https://blog.whyun.com/images/edge_to_balancer.png">
+<meta property="og:image" content="https://blog.whyun.com/images/consul_template_in_cluster.png">
+<meta property="og:image" content="https://blog.whyun.com/images/private_line_with_service_discovery.png">
+<meta property="og:image" content="https://blog.whyun.com/images/consul_with_openresty.png">
+<meta property="article:published_time" content="2021-11-05T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-19T07:15:30.549Z">
+<meta property="article:author" content="yunnysunny">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.whyun.com/images/balancer_classic.png">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/service-discovery-start/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/service-discovery-start/","path":"posts/service-discovery-start/","title":"服务发现揭秘"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>服务发现揭秘 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E9%97%AE%E9%A2%98%E6%8F%8F%E8%BF%B0"><span class="nav-text">1. 问题描述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-text">2 解决方案</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/service-discovery-start/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          服务发现揭秘
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-11-05 00:00:00" itemprop="dateCreated datePublished" datetime="2021-11-05T00:00:00+00:00">2021-11-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-01-19 07:15:30" itemprop="dateModified" datetime="2022-01-19T07:15:30+00:00">2022-01-19</time>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">随着互联网业务的发展，互联网用户基数越来越大，对于服务提供者来说带来的并发压力也越来越大。以往通过单机提供服务的方式已经被淘汰，多机冗余、负载均衡等名词也已经成为当前服务开发的基本要求。如何感知到一个服务的多个节点，如何平滑的对于服务进行扩容，如何保证负载均衡的高效性，传统的负载均衡基础设施面对越来越多的挑战。而服务发现技术的出现，对于上述问题带来了一个更有的解决方案。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="1-问题描述"><a href="#1-问题描述" class="headerlink" title="1. 问题描述"></a>1. 问题描述</h2><p>随着互联网业务的发展，互联网用户基数越来越大，对于服务提供者来说带来的并发压力也越来越大。以往通过单机提供服务的方式已经被淘汰，多机冗余、负载均衡等名词也已经成为当前服务开发的基本要求。如何感知到一个服务的多个节点，如何平滑的对于服务进行扩容，如何保证负载均衡的高效性，传统的负载均衡基础设施面对越来越多的挑战。而服务发现技术的出现，对于上述问题带来了一个更有的解决方案。</p>
+<p><img src="/images/balancer_classic.png"></p>
+<p><strong>图 1.1</strong></p>
+<p>传统的负载均衡服务就如 <strong>图 1.1</strong> 所示，一个负载均衡服务器后面挂载若干服务，每个服务都要 N 个节点。由于目前常用的免费负载均衡方案中，nginx 的使用率更广，下面所有的讲解都是以 nginx 为模板。简单起见，我们首先考虑部署在内网中，服务和服务相互调用的情况。</p>
+<p>我们假设 <code>服务1</code> 的端口为 <code>8080</code>，那么配置 <code>服务1</code> 的nginx 配置文件可能就是这个样子的：</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">upstream</span> service1</span> <span class="token punctuation">&#123;</span>
+    <span class="token directive"><span class="token keyword">server</span> 192.168.1.2:8080</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server</span> 192.168.1.3:8080</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server</span> 192.168.1.4:8080</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">&#123;</span>
+    <span class="token directive"><span class="token keyword">listen</span>       <span class="token number">8080</span></span><span class="token punctuation">;</span>
+
+    <span class="token directive"><span class="token keyword">location</span> ^~ /api/</span> <span class="token punctuation">&#123;</span>
+        <span class="token directive"><span class="token keyword">proxy_pass</span>  http://service1</span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_redirect</span> <span class="token boolean">off</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-Proto <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span></span><span class="token punctuation">;</span>    
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$http_host</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_connect_timeout</span>   <span class="token number">120</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_send_timeout</span>      <span class="token number">120</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_read_timeout</span>      <span class="token number">120</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">&#123;</span>
+        <span class="token directive"><span class="token keyword">root</span> /opt/dist/</span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">index</span> index.html</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.1</strong></p>
+<p><strong>代码 1.1</strong> 中，访问 <a target="_blank" rel="noopener" href="http://nginxip:8080/api">http://nginxip:8080/api</a> 开头的链接，都会被反向代理到 <code>192.168.1.2</code> <code>192.168.1.3</code> <code>192.168.1.4</code> 。如果我们机器的节点数变动不大，一切安好，但是随着我们业务量的上升，免不了要增加节点，这时候就必须手动修改 <strong>代码 1.1</strong>，增加所需的节点，然后重启 nginx。如果 <code>服务1</code> 变动不频繁，其实也可以忍。但是我们的 nginx 上可是并不仅仅只有一个 <code>服务1</code> 的，它还有 <code>服务2</code>，未来可预见，还有 <code>服务3</code> <code>服务4</code>。<code>服务1</code> 自己安分守己，但是它无法预见同样跟它一样依赖 nginx 做服务负载均衡的 <code>服务X</code> 在未来的某一天不会抽风。</p>
+<h2 id="2-解决方案"><a href="#2-解决方案" class="headerlink" title="2 解决方案"></a>2 解决方案</h2><p>说白了，我们当前的架构中是有类中心化的节点的，我们的 nginx 就是这个中心化的节点。<code>服务X</code> 带来的流量激增会伤害到看上去跟它无关的 <code>服务Y</code>。<code>服务 X</code> 的流量激增，是 <code>服务X</code> 导致的，本着谁污染谁治理的原则，怎么也得是 <code>服务X</code> 的请求者来解决吧，但是由于每个服务都有多个动态变动的节点，请求者并不知道他们的地址。这个时候，就轮到我们的 <code>服务发现</code> 技术闪亮登场了。</p>
+<p><code>服务发现</code> 技术解决方案，都会提供一个应用注册中心。服务器端可以将自己的访问地址注册到这个中心里来；然后客户端可以通过监听注册中心中当前服务的变动情况，来动态增加本地维护的服务器列表。</p>
+<p><img src="/images/register_and_watch.png"></p>
+<p><strong>图 1.2</strong></p>
+<p>这样处在中心节点的负载均衡服务组件不复存在，具体到某个应用的流量激增，也就不会直接影响其他应用。也许你会有疑问，注册中心也是中心节点吧，但是注册中心仅仅用来做应用启动注册和节点变动通知，并发的压力的很小，并不会因为流量的增加也受到影响。况且这个所谓的中心节点，也并不仅仅是说只有一个单节点，而是一个高可用的集群结构。</p>
+<p>常见的 <code>服务发现</code> 组件有 consul zookeeper etcd 等。本文选用的是 consul ，因为它的使用者比较广泛，且功能比较全面。</p>
+<blockquote>
+<p>可以参见这篇文章来对比不同组件之间的差异 <a target="_blank" rel="noopener" href="http://huhansi.com/2020/04/14/SpringCloud/2020-04-14-004-%E5%90%84%E7%A7%8D%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E6%A1%86%E6%9E%B6%E5%AF%B9%E6%AF%94/">http://huhansi.com/2020/04/14/SpringCloud/2020-04-14-004-%E5%90%84%E7%A7%8D%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E6%A1%86%E6%9E%B6%E5%AF%B9%E6%AF%94/</a></p>
+</blockquote>
+<p>新技术栈的引进，必然会带来改造的工作量。对于服务器端来说，改造不大，仅仅是在应用启动的时候增加一个注册步骤即可。这个注册步骤甚至都可以直接做成一个单独的应用程序，随机器启动，这样对于原有项目代码没有侵入性。</p>
+<blockquote>
+<p>可以参照笔者写的 <a target="_blank" rel="noopener" href="https://github.com/yunnysunny/consul-register">consul-register</a> 项目来做服务注册。这个项目就是通过单独应用来注册服务，不需要修改原有项目代码。</p>
+</blockquote>
+<p>客户端的改造要复杂些，因为要在客户端本身实现负载均衡算法。</p>
+<blockquote>
+<p>客户端负载均衡的实现，可以参见笔者写的 <a target="_blank" rel="noopener" href="https://github.com/yunnysunny/consul-balancer">consul-balancer</a> 项目。</p>
+</blockquote>
+<p><strong>图 1.2</strong> 适合的是在集群内部服务器之间相互调用的情况，但是一个服务如果是对公网暴漏访问的，情况会大不同。对于公网访问的服务，我们需要提供 https 支持（这里仅仅考虑七层 HTTP 协议，不考虑四层 socket 长连接的情况）。这时候，我们不得不在公网入口处部署一处 nginx 服务器（也可以是其他类似服务器，这里仅仅来 nginx 举例），配置好 SSL 证书，完成 https 的握手。考虑到这个 nginx 是直接和用户建立连接，如果这个 nginx 只有一台机器，而你的用户群体又分布在全国各地，肯定会出现一定概率某个地域的用户访问这台单节点的 nginx 服务速率慢的问题。所以更优化的方案是全国几个重要的地区各自建立入口点 nginx，最终入口点和业务集群之间的网络拓扑结构会是这样。</p>
+<p><img src="/images/edge_to_cluster.png"></p>
+<p><strong>图 1.3</strong></p>
+<p><strong>图 1.3</strong> 上面画了三个入口，其通过专线连接到了业务集群，但是这里并没有画入口节点是怎么最终连接到 <code>服务X</code> 上的节点的。如果入口节点和集群内部的网络是隔离的，那么入口节点和集群必然要部署一台负载均衡服务器，用来做流量转发。这太负载均衡服务器上绑定两块网卡，一块负责和入口节点通信，一块负责和业务集群通信。</p>
+<p><img src="/images/edge_to_balancer.png"></p>
+<p><strong>图 1.4</strong></p>
+<p><strong>图 1.4</strong> 跟 <strong>图 1.3</strong> 相比，多了一个负载均衡服务器。嗯？但是这个样子的话，岂不是又走回了我们的老路。而且说好的用服务发现呢，这也没发现啊。对于后者我们可以使用 consul-template 这个工具，读取 consul 的服务配置，动态生成 nginx 配置文件，然后重载 nginx 来达到服务发现的目的。</p>
+<p><img src="/images/consul_template_in_cluster.png"></p>
+<p><strong>图 1.5</strong></p>
+<p>使用了 consul-template 之后，我们利用上了服务发现技术栈，但是这里面的负载均衡服务器依然是一个中心节点。虽然我们可以通过增加负载均衡服务器节点个数来承载更高的流量，但是一来这样子会增加更多的机器开销，二来增加负载均衡服务节点，同样要修改入口节点配置。</p>
+<p>如果入口节点和业务集群的网络是打通的，问题会好办很多。入口点直接读取注册中心的变动，动态更改本地服务器列表即可。</p>
+<p><img src="/images/private_line_with_service_discovery.png"></p>
+<p><strong>图 1.6</strong></p>
+<p><strong>图 1.6</strong> 简化一下入口点，仅仅画出了一处作为代表。入口节点直接读取注册中心，如果服务有节点变动，便会及时更新本地配置文件，可以直接访问到 <code>服务X</code> 上的节点。</p>
+<p>使用 consul-template 其实隐藏了一个问题，服务器上的节点在出现异常的时候，进程可能崩溃退出，注册到注册中心上的节点就会发送变动，consul-template 就会更新入口节点上的配置文件，触发 nginx 的重启。但是 nginx 的重启过程在高并发的情况下，会导致不必要的延迟出现，对于低延迟应用来说是个很大的打击。</p>
+<blockquote>
+<p>关于重载 nginx 导致的性能问题，可以参见官方的这篇博文 <a target="_blank" rel="noopener" href="https://www.nginx.com/blog/using-nginx-plus-to-reduce-the-frequency-of-configuration-reloads/">https://www.nginx.com/blog/using-nginx-plus-to-reduce-the-frequency-of-configuration-reloads/</a></p>
+</blockquote>
+<p>解决这个问题，我们可以依靠 openresty 这个 nginx 插件，它支持通过 lua 来进行编程，可以拦截 nginx 处理 http 请求的各个阶段。依靠这个特性，我们可以定时拉取各个服务的节点配置信息到 openresty 中存储起来，在客户端触发请求的时候，直接转发请求到具体的某一个节点上面。</p>
+<blockquote>
+<p>大家可以参考笔者的项目 <a target="_blank" rel="noopener" href="https://github.com/yunnysunny/resty-gate">yunnysunny/resty-gate</a>，它实现了通过 openresty 动态拉取 consul 上的服务列表并基于此进行负载均衡的功能。</p>
+</blockquote>
+<p><img src="/images/consul_with_openresty.png"></p>
+<p><strong>图 1.7</strong></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/service-discovery-start/" title="服务发现揭秘">https://blog.whyun.com/posts/service-discovery-start/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/k8s-startup/" rel="prev" title="k8s 网络原理入门">
+                  <i class="fa fa-chevron-left"></i> k8s 网络原理入门
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/the-defect-of-node/" rel="next" title="Node 的缺陷">
+                  Node 的缺陷 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

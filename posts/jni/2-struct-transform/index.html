@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="JNI和java的数据结构的相互转化，JNI和java的函数相互调用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JNI系列教程二——数据结构">
+<meta property="og:url" content="https://blog.whyun.com/posts/jni/2-struct-transform/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="JNI和java的数据结构的相互转化，JNI和java的函数相互调用">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2015-11-25T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-19T07:15:30.545Z">
+<meta property="article:author" content="yunnysunny">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/jni/2-struct-transform/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/jni/2-struct-transform/","path":"posts/jni/2-struct-transform/","title":"JNI系列教程二——数据结构"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>JNI系列教程二——数据结构 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B"><span class="nav-text">2.1 基本类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-%E5%AF%B9%E8%B1%A1%E7%B1%BB%E5%9E%8B"><span class="nav-text">2.2 对象类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-3-%E4%BD%BF%E7%94%A8%E5%BC%82%E5%B8%B8"><span class="nav-text">2.3 使用异常</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/jni/2-struct-transform/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          JNI系列教程二——数据结构
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2015-11-25 00:00:00" itemprop="dateCreated datePublished" datetime="2015-11-25T00:00:00+00:00">2015-11-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-01-19 07:15:30" itemprop="dateModified" datetime="2022-01-19T07:15:30+00:00">2022-01-19</time>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">JNI和java的数据结构的相互转化，JNI和java的函数相互调用</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>JNI和java相互调用，一个不可避免的问题就是两者的数据结构要相互转换。这一节正是要讲这个重头戏。</p>
+<blockquote>
+<p>本文源地址<a href="http://blog.whyun.com/posts/jni/2-struct-transform/">http://blog.whyun.com/posts/jni/2-struct-transform/</a> 转载请注明出处。</p>
+</blockquote>
+<h2 id="2-1-基本类型"><a href="#2-1-基本类型" class="headerlink" title="2.1 基本类型"></a>2.1 基本类型</h2><p>基本数据类型大都是数字类型表2.1.1中给出了java和jni的对应关系。</p>
+<table>
+<thead>
+<tr>
+<th>Java 类型</th>
+<th>本地类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>boolean</td>
+<td>jboolean</td>
+<td>无符号，8 位</td>
+</tr>
+<tr>
+<td>byte</td>
+<td>jbyte</td>
+<td>无符号，8 位</td>
+</tr>
+<tr>
+<td>char</td>
+<td>jchar</td>
+<td>无符号，16 位</td>
+</tr>
+<tr>
+<td>short</td>
+<td>jshort</td>
+<td>有符号，16 位</td>
+</tr>
+<tr>
+<td>int</td>
+<td>jint</td>
+<td>有符号，32 位</td>
+</tr>
+<tr>
+<td>long</td>
+<td>jlong</td>
+<td>有符号，64 位</td>
+</tr>
+<tr>
+<td>float</td>
+<td>jfloat</td>
+<td>32 位</td>
+</tr>
+<tr>
+<td>double</td>
+<td>jdouble</td>
+<td>64 位</td>
+</tr>
+<tr>
+<td><strong>表2.1.1 基本数据类型对照表</strong></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h2 id="2-2-对象类型"><a href="#2-2-对象类型" class="headerlink" title="2.2 对象类型"></a>2.2 对象类型</h2><p>对象类型的对照关系牵扯到的知识点比较多，所以下面决定通过具体例子来让大家更好的学习它。<br>首先在java代码有这么两行行声明</p>
+<pre><code>public native int getSum(int a, int b);
+public native int getSum(byte [] array);
+</code></pre>
+<p>第一个函数是一个基本数据类型，第二个函数是一个数组，虽然两个函数在java中是同名的，但是生成的c文件却不能使用同名文件，</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">/*
+ * Class:     com_whyun_jni_chapter2_StructDemo
+ * Method:    getSum
+ * Signature: (II)I
+ */</span>
+JNIEXPORT jint JNICALL <span class="token function">Java_com_whyun_jni_chapter2_StructDemo_getSum__II</span>
+	<span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span>env<span class="token punctuation">,</span> jobject obj<span class="token punctuation">,</span> jint a<span class="token punctuation">,</span> jint b<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">return</span> a<span class="token operator">+</span>b<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+
+<span class="token comment">/*
+ * Class:     com_whyun_jni_chapter2_StructDemo
+ * Method:    getSum
+ * Signature: ([B)I
+ */</span>
+JNIEXPORT jint JNICALL <span class="token function">Java_com_whyun_jni_chapter2_StructDemo_getSum___3B</span>
+  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span>env<span class="token punctuation">,</span> jobject obj<span class="token punctuation">,</span> jbyteArray arr<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	  <span class="token keyword">int</span> sum <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+	  <span class="token keyword">char</span> <span class="token operator">*</span>data <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">char</span><span class="token operator">*</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">GetByteArrayElements</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>arr<span class="token punctuation">,</span><span class="token constant">NULL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	  <span class="token keyword">int</span> dataLen <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">GetArrayLength</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>arr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	  <span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+	  <span class="token keyword">for</span> <span class="token punctuation">(</span>i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span>i<span class="token operator">&lt;</span>dataLen<span class="token punctuation">;</span>i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		  sum <span class="token operator">+=</span> data<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">;</span>
+	  <span class="token punctuation">&#125;</span>
+	  <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">ReleaseByteArrayElements</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>arr<span class="token punctuation">,</span>data<span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	  <span class="token keyword">return</span> <span class="token punctuation">(</span>jint<span class="token punctuation">)</span>sum<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>我们通过<code>javah</code>生成头文件时，就会发现生成的getSum的函数后缀是不一样的。这里重点看JNI中对数组的操作，在实际编程中我们常常要处理二进制数据，那么自己数组便是经常要使用的一个数据结构了。java中的byte[]最终在JNI中被转化为jbyteArray，但是jbyteArray要想在C语言中使用，还必须得到一个C语言中可识别的char类型指针的形式，这就是函数GetByteArrayElements的作用。要想知道当前数组的长度，可以使用函数GetArrayLength。我们可以推断出GetByteArrayElements内部申请了一块内存，也就是说变量<code>data</code>是通过类似于malloc之类的函数申请得到的，所以最终在使用完成之后是需要释放的，所以才有了函数最后调用ReleaseByteArrayElements函数的代码。</p>
+<p>下面看一个复杂的例子通过JNI来调用java函数,直接上JNI的代码：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">/*
+ * Class:     com_whyun_jni_chapter2_StructDemo
+ * Method:    getUserList
+ * Signature: (I)Ljava/util/ArrayList;
+ */</span>
+JNIEXPORT jobject JNICALL <span class="token function">Java_com_whyun_jni_chapter2_StructDemo_getUserList</span>
+  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span>env<span class="token punctuation">,</span> jobject obj<span class="token punctuation">,</span> jint num<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">int</span> count <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span>num<span class="token punctuation">,</span>i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span>
+	jclass clsUserBean <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">FindClass</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span><span class="token string">"com/whyun/jni/bean/UserBean"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	jclass clsArrayList <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">FindClass</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span><span class="token string">"java/util/ArrayList"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	jmethodID userBeanConstructor <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">GetMethodID</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>clsUserBean<span class="token punctuation">,</span><span class="token string">"&lt;init>"</span><span class="token punctuation">,</span><span class="token string">"()V"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	jmethodID userBeanSetAge <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">GetMethodID</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>clsUserBean<span class="token punctuation">,</span><span class="token string">"setAge"</span><span class="token punctuation">,</span><span class="token string">"(I)V"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	jmethodID userBeanSetName <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">GetMethodID</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>clsUserBean<span class="token punctuation">,</span><span class="token string">"setName"</span><span class="token punctuation">,</span><span class="token string">"(Ljava/lang/String;)V"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	jmethodID arrayListContructor <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">GetMethodID</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>clsArrayList<span class="token punctuation">,</span><span class="token string">"&lt;init>"</span><span class="token punctuation">,</span><span class="token string">"(I)V"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	jmethodID arrayListAdd <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">GetMethodID</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>clsArrayList<span class="token punctuation">,</span><span class="token string">"add"</span><span class="token punctuation">,</span><span class="token string">"(ILjava/lang/Object;)V"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	jobject arrayList <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">NewObject</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>clsArrayList<span class="token punctuation">,</span>arrayListContructor<span class="token punctuation">,</span>num<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+	<span class="token keyword">char</span> nameStr<span class="token punctuation">[</span><span class="token number">5</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token number">0</span><span class="token punctuation">&#125;</span><span class="token punctuation">;</span>
+	<span class="token keyword">int</span> index <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+	jstring name<span class="token punctuation">;</span>
+
+	<span class="token keyword">for</span><span class="token punctuation">(</span>i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span>i<span class="token operator">&lt;</span>count<span class="token punctuation">;</span>i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		jobject userBean <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">NewObject</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>clsUserBean<span class="token punctuation">,</span>userBeanConstructor<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		
+		<span class="token keyword">for</span> <span class="token punctuation">(</span>index<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span>index<span class="token operator">&lt;</span><span class="token number">4</span><span class="token punctuation">;</span>index<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+			nameStr<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">=</span> randStr<span class="token punctuation">[</span><span class="token punctuation">(</span>i<span class="token operator">+</span><span class="token number">7</span><span class="token punctuation">)</span><span class="token operator">%</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+		<span class="token punctuation">&#125;</span>
+		name <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">NewStringUTF</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span><span class="token punctuation">)</span>nameStr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">CallVoidMethod</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>userBean<span class="token punctuation">,</span>userBeanSetAge<span class="token punctuation">,</span><span class="token punctuation">(</span>jint<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token operator">+</span>i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+		<span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">CallVoidMethod</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>userBean<span class="token punctuation">,</span>userBeanSetName<span class="token punctuation">,</span>name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+		<span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">CallVoidMethod</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>arrayList<span class="token punctuation">,</span>arrayListAdd<span class="token punctuation">,</span><span class="token punctuation">(</span>jint<span class="token punctuation">)</span>i<span class="token punctuation">,</span>userBean<span class="token punctuation">)</span><span class="token punctuation">;</span>
+	<span class="token punctuation">&#125;</span>
+	<span class="token keyword">return</span> arrayList<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果你稍加揣测的话，这段代码翻译成java代码应该是这么写的：</p>
+<pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token keyword">public</span> <span class="token class-name">ArrayList</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserBean</span><span class="token punctuation">></span></span> <span class="token function">getUserList</span><span class="token punctuation">(</span><span class="token keyword">int</span> count<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token class-name">ArrayList</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserBean</span><span class="token punctuation">></span></span> list <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ArrayList</span><span class="token generics"><span class="token punctuation">&lt;</span><span class="token class-name">UserBean</span><span class="token punctuation">></span></span><span class="token punctuation">(</span>count<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span><span class="token punctuation">(</span><span class="token keyword">int</span> i<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">;</span>i<span class="token operator">&lt;</span>count<span class="token punctuation">;</span>i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token class-name">UserBean</span> bean <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">UserBean</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        bean<span class="token punctuation">.</span><span class="token function">setAge</span><span class="token punctuation">(</span>i<span class="token operator">+</span><span class="token number">20</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        bean<span class="token punctuation">.</span><span class="token function">setName</span><span class="token punctuation">(</span><span class="token string">"name"</span><span class="token operator">+</span>i<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        list<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>i<span class="token punctuation">,</span>bean<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">return</span> list<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>看上去java代码要简单许多，在JNI中包括类、成员函数、对象之类的数据都需要先创建再使用。在java中创建对象用<code>new UserBean()</code>就够了，但是在JNI中，你首先要通过<code>FindClass</code>函数来找到类定义，然后通过类定义用函数<code>GetMethodID</code>来找到构造函数，然后根据类定义和构造函数通过函数<code>NewObject</code>来获取一个对象，下面分别对这三个函数进行讲解。<br><code>FindClass</code>函数的第二个参数是要加载的类的类名全称，在java中我们应该写作<code>com.whyun.jni.bean.UserBean</code>,在JNI中就是把<code>.</code>换成了<code>/</code>而已。<br><code>GetMethodID</code>函数的第二个参数是<code>FindClass</code>函数得到的类变量<code>clsUserBean</code>,第二个参数是函数名，一般来说函数名直接写函数名称就行了，比如说你再往下看一行代码获取UserBean的<code>setAge</code>函数的时候就直接写的函数名，但是构造函数就不同了，所有类的构造函数在JNI中统一叫<code>&lt;init&gt;</code>。最后一个参数很重要，它是java函数的签名，java中每个函数和属性都有一个它的标识，这个标识用来指出当前函数的参数、返回值类型或者属性的类名，可能有些人第一听说这个概念，其实获取这个标识有一个很简单的方法，就是命令<code>javap</code>，下面先做个小实验，运行<code>javap -s java.lang.String</code>，会输出如下内容：</p>
+<pre class="line-numbers language-none"><code class="language-none">Compiled from &quot;String.java&quot;
+public final class java.lang.String implements java.io.Serializable, java.lang.Comparable&lt;java.lang.String&gt;, java.lang.CharSequence &#123;
+  public static final java.util.Comparator&lt;java.lang.String&gt; CASE_INSENSITIVE_ORDER;
+    Signature: Ljava&#x2F;util&#x2F;Comparator;
+  public java.lang.String();
+    Signature: ()V
+
+  public java.lang.String(java.lang.String);
+    Signature: (Ljava&#x2F;lang&#x2F;String;)V
+
+  public java.lang.String(char[]);
+    Signature: ([C)V
+
+  public java.lang.String(char[], int, int);
+    Signature: ([CII)V
+
+  public java.lang.String(int[], int, int);
+    Signature: ([III)V
+由于文件内容比较多，所以省略掉下面内容    <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>由于java是支持重载的，一个函数可能会拥有多种实现方式，比如<code>String</code>类的构造函数就有N多个，那么你在调用其函数的时候，就必须得依靠参数和返回值类型来区分不同的函数了，而签名正提供了一种简介的方式来表示一个函数的参数和返回值。通过刚才<code>javap</code>命令的输出，我们可以得到对于没有参数的String构造函数，其签名为<code>()V</code>；对于参数为字符数组的构造函数签名为<code>([C)V</code>。<br>接着讲函数<code>NewObject</code>,前面经过<code>FindClass</code>和<code>GetMethodID</code>一顿折腾，我们拿到了两个变量类变量<code>clsUserBean</code>和函数变量<code>userBeanConstructor</code>,将其传到<code>NewObject</code>中就能得到一个对象。在我们的代码中还有一个对于ArrayList类型的对象的构造，他调用<code>NewObject</code>的时候比<code>UserBean</code>多了一个参数，那是由于我们使用的构造函数为<code>ArrayList(int i)</code>，故需要传递一个ArrayList的长度参数，这里需要声明的是<code>NewObject</code>函数的参数个数是可变的，调用的构造函数有参数，就依次追加到后面即可。<br>终于讲到真正调用java函数这一步了，就是代码中的<code>CallVoidMethod</code>,和<code>NewObject</code>一样，它也是可变参数，参数形式也一样。除了<code>CallVoidMethod</code>，JNI中还有各种<code>Call[Type]Method</code>，这个Type就代表了java函数的返回值，它可以是<code>Object</code> <code>Boolean</code> <code>Byte</code> <code>Char</code> <code>Short</code> <code>Int</code> <code>Long</code> <code>Float</code> <code>Double</code>。</p>
+<h2 id="2-3-使用异常"><a href="#2-3-使用异常" class="headerlink" title="2.3 使用异常"></a>2.3 使用异常</h2><p>c语言中没有异常这个概念，使用c代码的时候多是通过返回码来判断是否调用成功，然而对于java程序来说判断有没有成功，往往是看有没有异常抛出，所以说编写一个java友好的JNI程序，我们需要将错误码转成java异常。直接上例子：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">/*
+ * Class:     com_whyun_jni_chapter2_StructDemo
+ * Method:    showException
+ * Signature: ()V
+ */</span>
+JNIEXPORT <span class="token keyword">void</span> JNICALL <span class="token function">Java_com_whyun_jni_chapter2_StructDemo_showException</span>
+  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span>env<span class="token punctuation">,</span> jobject obj<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	  jclass exception <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">FindClass</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span><span class="token string">"java/lang/Exception"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	  <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">ThrowNew</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span>exception<span class="token punctuation">,</span><span class="token string">"This is a exception."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里ThrowNew转成java的话，就是<code>throw new Exception(&quot;This is a exception.&quot;);</code>其它的我就不多说了。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/jni/2-struct-transform/" title="JNI系列教程二——数据结构">https://blog.whyun.com/posts/jni/2-struct-transform/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/jni/" rel="prev" title="JNI系列教程一——入门">
+                  <i class="fa fa-chevron-left"></i> JNI系列教程一——入门
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/jni-ndk/" rel="next" title="JNI系列教程三 —— NDK入门">
+                  JNI系列教程三 —— NDK入门 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="教你如何在Node中使用缓存，解决高并发问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Node 缓存优化之路">
+<meta property="og:url" content="https://blog.whyun.com/posts/node/the-cache-design-in-node/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="教你如何在Node中使用缓存，解决高并发问题">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.whyun.com/images/node_threads.png">
+<meta property="og:image" content="https://blog.whyun.com/images/young_old_area.png">
+<meta property="article:published_time" content="2018-10-16T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-19T07:15:30.545Z">
+<meta property="article:author" content="yunnysunny">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.whyun.com/images/node_threads.png">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/node/the-cache-design-in-node/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/node/the-cache-design-in-node/","path":"posts/node/the-cache-design-in-node/","title":"Node 缓存优化之路"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Node 缓存优化之路 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E7%BC%93%E5%AD%98%E5%88%86%E7%B1%BB"><span class="nav-text">1. 缓存分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E7%BC%93%E5%AD%98%E8%AE%BE%E8%AE%A1%E6%80%9D%E8%B7%AF"><span class="nav-text">2. 缓存设计思路</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E4%BC%9A%E8%AF%9D"><span class="nav-text">2.1 会话</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E9%97%AA%E5%AD%98"><span class="nav-text">2.2 闪存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E9%95%9C%E5%83%8F"><span class="nav-text">2.3 镜像</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95"><span class="nav-text">3. 性能测试</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/node/the-cache-design-in-node/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Node 缓存优化之路
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2018-10-16 00:00:00" itemprop="dateCreated datePublished" datetime="2018-10-16T00:00:00+00:00">2018-10-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-01-19 07:15:30" itemprop="dateModified" datetime="2022-01-19T07:15:30+00:00">2022-01-19</time>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">教你如何在Node中使用缓存，解决高并发问题</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>当今互联网，越来越往大数据的方向发展。大数据的背后是大用户，你的后端服务必须得有能力承载大用户、高并发的冲击。从宏观上讲，提高并发能力，无怪乎横向扩展（增加服务器节点个数）、纵向扩展（提高单点服务器的处理能力）。横向扩展，常见的有负载均衡，是一种部署的拓扑结构；纵向扩展，更多的体现的在应用程序本身性能提升。计算机中，我们常用拿空间换时间，来提升程序性能，缓存正是这种思想的体现。  </p>
+<blockquote>
+<p>本文链接地址 <a href="https://blog.whyun.com/posts/node/the-cache-design-in-node">https://blog.whyun.com/posts/node/the-cache-design-in-node</a> ,转载请注明出处。</p>
+</blockquote>
+<p>我们这篇文章讲 Node 的缓存设计，不过在切入正题之前，我还是要先讲一下 Node 的线程模型，如下图：</p>
+<p><img src="/images/node_threads.png" alt="Node 线程模型"></p>
+<p><strong>图片0.1 Node 线程模型</strong></p>
+<p>我们常说 Node 是单线程程序，这是由于我们 JavaScript 代码（基于 V8 引擎）正是运行在这个单线程中的，此外我们常说的事件轮询、网络 IO 都是运行在这个线程中的。不过 Node 进程中，并不仅仅只包含这一个线程，它还有一个线程池，用来处理 文件 IO 、crypto 、zlib，还有异步 C++ 模块等操作，只不过，我们平常在 Node 中运用这些操作比较少。</p>
+<h2 id="1-缓存分类"><a href="#1-缓存分类" class="headerlink" title="1. 缓存分类"></a>1. 缓存分类</h2><p>从生命周期上讲，缓存大体上分以下三类，</p>
+<ol>
+<li><p>会话 跟用户登陆状态关联的数据，生命周期长 </p>
+</li>
+<li><p>临时数据，短时间内有效，生命周期短 </p>
+</li>
+<li><p>镜像 数据库的数据镜像，生命周期特长</p>
+</li>
+</ol>
+<h2 id="2-缓存设计思路"><a href="#2-缓存设计思路" class="headerlink" title="2. 缓存设计思路"></a>2. 缓存设计思路</h2><h3 id="2-1-会话"><a href="#2-1-会话" class="headerlink" title="2.1 会话"></a>2.1 会话</h3><p>现如今，各种设备终端兴起，很多情况下，我们要自己设计用户会话，而不是直接使用传统 web 中使用的 session，以便更好的适配多端设备，并且能够更好的对性能进行调优。</p>
+<p>一个简单的 session 设计思路，就是生成一个 token，然后将用户数据序列化成 JSON 字符串，最后将 token 和 JSON 字符串的映射关系写入 redis。在读取的时候，根据 token 查询到 JSON 字符串，然后反序列化即可。</p>
+<p>咋一看，这个设计是没有问题的，不过经过性能测试发现，Node 中 JSON 的反序列化性能是不高的，解决这个问题也很简单，我们将 redis 中反序列化的数据缓存到内存即可，这样用户下次请求的 token 验证就直接走内存了。<br>不过这又会导致一个问题，如果你的用户量数据巨大，那么内存是不够用的。我们必须得有内存清理机制，否则早晚内存会炸掉。</p>
+<p>应该怎么清理呢？每天凌晨将内存中的数据清理掉，但是如果白天内存就告急了怎么半？限制内存存储数据个数，在达到内存限制个数后，内存中存储的都是老数据，如果这些老数据都是冷数据，新来的请求还算是会频繁的请求 redis ，做反序列化。<br>怎么办？有没有既限制内存数量，且又能读写热数据的思路呢？还真有，这就是 <strong>L</strong>(Least)<strong>R</strong>(Recently)<strong>U</strong>(Used) 算法.。不过如果你使用 JavaScript 编写一个 LRU 算法，就会在 V8 引擎中引入一个耗时操作，这在 Node 中是大忌。我们开头<strong>图0.1</strong>讲过，Node 进程中其实是有一个线程池的，我们何不将这个 LRU 实现代码，在这里实现？</p>
+<p>我写了一个 c++ addon 来处理这个 LRU 算法，刚开始测试的时候性能很不错，看上去完美的解决了这个问题。不过随着时间的推移，我最担心的事情还是发生了，就是进程崩溃了！刚才我们说过，我们借用的是线程池来处理 LRU 算法，但是我们的程序中对于多线程操作，并没有加锁，导致处理的过程中出现脏数据，然后读写非法内存地址，进程就崩溃了。</p>
+<p>我将线程操作加上了锁，加锁所导致的性能又一步做出了损耗，但依然在可控范围内。但是我们依然忽略了一个问题，我们做 LRU 就是要减少内存使用的，但是现在我们反而把 每个用户的 token 数据都写到内存中 LRU 关联的链表中，长此以往，内存依然会爆。</p>
+<p>说到这里，我们的优化之路，貌似进入了死胡同，不过当你为一件事情殚精竭虑的时候，上天一定会眷顾你。一个偶然的机会，我发现了 Redis 的内存清理也是使用 LRU 算法的，同时在启用 LRU 时，性能也会下降，这跟我们使用LRU算法的结果是一样的。不过在 Redis 中还有一种算法，用来清理过期key，就是定期遍历 key 列表，从 key 列表中取出 N 个 key，判断其是否过期，如果过期，就删除。Redis 也是单线程，其线程模型和 Node 是类似的，所以它在遍历列表的时候，不会做全量遍历，而是使用定时器。增加定时定量的清理算法后，做性能测试，性能并没有损耗，同时还保证了内存占用在可控范围之内。</p>
+<p>以上就是会话类型的缓存设计历程，对应的源代码已经开源，参见 <a target="_blank" rel="noopener" href="https://www.npmjs.com/package/session-token">session-token</a>。</p>
+<h3 id="2-2-闪存"><a href="#2-2-闪存" class="headerlink" title="2.2 闪存"></a>2.2 闪存</h3><p>使用闪存，一定是我们允许在短暂时间内缓存数据和真实数据有一定的误差，但是这个误差一定要在允许的范围之内。比如说做阈值处理时，通过 Redis 的 incr 操作做计数器，在达到阈值时就可以把这个值缓存到内存，在达到阈值的短暂时间内，真实的计数器的值我们并不关心。</p>
+<p>整个设计思路类似于 JVM 或者 V8 的新生代 GC 算法：</p>
+<p>  <img src="/images/young_old_area.png" alt="young/old"></p>
+<p><strong>图 2 .2 young/old</strong></p>
+<p>缓存数据在写入的时候，现如 young 区域，程序内置定时器每隔固定时间将 young 区域赋值到 old 区域，同时清空 young 区域。</p>
+<p>使用时要注意缓存击穿问题。比如说笔者曾经犯过的一个问题，在将 Redis 的查询的结果缓存到闪存，但是如果查询结果为空，没有将空的这个结果缓存下来，所以说对于 key 值不存在的情况，每次都是缓存不命中中的，每次都会请求 Redis。解决的问题也很简单，就是在闪存中保存一个空串。</p>
+<p>对应的源代码解决方案参见 <a target="_blank" rel="noopener" href="https://www.npmjs.com/package/flash-cache">flash-cache</a>。</p>
+<h3 id="2-3-镜像"><a href="#2-3-镜像" class="headerlink" title="2.3 镜像"></a>2.3 镜像</h3><p>前段时间，我们接手了一个 IM 项目，要求实现类似于钉钉的功能，在线可以实时接收数据，离线后上线，可以查看未读历史记录。考虑到是一个实时系统，我们的没有选择直接读取 mongodb，而是将数据先写入 Redis 中。同时将实时聊天记录打入 Kafka，然后通过消费者程序同步到 mongodb。Redis 中存储的数据可以理解成 mongodb 中的镜像，读取的时候，先读取 Redis，只有在 Redis 中查询不到的时候才读取 mongodb （实际上这种情况几乎不可能发生，因为我们在 Redis 中缓存失效时间很长）。</p>
+<p>镜像中一般用来映射数据库中的表记录，采用的 key 类型为 sorted set。但是数据库中的数据量是巨大的，全部缓存到一个 key 中，对于 Redis 是不友好的，所以说需要按天拆分 key。</p>
+<p>前面说到 key 的类型为 sorted set，那么 score 是什么呢？score 是一个自增数字，我们用自增数字来唯一标识一条聊天记录。者个自增数字使用的是 Redis 的 incr 操作客户端本地存留一个上次阅读到的聊天 Id，服务器端可以根据上次阅读Id，就可以给客户端返回历史记录（操作过程中会涉及到分页查询）。</p>
+<h2 id="3-性能测试"><a href="#3-性能测试" class="headerlink" title="3. 性能测试"></a>3. 性能测试</h2><p>关于性能调优的方法和工具，可以参见我写的《Node 基础教程》中的第11章 <a target="_blank" rel="noopener" href="https://github.com/yunnysunny/nodebook/blob/master/text/11_node_optimization.md">Node 调优</a>。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/node/the-cache-design-in-node/" title="Node 缓存优化之路">https://blog.whyun.com/posts/node/the-cache-design-in-node/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/the-design-of-sso-between-diffrent-domain/" rel="prev" title="跨越万水千山认识你,跨根域的单点登陆设计">
+                  <i class="fa fa-chevron-left"></i> 跨越万水千山认识你,跨根域的单点登陆设计
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/request-dns/the-problem-of-dns-timeout-on-request-package/" rel="next" title="request 包中出现 DNS 解析超时的探究">
+                  request 包中出现 DNS 解析超时的探究 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

