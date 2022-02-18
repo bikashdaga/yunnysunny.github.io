@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 6.0.0">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
@@ -20,8 +19,9 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="手把手教你怎么将一个自定义的操作系统加入到noobs中">
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="手把手教你怎么将一个自定义的操作系统加入到noobs中">
 <meta property="og:type" content="article">
 <meta property="og:title" content="NOOBS安装自定义系统">
 <meta property="og:url" content="https://blog.whyun.com/posts/noobs/">
@@ -33,7 +33,7 @@
 <meta property="og:image" content="http://blog.whyun.com/images/add_new_vbox_share.png">
 <meta property="og:image" content="http://blog.whyun.com/images/noobs_files.jpg">
 <meta property="article:published_time" content="2014-11-21T00:00:00.000Z">
-<meta property="article:modified_time" content="2022-01-19T08:06:44.830Z">
+<meta property="article:modified_time" content="2022-02-18T09:12:48.504Z">
 <meta property="article:author" content="yunnysunny">
 <meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
 <meta name="twitter:card" content="summary">
@@ -52,6 +52,7 @@
 
   <script src="/js/third-party/analytics/baidu-analytics.js"></script>
   <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
 
 
 
@@ -140,7 +141,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -231,7 +232,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-01-19 08:06:44" itemprop="dateModified" datetime="2022-01-19T08:06:44+00:00">2022-01-19</time>
+      <time title="修改时间：2022-02-18 09:12:48" itemprop="dateModified" datetime="2022-02-18T09:12:48+00:00">2022-02-18</time>
     </span>
 
   
@@ -298,7 +299,7 @@
 &#125;
 </code></pre>
 <p><strong>配置文件2.2 partitions.json</strong></p>
-<p>可以看到在json文件中属性partitions是一个数组类型，数组每个元素定义的是一个分区信息。首先看label为boot的分区，这是一个FAT格式的分区，被用作操作系统启动分区；然后label为root的是ext4分区，里面存放linux操作系统分区。partition_size_nominal是说分区的大小，want_maximised是说当前分区是否需要被扩展，如果为false，则分区的大小就是partition_size_nominal的指定值，如果为true，则noobs会根据sd卡的大小尽量的分配尽可能多的空间给当前分区。<br>9. 之前说过，我们从retropie官网上下载下来它的安装文件，将其解压后我们得到一个img文件。按照noobs给出的文档，根据partitions.json中的配置的信息，我们应该生成两个压缩文件，分别为boot.tar.xz和root.tar.gz，文件名实际上对应的是配置文件中的label属性。那么我们现在得到的是img文件，怎样得到这两个文件呢？<br>如果你是用linux，这个问题很好解决，linux下可以使用mount命令直接把img文件挂载到指定目录上；如果使用windows，那就只能用虚拟机了。好吧，我就是用的windows，打开自己的虚拟机，通过vbox上的共享目录，来访问windows上的这个img文件。<br><img src="http://blog.whyun.com/images/select_share.png" alt="vbox共享"><br><strong>图2.1 共享文件夹设置1</strong><br>在弹出的界面中新增一个共享设置，我们假设img文件放在e:\sharing下，那么可以做如下设置：<br><img src="http://blog.whyun.com/images/add_new_vbox_share.png" alt="新建共享"><br><strong>图2.2 新建共享</strong><br>最后在ubuntu下通过命令<code>mount -t vboxsf sharing /mnt/share</code>来加载这个共享（这里假设/mnt/share目录已经存在了）。在/mnt/share下我们用fdisk命令来查看img文件内部的分区情况：</p>
+<p>可以看到在json文件中属性partitions是一个数组类型，数组每个元素定义的是一个分区信息。首先看label为boot的分区，这是一个FAT格式的分区，被用作操作系统启动分区；然后label为root的是ext4分区，里面存放linux操作系统分区。partition_size_nominal是说分区的大小，want_maximised是说当前分区是否需要被扩展，如果为false，则分区的大小就是partition_size_nominal的指定值，如果为true，则noobs会根据sd卡的大小尽量的分配尽可能多的空间给当前分区。<br>9. 之前说过，我们从retropie官网上下载下来它的安装文件，将其解压后我们得到一个img文件。按照noobs给出的文档，根据partitions.json中的配置的信息，我们应该生成两个压缩文件，分别为boot.tar.xz和root.tar.gz，文件名实际上对应的是配置文件中的label属性。那么我们现在得到的是img文件，怎样得到这两个文件呢？<br>如果你是用linux，这个问题很好解决，linux下可以使用mount命令直接把img文件挂载到指定目录上；如果使用windows，那就只能用虚拟机了。好吧，我就是用的windows，打开自己的虚拟机，通过vbox上的共享目录，来访问windows上的这个img文件。<br><img src="http://blog.whyun.com/images/select_share.png" alt="vbox共享"><br><strong>图2.1 共享文件夹设置1</strong><br>在弹出的界面中新增一个共享设置，我们假设img文件放在e:\sharing下，那么可以做如下设置：<br><img src="http://blog.whyun.com/images/add_new_vbox_share.png" alt="新建共享"><br><strong>图2.2 新建共享</strong><br>最后在ubuntu下通过命令<code>mount -t vboxsf sharing /mnt/share</code>来加载这个共享（这里假设&#x2F;mnt&#x2F;share目录已经存在了）。在&#x2F;mnt&#x2F;share下我们用fdisk命令来查看img文件内部的分区情况：</p>
 <pre><code>fdisk -lu RetroPieImage_ver2.3.img
 </code></pre>
 <p>该命令将会输出如下内容：</p>
@@ -326,7 +327,7 @@ sudo mkdir /mnt/share/img2
 <p>其中打包的时候我们制定了<code>p</code>参数，这里是告诉tar命令，在tar命令运行时，要保留原文件的权限属性不变。<br>接着就是使用xz命令就行压缩了：</p>
 <pre><code>xz -9 -e boot.tar
 </code></pre>
-<p>最终生成一个<code>boot.tar.xz</code>文件，拷贝到文件夹RetroPie中。同理我们可以再生成一个<code>root.tar.xz</code>文件。<strong>但是要注意，在生成<code>boot.tar</code>的时候要使用管理员权限，即运行<code>sudo tar -cvpf ../root.tar</code>，否某些文件会提示没有权限操作。</strong><br>10. noobs在进行分区的时候需要读取脚本<code>partition_setup.sh</code>来完成分区操作，如果当前系统是由<code>Raspbian</code>改装来的（比如<code>RetroPie</code>和<code>raspbmc</code>、<code>Pidora</code>），那么直接使用<code>Raspbian</code>文件夹中的<code>partition_setup.sh</code>即可，但是有一些系统不是标准linux，比如说<code>openelec</code>，这时候你可以从github项目<a target="_blank" rel="noopener" href="https://github.com/procount/noobsconfig">procount/noobsconfig</a>找到相应的sh脚本文件。<br>11. 最后我们就是格式化SD卡了，使用SDFormatter（<a target="_blank" rel="noopener" href="https://www.sdcard.org/chs/downloads/formatter_4/">下载页面地址</a>）将你的SD卡格式化，然后将制作好的noobs文件全部拷贝到sd卡中，保证recovery.img在sd卡根目录：</p>
+<p>最终生成一个<code>boot.tar.xz</code>文件，拷贝到文件夹RetroPie中。同理我们可以再生成一个<code>root.tar.xz</code>文件。<strong>但是要注意，在生成<code>boot.tar</code>的时候要使用管理员权限，即运行<code>sudo tar -cvpf ../root.tar</code>，否某些文件会提示没有权限操作。</strong><br>10. noobs在进行分区的时候需要读取脚本<code>partition_setup.sh</code>来完成分区操作，如果当前系统是由<code>Raspbian</code>改装来的（比如<code>RetroPie</code>和<code>raspbmc</code>、<code>Pidora</code>），那么直接使用<code>Raspbian</code>文件夹中的<code>partition_setup.sh</code>即可，但是有一些系统不是标准linux，比如说<code>openelec</code>，这时候你可以从github项目<a target="_blank" rel="noopener" href="https://github.com/procount/noobsconfig">procount&#x2F;noobsconfig</a>找到相应的sh脚本文件。<br>11. 最后我们就是格式化SD卡了，使用SDFormatter（<a target="_blank" rel="noopener" href="https://www.sdcard.org/chs/downloads/formatter_4/">下载页面地址</a>）将你的SD卡格式化，然后将制作好的noobs文件全部拷贝到sd卡中，保证recovery.img在sd卡根目录：</p>
 <p><img src="http://blog.whyun.com/images/noobs_files.jpg" alt="noobs根目录"><br><strong>图2.3 sd卡根目录</strong><br>至此一个自定义的操作系统已经成功制作完成，将sd卡插入树莓派就可以安装了。</p>
 
     </div>

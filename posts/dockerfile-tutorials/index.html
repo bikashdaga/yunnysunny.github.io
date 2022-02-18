@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 6.0.0">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
@@ -20,8 +19,9 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="dockerfile 的使用教程，讲解 dockerfile 的 FROM COPY RUN ENTRYPOINT CMD 等指令的使用。">
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="dockerfile 的使用教程，讲解 dockerfile 的 FROM COPY RUN ENTRYPOINT CMD 等指令的使用。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="dockerfile 使用教程">
 <meta property="og:url" content="https://blog.whyun.com/posts/dockerfile-tutorials/">
@@ -32,7 +32,7 @@
 <meta property="og:image" content="https://blog.whyun.com/images/dive-first.gif">
 <meta property="og:image" content="https://blog.whyun.com/images/image-20211027162450032.png">
 <meta property="article:published_time" content="2021-10-09T00:00:00.000Z">
-<meta property="article:modified_time" content="2022-01-19T08:06:44.830Z">
+<meta property="article:modified_time" content="2022-02-18T09:12:48.504Z">
 <meta property="article:author" content="yunnysunny">
 <meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
 <meta name="twitter:card" content="summary">
@@ -51,6 +51,7 @@
 
   <script src="/js/third-party/analytics/baidu-analytics.js"></script>
   <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
 
 
 
@@ -139,7 +140,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -230,7 +231,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-01-19 08:06:44" itemprop="dateModified" datetime="2022-01-19T08:06:44+00:00">2022-01-19</time>
+      <time title="修改时间：2022-02-18 09:12:48" itemprop="dateModified" datetime="2022-02-18T09:12:48+00:00">2022-02-18</time>
     </span>
 
   
@@ -294,7 +295,7 @@ Successfully built f3e54049025a
 Successfully tagged mycentos:latest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>输出 1.1.2</strong></p>
-<p>会看到 Step 2/2 中显示的是使用缓存(<code>Using cache</code>)，并且镜像 ID 还是为 <code>f3e54049025a</code>，跟第一次构建时生成的一样。</p>
+<p>会看到 Step 2&#x2F;2 中显示的是使用缓存(<code>Using cache</code>)，并且镜像 ID 还是为 <code>f3e54049025a</code>，跟第一次构建时生成的一样。</p>
 <h3 id="1-2-传递参数"><a href="#1-2-传递参数" class="headerlink" title="1.2 传递参数"></a>1.2 传递参数</h3><p>Dockerfile 中可以支持传递参数来做个性化构建，如果你需要构建的镜像中使用的软件包有多个版本，那么你就可以通过传递参数的方式指定当前要构建的软件的版本号，从而生成不同的镜像。</p>
 <p>举个例子，以下是一个构建 zookeeper 的 Dockerfile（<strong>代码1.2.1</strong>可以从<a target="_blank" rel="noopener" href="https://code.aliyun.com/yunnysunny/dockerfiles/tree/master/zookeeper/Dockerfile">这里</a>找到）</p>
 <pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">FROM openjdk:11
@@ -329,7 +330,7 @@ fi<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><
 <p>docker 遇到这句话的时候，会自动拼接一个 https 的地址进行请求。不过有一种特殊情况就是，公司的运维人员在搭建自建镜像仓库的时候，没有启用 https ，而是直接用了 http 协议，那么 FROM 指令可能就是这样的：</p>
 <pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">FROM registry.private.com:port&#x2F;image-name:tag-name<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>那么你就需要更改你的 docker 的配置文件，Linux 下位于 /etc/docker/daemon.json，添加如下配置：</p>
+<p>那么你就需要更改你的 docker 的配置文件，Linux 下位于 &#x2F;etc&#x2F;docker&#x2F;daemon.json，添加如下配置：</p>
 <pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token property">"insecure-registries"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
     <span class="token string">"registry.private.com:port"</span>
 <span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
@@ -364,7 +365,7 @@ ZOOKEEPER_DOWNLOAD_ADDRESS&#x3D;https:&#x2F;&#x2F;mirrors.bfsu.edu.cn&#x2F;apach
 # git update-index --chmod +x zookeeper<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <blockquote>
-<p>存储在 git 仓库中文件的权限只有 644 和 755 两种，如果你在 docker 中需要使用一些比较特殊的权限，不如说 ~/.ssh 目录下的文件，必须是 600 权限，你还是必须在 dockerfile 中使用 RUN 指令强制将 ~/.ssh 下的目录 chmod 成 600。</p>
+<p>存储在 git 仓库中文件的权限只有 644 和 755 两种，如果你在 docker 中需要使用一些比较特殊的权限，不如说 ~&#x2F;.ssh 目录下的文件，必须是 600 权限，你还是必须在 dockerfile 中使用 RUN 指令强制将 ~&#x2F;.ssh 下的目录 chmod 成 600。</p>
 <p>如果当前项目的目录层级比较深，可以在调用 ls-tree 中添加 <code>-r</code> 参数，例如下面命令可以批量查看当前项目在 git 仓库中所有没有可执行权限的 shell 文件：</p>
 <pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">git ls-tree -r HEAD | grep &quot;\.sh$&quot; | grep 100644<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 </blockquote>
@@ -390,7 +391,7 @@ COPY . &#x2F;opt
 RUN gitbook pdf .<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>代码 1.2.6</strong></p>
-<p>由于 gitbook pdf 命令不支持使用 root 用户运行，所以这里先通过 useradd 命令创建一个名字为 <code>gitbook</code> 的用户。然后将 /opt 的归属权更改位 <code>gitbook</code> 用户，接着使用 USER 指令将 docker 的用户切换位 <code>gitbook</code>，后面的 RUN 指令中的命令就会使用 <code>gitbook</code> 用户来运行。</p>
+<p>由于 gitbook pdf 命令不支持使用 root 用户运行，所以这里先通过 useradd 命令创建一个名字为 <code>gitbook</code> 的用户。然后将 &#x2F;opt 的归属权更改位 <code>gitbook</code> 用户，接着使用 USER 指令将 docker 的用户切换位 <code>gitbook</code>，后面的 RUN 指令中的命令就会使用 <code>gitbook</code> 用户来运行。</p>
 <h3 id="1-3-启动命令"><a href="#1-3-启动命令" class="headerlink" title="1.3 启动命令"></a>1.3 启动命令</h3><p>一般制作基础镜像时，会在 dockerfile 中指定一个 <code>ENTRYPOINT</code> 指令来 docker 启动时的自运行脚本文件；同时 dockerfile 中还可以使用 <code>CMD</code> 指令，它可以直接指定启动命令。</p>
 <p>docker 在使用这两个指定的策略是这样的：</p>
 <p>如果当前 dockerfile 和其应用的父级（包括其父级的父级） dockerfile 中没有任何 <code>ENTRYPOINT</code> 和 <code>CMD</code> 指定，则制作好的镜像在进行 docker run 时立即退出，其实这种情况下制作的镜像没有任何意义。</p>
@@ -521,7 +522,7 @@ docker rmi $(docker images | grep &quot;none&quot; | awk &#39;&#123;print $3&#12
 
 <p><strong>代码 2.1.1 清理 docker 镜像脚本</strong></p>
 <h3 id="2-2-拉取基础镜像缓慢"><a href="#2-2-拉取基础镜像缓慢" class="headerlink" title="2.2 拉取基础镜像缓慢"></a>2.2 拉取基础镜像缓慢</h3><p>默认的镜像仓库地址是托管在 dockerhub 上，由于众所周知的原因，国外的网站在咱们这里访问并不稳定，并且 dockerhub 本身处于商业考量，还会对用户的访问进行限速，所以我们一般会在 docker 的配置文件中修改镜像仓库地址，将其指向国内地址。</p>
-<p>具体配置文件在 Linux 下是 /etc/docker/daemon.json，修改其中的 <code>registry-mirrors</code> 属性即可：</p>
+<p>具体配置文件在 Linux 下是 &#x2F;etc&#x2F;docker&#x2F;daemon.json，修改其中的 <code>registry-mirrors</code> 属性即可：</p>
 <pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">&#123;</span>
   <span class="token property">"registry-mirrors"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
     <span class="token string">"https://docker.mirrors.ustc.edu.cn"</span><span class="token punctuation">,</span>
@@ -567,7 +568,7 @@ centos       7         eeb6ee3f44bd   5 weeks ago   204MB<span aria-hidden="true
 <p>使用 <code>dive first-centos</code> 来查看各个层的文件变动，加载完界面后，按 <code>Tab</code> 键激活左右命令行区域，切换到右侧区域后，按 <code>CTRL+U</code>键可以过滤掉未修改的文件，只显示被修改的文件。然后再通过 <code>Tab</code> 键回到左侧区域，通过方向键切换查看各个指令，对应右侧区域会显示镜像内有哪些文件被更改。</p>
 <p><img src="/images/dive-first.gif" alt="查看 first-centos 的各层空间占用"></p>
 <p><strong>图 2.3.1 查看 first-centos 的各层空间占用</strong></p>
-<p>可以看到最后两个 yum 命令，会在 /var/cache 中生成大量缓存文件，是导致我们镜像内容变动的原因。yum 的在运行 install 命令时，会检测包元数据的缓存数据是否存在，如果不存在就会重新生成。所以我们在查看 yum install 命令的级联文件变动的时候，会在 /var/cache 下显示如此大的磁盘新增量。</p>
+<p>可以看到最后两个 yum 命令，会在 &#x2F;var&#x2F;cache 中生成大量缓存文件，是导致我们镜像内容变动的原因。yum 的在运行 install 命令时，会检测包元数据的缓存数据是否存在，如果不存在就会重新生成。所以我们在查看 yum install 命令的级联文件变动的时候，会在 &#x2F;var&#x2F;cache 下显示如此大的磁盘新增量。</p>
 <p>接着我们修改一下 <strong>代码 2.3.1</strong> ,增加缓存清理机制：</p>
 <pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">FROM centos:7 as base
 

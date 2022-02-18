@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 6.0.0">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
@@ -20,8 +19,9 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="安卓NDK的编写入门  包括不同安卓版本 不同cpu架构引用头文件库文件的路径规则等知识点">
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="安卓NDK的编写入门  包括不同安卓版本 不同cpu架构引用头文件库文件的路径规则等知识点">
 <meta property="og:type" content="article">
 <meta property="og:title" content="JNI系列教程三 —— NDK入门">
 <meta property="og:url" content="https://blog.whyun.com/posts/jni-ndk/">
@@ -33,7 +33,7 @@
 <meta property="og:image" content="https://blog.whyun.com/images/anroid21-arch.png">
 <meta property="og:image" content="https://blog.whyun.com/images/hello_jni_run_success.png">
 <meta property="article:published_time" content="2015-12-05T00:00:00.000Z">
-<meta property="article:modified_time" content="2022-01-19T08:06:44.830Z">
+<meta property="article:modified_time" content="2022-02-18T09:12:48.504Z">
 <meta property="article:author" content="yunnysunny">
 <meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
 <meta name="twitter:card" content="summary">
@@ -52,6 +52,7 @@
 
   <script src="/js/third-party/analytics/baidu-analytics.js"></script>
   <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
 
 
 
@@ -140,7 +141,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -231,7 +232,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-01-19 08:06:44" itemprop="dateModified" datetime="2022-01-19T08:06:44+00:00">2022-01-19</time>
+      <time title="修改时间：2022-02-18 09:12:48" itemprop="dateModified" datetime="2022-02-18T09:12:48+00:00">2022-02-18</time>
     </span>
 
   
@@ -276,11 +277,11 @@ include $(BUILD_SHARED_LIBRARY)<span aria-hidden="true" class="line-numbers-rows
 <li>LOCAL_MODULE 定义当前生成模板的名称，注意到文件最后一行<code>include $(BUILD_SHARED_LIBRARY)</code>代表当前是要生成一个动态库，所以说将LOCAL_MODULE定义成<code>chapter3</code>后，将会得到一个<code>libchapter3.so</code>文件。</li>
 <li>LOCAL_CFLAGS 定义编译用到的宏定义，当然也可以使用<code>-I</code>来指定头文件路径，不过这个使用<code>LOCAL_C_INCLUDES</code>更适合，因为后者可以被断点调试程序gdb识别。</li>
 <li>TARGET_PLATFORM 指定当前使用的API版本，比如说android-9，就会使用NDK文件夹下的<code>platforms/android-9</code>中的头文件和库来参与编译（对于API版本和android版本之间的对应关系，可以参见百度百科的词条<a target="_blank" rel="noopener" href="http://baike.baidu.com/view/7902337.htm">Android历史版本</a>）。</li>
-<li>TARGET_ARCH 指定编译的CPU平台，不同API版本支持的类型不同，越新的API支持的CPU平台就越多，如果想查看当前API版本支持哪几个平台，去<code>plantforms/android-&#123;API版本号&#125;</code>中看一下便知道，比如说android-3仅仅支持一个平台<code>arch-arm</code>:<br><img src="/images/1.5arch.png" alt="1.5支持的cpu类型">  </li>
+<li>TARGET_ARCH 指定编译的CPU平台，不同API版本支持的类型不同，越新的API支持的CPU平台就越多，如果想查看当前API版本支持哪几个平台，去<code>plantforms/android-&#123;API版本号&#125;</code>中看一下便知道，比如说android-3仅仅支持一个平台<code>arch-arm</code>:<br><img src="/images/1.5arch.png" alt="1.5支持的cpu类型"></li>
 </ul>
 <p><strong>图3.2.1 anroid 1.5支持的cpu类型</strong><br>那么android-3，可选的<code>TARGET_ARCH</code>就只有一个<code>arm</code>选项。<br>但是<code>android-21</code>就支持6个CPU平台：<br><img src="/images/anroid21-arch.png" alt="android-21支持的CPU类型"><br><strong>图3.2.2 android5.0 支持的CPU类型</strong><br>这样对于android5.0来说可选的选项包括<code>arm</code> <code>arm64</code> <code>mips</code> <code>mips64</code> <code>x86</code> <code>x86_64</code><br>另外如果没有指定这个值的话，就会用默认的<code>arm</code></p>
 <ul>
-<li>LOCAL_LDLIBS 指定要引用的系统库，比如例子中的<code>-llog</code>就会引用``plantforms/android-{API版本号}/usr/lib/liblog.so`。</li>
+<li>LOCAL_LDLIBS 指定要引用的系统库，比如例子中的<code>-llog</code>就会引用&#96;&#96;plantforms&#x2F;android-{API版本号}&#x2F;usr&#x2F;lib&#x2F;liblog.so&#96;。</li>
 <li>LOCAL_SRC_FILES 在这里就是要编译的c文件了，如果一行写不开，需要写多行，那么可以在每行的行尾加上 <code> \</code>。</li>
 <li>BUILD_SHARED_LIBRARY 这里代表最终生成的是一个动态库文件。</li>
 </ul>

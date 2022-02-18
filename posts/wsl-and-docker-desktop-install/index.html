@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 6.0.0">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
@@ -20,8 +19,9 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="win10 中提供了 wsl 的解决方案，可以在 Windows 中直接开启 linux 子系统，十分方便开发者使用。同时一些重要的功能也要依赖于 wsl 才能启动，比如说 docker desktop。本教程就是演示一下如何在 win10 中配置 wsl ，并且如何正常使用 docker desktop。">
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="win10 中提供了 wsl 的解决方案，可以在 Windows 中直接开启 linux 子系统，十分方便开发者使用。同时一些重要的功能也要依赖于 wsl 才能启动，比如说 docker desktop。本教程就是演示一下如何在 win10 中配置 wsl ，并且如何正常使用 docker desktop。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="wsl 和 docker desktop 的安装教程">
 <meta property="og:url" content="https://blog.whyun.com/posts/wsl-and-docker-desktop-install/">
@@ -33,7 +33,7 @@
 <meta property="og:image" content="https://blog.whyun.com/images/enable_docker_for_wsl.png">
 <meta property="og:image" content="https://blog.whyun.com/images/insecure_registries.png">
 <meta property="article:published_time" content="2021-09-09T00:00:00.000Z">
-<meta property="article:modified_time" content="2022-01-19T08:06:44.834Z">
+<meta property="article:modified_time" content="2022-02-18T09:12:48.508Z">
 <meta property="article:author" content="yunnysunny">
 <meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
 <meta name="twitter:card" content="summary">
@@ -52,6 +52,7 @@
 
   <script src="/js/third-party/analytics/baidu-analytics.js"></script>
   <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
 
 
 
@@ -140,7 +141,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -231,7 +232,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-01-19 08:06:44" itemprop="dateModified" datetime="2022-01-19T08:06:44+00:00">2022-01-19</time>
+      <time title="修改时间：2022-02-18 09:12:48" itemprop="dateModified" datetime="2022-02-18T09:12:48+00:00">2022-02-18</time>
     </span>
 
   
@@ -316,7 +317,7 @@ failed to solve with frontend dockerfile.v0: failed to create LLB definition: fa
 <p><img src="/images/insecure_registries.png"></p>
 <p>在 <code>insecure-registries</code> 数组中添加公司的镜像仓库根地址。</p>
 <h3 id="2-5-WSL2-无法启动"><a href="#2-5-WSL2-无法启动" class="headerlink" title="2.5 WSL2 无法启动"></a>2.5 WSL2 无法启动</h3><p>启动时显示错误 <strong>0x80070003</strong> 或错误 <strong>0x80370102</strong>，这种情况一般出现在新出厂的电脑上，或者 BIOS 升级后的电脑上，很多品牌电脑的 BIOS 默认关闭了 CPU 的虚拟化功能，需要进入 BIOS 自己手动开启，然后才能启动 WSL2。</p>
-<h3 id="2-6-WSL2-内的-DNS-不稳定"><a href="#2-6-WSL2-内的-DNS-不稳定" class="headerlink" title="2.6 WSL2 内的 DNS 不稳定"></a>2.6 WSL2 内的 DNS 不稳定</h3><p>wsl2 算是新出的技术，很多方面并不稳定，DNS 解析也隔三岔五会出现问题。通过查看 /etc/resolv.conf 发现里面配置的是一个内网 DNS 服务地址</p>
+<h3 id="2-6-WSL2-内的-DNS-不稳定"><a href="#2-6-WSL2-内的-DNS-不稳定" class="headerlink" title="2.6 WSL2 内的 DNS 不稳定"></a>2.6 WSL2 内的 DNS 不稳定</h3><p>wsl2 算是新出的技术，很多方面并不稳定，DNS 解析也隔三岔五会出现问题。通过查看 &#x2F;etc&#x2F;resolv.conf 发现里面配置的是一个内网 DNS 服务地址</p>
 <pre class="line-numbers language-none"><code class="language-none"># This file was automatically generated by WSL. To stop automatic generation of this file, add the following entry to &#x2F;etc&#x2F;wsl.conf:
 # [network]
 # generateResolvConf &#x3D; false
@@ -330,24 +331,24 @@ nameserver 172.29.48.1<span aria-hidden="true" class="line-numbers-rows"><span><
 <pre class="line-numbers language-shell" data-language="shell"><code class="language-shell"><span class="token function">sudo</span> systemctl disable systemd-resolved 
 <span class="token function">sudo</span> systemctl stop systemd-resolved<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
-<p>按理来说，我们需要修改 /etc/resolv.conf 文件，不过在 wsl 中 /etc/resolv.conf 默认会在 WSL 启动的时候被重写，所以需要先修改 /etc/wsl.conf 文件。这个文件默认不存在，所以不存在的时候，可以创建一个：</p>
+<p>按理来说，我们需要修改 &#x2F;etc&#x2F;resolv.conf 文件，不过在 wsl 中 &#x2F;etc&#x2F;resolv.conf 默认会在 WSL 启动的时候被重写，所以需要先修改 &#x2F;etc&#x2F;wsl.conf 文件。这个文件默认不存在，所以不存在的时候，可以创建一个：</p>
 <pre class="line-numbers language-none"><code class="language-none">[network]
 generateResolvConf &#x3D; false<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <blockquote>
 <p>修改完配置后，还需要在 Windows 命令中执行 <code>wsl.exe --shutdown</code>，然后重新打开 wsl 命令行才能生效。</p>
 </blockquote>
-<p>接下来运行 <code>sudo apt-get install dnsmasq</code> 来安装 Dnsmasq ，安装完之后，会生成一个 /etc/dnsmasq.conf  文件。我们可以在其最后追加一行配置</p>
+<p>接下来运行 <code>sudo apt-get install dnsmasq</code> 来安装 Dnsmasq ，安装完之后，会生成一个 &#x2F;etc&#x2F;dnsmasq.conf  文件。我们可以在其最后追加一行配置</p>
 <pre class="line-numbers language-none"><code class="language-none">conf-dir&#x3D;&#x2F;etc&#x2F;dnsmasq.d&#x2F;,*.conf<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p> 这样我们自定义的域名配置，就可以都放在 /etc/dnsmasq.d 目录下，在这个目录下创建一个文件 mydns.conf ，然后写入如下配置</p>
+<p> 这样我们自定义的域名配置，就可以都放在 &#x2F;etc&#x2F;dnsmasq.d 目录下，在这个目录下创建一个文件 mydns.conf ，然后写入如下配置</p>
 <pre class="line-numbers language-none"><code class="language-none">server&#x3D;&#x2F;your_inner_domian&#x2F;your_inner_dns_server
 server&#x3D;&#x2F;your_inner_domian&#x2F;::
 server&#x3D;119.29.29.29
 server&#x3D;223.5.5.5<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>上面配置文件的第一行代表如果要解析的域名中包含 your_inner_domian 字符，则使用 dns 服务器 your_inner_dns_server 进行解析。这是一个子字符串匹配，不论你的域名为 <code>your_inner_domian.com</code> 或者 <code>your_inner_domain.net</code>，使用 your_inner_domian 都可匹配成功。 如果你的 your_inner_dns_server 不支持 ipv6，记得要加入第二行配置，它是用来禁用 ipv6 dns 解析用的（如果你的内网 DNS 服务器不支持 ipv6 协议的话，这个配置特别有用），不过这个功能仅支持 dnsmasq 2.80 及以上版本（使用 Ubuntu 20.02 安装的 Dnsmasq 是 2.80 版本，可以放心使用）。最后一行是留一个默认的 DNS 服务器（<code>119.29.29.29</code> 是腾讯的公共 DNS，<code>223.5.5.5</code> 是阿里的公共 DNS，这里之所有没有使用常用的 114 DNS，是由于它解析国外域名的时候，经常会失败），用来解析公网域名。</p>
-<p>配置完成后，修改 /etc/resolv.conf，将里面的 <code>nameserver</code> 修改为 <code>127.0.0.1</code>。最后执行  <code>service dnsmasq start</code> 来启动 dnsmasq，就可以测试我们的配置了。执行 <code>dig baidu.com</code>，正常情况下会有如下输出：</p>
+<p>配置完成后，修改 &#x2F;etc&#x2F;resolv.conf，将里面的 <code>nameserver</code> 修改为 <code>127.0.0.1</code>。最后执行  <code>service dnsmasq start</code> 来启动 dnsmasq，就可以测试我们的配置了。执行 <code>dig baidu.com</code>，正常情况下会有如下输出：</p>
 <pre class="line-numbers language-none"><code class="language-none">; &lt;&lt;&gt;&gt; DiG 9.16.1-Ubuntu &lt;&lt;&gt;&gt; baidu.com
 ;; global options: +cmd
 ;; Got answer:
@@ -369,7 +370,7 @@ baidu.com.              200     IN      A       220.181.38.251
 ;; MSG SIZE  rcvd: 70<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>上面输出中 <code>ANSWER SECTION</code> 中列出来了解析出来的 IP，代表解析成功。同样执行 dig 内网域名，也能被正常解析则证明配置正确。</p>
-<p>最后需要说明的是 wsl 不好做 service 的开机自启动，下次启动后需要手动执行 <code>sudo service dnsmasq start</code> 才能启动 dnsmasq 。这样就显得不是很友好，可以修改 /etc/resolv.conf，在 <code>nameserver 127.0.0.1</code> 的后面再追加一行 <code>nameserver 119.29.29.29</code> 这样 dnsmasq 没有启动时，可以保证公网域名能解析。</p>
+<p>最后需要说明的是 wsl 不好做 service 的开机自启动，下次启动后需要手动执行 <code>sudo service dnsmasq start</code> 才能启动 dnsmasq 。这样就显得不是很友好，可以修改 &#x2F;etc&#x2F;resolv.conf，在 <code>nameserver 127.0.0.1</code> 的后面再追加一行 <code>nameserver 119.29.29.29</code> 这样 dnsmasq 没有启动时，可以保证公网域名能解析。</p>
 
     </div>
 

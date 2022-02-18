@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width">
-<meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 6.0.0">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
 
 
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
@@ -20,8 +19,9 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.9.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="之前通过讲 docker compose 教程 初步了解容器编排技术。但是 docker compose 默认只能在单机模式下运行，如果想在多个宿主机上运行，你可以借助 docker swarm 技术，你可以方便的将 docker-compose.yml 文件运用到 swarm 集群创建中。不过由于 kubernetes 的出现，swarm 的市场受到了极大排挤，目前各大公司利用容器编排技术，一般">
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="之前通过讲 docker compose 教程 初步了解容器编排技术。但是 docker compose 默认只能在单机模式下运行，如果想在多个宿主机上运行，你可以借助 docker swarm 技术，你可以方便的将 docker-compose.yml 文件运用到 swarm 集群创建中。不过由于 kubernetes 的出现，swarm 的市场受到了极大排挤，目前各大公司利用容器编排技术，一般">
 <meta property="og:type" content="article">
 <meta property="og:title" content="k8s 网络原理入门">
 <meta property="og:url" content="https://blog.whyun.com/posts/k8s-startup/">
@@ -35,7 +35,7 @@
 <meta property="og:image" content="https://blog.whyun.com/images/pod_net_bridge.png">
 <meta property="og:image" content="https://blog.whyun.com/images/k8s_pod_tunnel.png">
 <meta property="article:published_time" content="2021-10-26T00:00:00.000Z">
-<meta property="article:modified_time" content="2022-01-19T08:06:44.830Z">
+<meta property="article:modified_time" content="2022-02-18T09:12:48.504Z">
 <meta property="article:author" content="yunnysunny">
 <meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
 <meta name="twitter:card" content="summary">
@@ -54,6 +54,7 @@
 
   <script src="/js/third-party/analytics/baidu-analytics.js"></script>
   <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
 
 
 
@@ -142,7 +143,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -233,7 +234,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-01-19 08:06:44" itemprop="dateModified" datetime="2022-01-19T08:06:44+00:00">2022-01-19</time>
+      <time title="修改时间：2022-02-18 09:12:48" itemprop="dateModified" datetime="2022-02-18T09:12:48+00:00">2022-02-18</time>
     </span>
 
   
@@ -255,7 +256,7 @@
     
     <div class="post-body" itemprop="articleBody">
         <p>之前通过讲 <a href="https://blog.whyun.com/posts/docker-compose-tutorial/">docker compose 教程</a> 初步了解容器编排技术。但是 docker compose 默认只能在单机模式下运行，如果想在多个宿主机上运行，你可以借助 <a target="_blank" rel="noopener" href="https://docs.docker.com/engine/swarm/">docker swarm</a> 技术，你可以方便的将 docker-compose.yml 文件运用到 swarm 集群创建中。不过由于 <a target="_blank" rel="noopener" href="https://kubernetes.io/zh/">kubernetes</a> 的出现，swarm 的市场受到了极大排挤，目前各大公司利用容器编排技术，一般都会选择 kubernetes。本文顺应时势，在讲解容器编排技术的时候也是选择了 kubernetes 作为入门教程。本文作为教程的第一章，选择主要讲解的 kubernetes 内部网络原理。</p>
-<h2 id="1-安装"><a href="#1-安装" class="headerlink" title="1. 安装"></a>1. 安装</h2><h3 id="1-1-Linux-下安装"><a href="#1-1-Linux-下安装" class="headerlink" title="1.1 Linux 下安装"></a>1.1 Linux 下安装</h3><p>可以参见这篇文章 <a target="_blank" rel="noopener" href="https://blog.ideabeat.cn/2021/11/29/%E4%BD%BF%E7%94%A8kubeadm%E6%90%AD%E5%BB%BAk8s%E9%9B%86%E7%BE%A4-ubuntu-debian%E5%8F%91%E8%A1%8C%E7%89%88/">使用kubeadm搭建k8s集群-ubuntu/debian发行版</a> 。</p>
+<h2 id="1-安装"><a href="#1-安装" class="headerlink" title="1. 安装"></a>1. 安装</h2><h3 id="1-1-Linux-下安装"><a href="#1-1-Linux-下安装" class="headerlink" title="1.1 Linux 下安装"></a>1.1 Linux 下安装</h3><p>可以参见这篇文章 <a target="_blank" rel="noopener" href="https://blog.ideabeat.cn/2021/11/29/%E4%BD%BF%E7%94%A8kubeadm%E6%90%AD%E5%BB%BAk8s%E9%9B%86%E7%BE%A4-ubuntu-debian%E5%8F%91%E8%A1%8C%E7%89%88/">使用kubeadm搭建k8s集群-ubuntu&#x2F;debian发行版</a> 。</p>
 <h3 id="1-2-Windows-下安装"><a href="#1-2-Windows-下安装" class="headerlink" title="1.2 Windows 下安装"></a>1.2 Windows 下安装</h3><p>可以参见我之前的博文 <a href="https://blog.whyun.com/posts/wsl-and-docker-desktop-install/#1-4-docker-desktop-%E4%B8%8B%E9%85%8D%E7%BD%AE-kubernetes">docker desktop 下配置 kubernetes</a> 。</p>
 <h2 id="2-原理"><a href="#2-原理" class="headerlink" title="2 原理"></a>2 原理</h2><p>kubernetes 将若干容器进行编排，形成一个集群，但是这个集群最终要对外提供访问能力，才能被使用。kubernetes 自带了 NodePort 和 LoadBalancer 两种模式来让使用者从外部访问集群内的机器。其中 NodePort 和原理和我们路由器中用到的<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E7%BD%91%E7%BB%9C%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2">网络地址转化</a>（<strong>N</strong>etwork <strong>A</strong>ddress <strong>T</strong>ranslation，简称 <code>NAT</code>）是一样的。kubernetes 会对外提供一个端口，用来支持外部应用来访问内部的某一个服务。同时对于内部 pod 来说，每个部署当前服务的节点都会被分配一个特定端口，用来接收“路由器”转发过来的请求。</p>
 <blockquote>
@@ -283,7 +284,7 @@
 <p><strong>图 2.4</strong></p>
 <p>pod 和主机之间 通过 veth pair 技术 进行通信，veth pair 类似于管道，一端发送的数据，可以在另一端收到。如果是统一主机上的 pod 们相互通信，就可以借助于网桥。网桥工作在链路层，可以将其理解为现实中的交换机，veth 网卡和网桥之间的连接，可以理解为网络终端通过网线和交换机之间的连接。网桥内部存储每个网口对应的 MAC 地址映射表，数据链路层的数据包到达网桥后，通过查询映射表就可以准发到对应接口了。</p>
 <p>然而 Linux 下的网桥，并不是一个纯粹的交换机，交换机或者说传统意义上的网桥只工作在数据链路层，但是 Linux 下的网卡是一块虚拟网卡，上面可以分配 IP，所以它还可以工作在网络层。它的名字叫“网桥”，仅仅是 Linux 内核开发者的自定义称谓而已。</p>
-<p>挂载在主机 1 上的 pod 们，ip 可以是 10.1.0.0/24，但是挂载到主机 2 上的 pod 们，就不能选用跟他们同一网段，否则就很有可能出现地址冲突的问题。我们假定 主机 2上的 pod 们 ip 地址是 10.2.0.0/24。那么这两部分 pod 是不能直接通信的，不过跨网络通信也不是不可能的，我们常用的 VPN 技术就是一种跨网络通信的技术。隧道的原理是，鉴定两个异地的局域网不能相互通信，但是两个局域网所在的网络中都有公网出口，则可以构建了一种隧道技术，将数据链路层的包，外层包裹在传输层中，通过公开网络进行传输，然后到达对端后在提取出内层链路层的包，转发给对应的内部网络终端。所以从抽象一样上看，感觉像是两个局域网是可以在数据链路层相互可见的，但是其实是借助了上述的隧道技术。具体到 kubenetes 中， Flannel、calico、weave 等技术提供了类似隧道功能。由于 kubenetes 中各个主机之间是可以互通的，主机所在的局域网也就成为了刚才流程中的“公开网络”。</p>
+<p>挂载在主机 1 上的 pod 们，ip 可以是 10.1.0.0&#x2F;24，但是挂载到主机 2 上的 pod 们，就不能选用跟他们同一网段，否则就很有可能出现地址冲突的问题。我们假定 主机 2上的 pod 们 ip 地址是 10.2.0.0&#x2F;24。那么这两部分 pod 是不能直接通信的，不过跨网络通信也不是不可能的，我们常用的 VPN 技术就是一种跨网络通信的技术。隧道的原理是，鉴定两个异地的局域网不能相互通信，但是两个局域网所在的网络中都有公网出口，则可以构建了一种隧道技术，将数据链路层的包，外层包裹在传输层中，通过公开网络进行传输，然后到达对端后在提取出内层链路层的包，转发给对应的内部网络终端。所以从抽象一样上看，感觉像是两个局域网是可以在数据链路层相互可见的，但是其实是借助了上述的隧道技术。具体到 kubenetes 中， Flannel、calico、weave 等技术提供了类似隧道功能。由于 kubenetes 中各个主机之间是可以互通的，主机所在的局域网也就成为了刚才流程中的“公开网络”。</p>
 <p><img src="/images/k8s_pod_tunnel.png"></p>
 <p><strong>图 2.5</strong></p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="这篇文章主要讲述 prometheus 的入门内容，包括 promethues 的适用场景、promethues 的环境搭建、简单入门教程编写。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="prometheus 启航">
+<meta property="og:url" content="https://blog.whyun.com/posts/prometheus-startup/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="这篇文章主要讲述 prometheus 的入门内容，包括 promethues 的适用场景、promethues 的环境搭建、简单入门教程编写。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220125153623368.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220216094717415.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220216095022954.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220216144951153.png">
+<meta property="og:image" content="https://blog.whyun.com/images/prometheus_time_series.drawio.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220218134052626.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220218154349451.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220218133244968.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220218154554996.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220218160509680.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220218160750176.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220218161148473.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220218161303568.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220218161552531.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220218162106609.png">
+<meta property="article:published_time" content="2022-01-24T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-02-18T09:12:48.508Z">
+<meta property="article:author" content="yunnysunny">
+<meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.whyun.com/images/image-20220125153623368.png">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/prometheus-startup/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/prometheus-startup/","path":"posts/prometheus-startup/","title":"prometheus 启航"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>prometheus 启航 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%AE%89%E8%A3%85"><span class="nav-text">1. 安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E6%95%B0%E6%8D%AE%E6%8C%87%E6%A0%87-metric"><span class="nav-text">2. 数据指标(metric)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E4%BD%BF%E7%94%A8-grafana-%E5%B1%95%E7%A4%BA%E6%95%B0%E6%8D%AE"><span class="nav-text">3. 使用 grafana 展示数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text">参考资料</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81"><span class="nav-text">代码</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description">白一梓的个人技术博客，涉猎 Node Go Java 等语言和 TCP HTTP 等网络协议。</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/prometheus-startup/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="白一梓的个人技术博客，涉猎 Node Go Java 等语言和 TCP HTTP 等网络协议。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          prometheus 启航
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-01-24 00:00:00" itemprop="dateCreated datePublished" datetime="2022-01-24T00:00:00+00:00">2022-01-24</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">更新于</span>
+      <time title="修改时间：2022-02-18 09:12:48" itemprop="dateModified" datetime="2022-02-18T09:12:48+00:00">2022-02-18</time>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">这篇文章主要讲述 prometheus 的入门内容，包括 promethues 的适用场景、promethues 的环境搭建、简单入门教程编写。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>在服务运行的整个生命周期内，为了尽早的发现服务内部的潜在问题，我们需要对于服务运行过程中产生的数据进行监控，并提取其关键指标，并在某项指标产生异常时触发报警。<br>我们熟知的监控系统，除了本文讲到的 prometheus 外，还有 zabbix。zabbix 跟 prometheus 的最大区别是，需要被监控方主动上报自己的数据给数据收集者；而 prometheus 需要程序的编写者自己暴漏 HTTP 接口，然后由数据采集者自己来做数据拉取。prometheus 采用这种主动拉取的策略，便可以从容的在数据采集端来控制数据采集的频率，一旦想做修改某个指标的频率只需要在采集端做一次修改，换成使用 zabbix 的话，需要修改每个上报端的程序配置才能完成。</p>
+<p>加之，Prometheus 的社区中提供了各种数据暴漏的插件程序（在 Prometheus 体系中，它们被称之为 exporter），大大减轻了程序编写成本。很多常见的数据库或者中间件程序，都有编写好的 exporter 程序，可以使用，例如 Mysql Mongodb Redis Kafka Nginx 等都有成熟的 exporter 可以使用。</p>
+<blockquote>
+<p>具体可以参见官方的 exporter 文档 <a target="_blank" rel="noopener" href="https://prometheus.io/docs/instrumenting/exporters/">https://prometheus.io/docs/instrumenting/exporters/</a></p>
+</blockquote>
+<p>Prometheus 还有一个重大的特性，是其收集的数据有固定的数据结构，而这些数据结构可以通过自带的 <a target="_blank" rel="noopener" href="https://prometheus.io/docs/prometheus/latest/querying/basics/">PromQL</a> 语句进行查询，返回聚合后的数据，更可以将 PromQL 和 grafana 结合，显示成报表视图。</p>
+<blockquote>
+<p>由于 PromQL 比较复杂，本篇教程并不会过多涉及。</p>
+</blockquote>
+<h2 id="1-安装"><a href="#1-安装" class="headerlink" title="1. 安装"></a>1. 安装</h2><p>这里使用 docker-compose 来构建一个测试用的 Prometheus 环境</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">version</span><span class="token punctuation">:</span> <span class="token string">"3"</span>
+<span class="token key atrule">services</span><span class="token punctuation">:</span>
+  <span class="token key atrule">alertmanager</span><span class="token punctuation">:</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> always
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> prom/alertmanager
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">'9093:9093'</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> ./alertmanager<span class="token punctuation">:</span>/etc/alertmanager
+  <span class="token key atrule">prometheus</span><span class="token punctuation">:</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> always
+    <span class="token key atrule">user</span><span class="token punctuation">:</span> root
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> bitnami/prometheus
+    <span class="token key atrule">container_name</span><span class="token punctuation">:</span> prometheus<span class="token punctuation">-</span>dev
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">'9090:9090'</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> ./prometheus<span class="token punctuation">:</span>/opt/bitnami/prometheus/conf
+      <span class="token punctuation">-</span> /tmp/prometheus<span class="token punctuation">-</span>persistence<span class="token punctuation">:</span>/opt/bitnami/prometheus/data
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> alertmanager
+  <span class="token key atrule">grafna</span><span class="token punctuation">:</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> always
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> grafana/grafana
+    <span class="token key atrule">user</span><span class="token punctuation">:</span> root
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> /tmp/grafana<span class="token punctuation">-</span>persistence<span class="token punctuation">:</span>/var/lib/grafana
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">'3000:3000'</span>
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+       <span class="token key atrule">GF_SECURITY_ADMIN_PASSWORD</span><span class="token punctuation">:</span> <span class="token string">"secret"</span>
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> prometheus<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.1 docker-compose.yml</strong></p>
+<p>在上述代码中，通过 <code>volumes</code> 属性指定了一个外挂的目录，Prometheus 默认从 <code>/opt/bitnami/prometheus/conf/prometheus.yml</code> 路径下加载配置，这里我们在 <code>docker-compose.yml</code> 文件所在目录下，创建一个 <code>prometheus</code> 目录做映射到 <code>/opt/bitnami/prometheus/conf</code> 目录，这样修改配置文件时，就只需要在宿主机上做修改即可，不需要进入 docker 内部。下面是 <code>prometheus</code> 目录下的 <code>prometheus.yml</code> 的配置内容</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token comment"># my global config</span>
+<span class="token key atrule">global</span><span class="token punctuation">:</span>
+  <span class="token key atrule">scrape_interval</span><span class="token punctuation">:</span>     15s <span class="token comment"># Set the scrape interval to every 15 seconds. Default is every 1 minute.</span>
+  <span class="token key atrule">evaluation_interval</span><span class="token punctuation">:</span> 15s <span class="token comment"># Evaluate rules every 15 seconds. The default is every 1 minute.</span>
+  <span class="token comment"># scrape_timeout is set to the global default (10s).</span>
+<span class="token comment"># Alertmanager configuration</span>
+<span class="token key atrule">alerting</span><span class="token punctuation">:</span>
+  <span class="token key atrule">alertmanagers</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">static_configs</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">targets</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> alertmanager<span class="token punctuation">:</span><span class="token number">9094</span>
+<span class="token comment"># A scrape configuration containing exactly one endpoint to scrape:</span>
+<span class="token comment"># Here it's Prometheus itself.</span>
+<span class="token key atrule">scrape_configs</span><span class="token punctuation">:</span>
+  <span class="token comment"># The job name is added as a label `job=&lt;job_name>` to any timeseries scraped from this config.</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">job_name</span><span class="token punctuation">:</span> <span class="token string">'prometheus'</span>
+
+    <span class="token comment"># metrics_path defaults to '/metrics'</span>
+    <span class="token comment"># scheme defaults to 'http'.</span>
+
+    <span class="token key atrule">static_configs</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">targets</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'localhost:9090'</span><span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.2 prometheus.yml</strong></p>
+<img src="/images/image-20220125153623368.png" alt="image-20220125153623368" style="zoom: 33%;" />
+
+<p> <strong>图 1.1</strong></p>
+<p>在浏览器中打开 localhost:9090，如果能显示上图界面，代表配置成功。</p>
+<p>这里主要讲一下 <strong>代码 1.2</strong> 中的 <code>scrape_config</code> 属性。它里面配置的内容，就是我们前面中提到的各种 exporter，Prometheus 本身也提供了一个 exporter 采集地址，访问 <a target="_blank" rel="noopener" href="http://localhost:9090/metrics">http://localhost:9090/metrics</a> 即可看到返回的采集数据。这里摘取返回的头部几行数据展示如下：</p>
+<pre class="line-numbers language-none"><code class="language-none"># HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds&#123;quantile&#x3D;&quot;0&quot;&#125; 1.95e-05
+go_gc_duration_seconds&#123;quantile&#x3D;&quot;0.25&quot;&#125; 5.42e-05
+go_gc_duration_seconds&#123;quantile&#x3D;&quot;0.5&quot;&#125; 0.0001787
+go_gc_duration_seconds&#123;quantile&#x3D;&quot;0.75&quot;&#125; 0.0002019
+go_gc_duration_seconds&#123;quantile&#x3D;&quot;1&quot;&#125; 0.0003965
+go_gc_duration_seconds_sum 0.0008508
+go_gc_duration_seconds_count 5
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 35
+# HELP go_info Information about the Go environment.
+# TYPE go_info gauge
+go_info&#123;version&#x3D;&quot;go1.17.5&quot;&#125; 1
+# ......此处省略若干条记录......
+# HELP promhttp_metric_handler_requests_total Total number of scrapes by HTTP status code.
+# TYPE promhttp_metric_handler_requests_total counter
+promhttp_metric_handler_requests_total&#123;code&#x3D;&quot;200&quot;&#125; 543
+promhttp_metric_handler_requests_total&#123;code&#x3D;&quot;500&quot;&#125; 0
+promhttp_metric_handler_requests_total&#123;code&#x3D;&quot;503&quot;&#125; 0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.3</strong></p>
+<h2 id="2-数据指标-metric"><a href="#2-数据指标-metric" class="headerlink" title="2. 数据指标(metric)"></a>2. 数据指标(metric)</h2><p><strong>代码 1.3</strong> 中给出了一个示例，Prometheus 拉取回的数据，就是上述这种格式的。我们对这种格式，做一个抽象定义的话，就是如下形式</p>
+<pre class="line-numbers language-none"><code class="language-none">metric_name&#123;label_name1&#x3D;label_value1, ...&#125; float_value<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>以空格为分割，前半部分就是指标，后半部分就是指标的值。指标又分为指标名称和指标标签，大括号内容中的内容就是一个个指标标签，可以理解为对于当前指标的各种属性描述信息；指标名称就是大括号前的 <code>metric_name</code>，可以在后续的所有查询操作中，都需要根据这个名字作为检索依据。</p>
+<p>我们打开 <a target="_blank" rel="noopener" href="http://localhost:9090/graph">http://localhost:9090/graph</a> ，在其中搜索框中输入</p>
+<p> <code>promhttp_metric_handler_requests_total</code> </p>
+<p>后回车，会显示出来当前不同 HTTP 请求响应码的个数统计：</p>
+<p><img src="/images/image-20220216094717415.png" alt="image-20220216094717415"></p>
+<p><strong>图 2.1</strong></p>
+<p>当然你也可以在检索中通过标签值来做过滤，比如说你只想看请求响应码为 200 的数据。输入 </p>
+<p><code>promhttp_metric_handler_requests_total&#123;code=&quot;200&quot;&#125;</code> </p>
+<p>后回车，会显示如下数据：</p>
+<p><img src="/images/image-20220216095022954.png" alt="image-20220216095022954"></p>
+<p><strong>图 2.2</strong></p>
+<p>上面举的两个例子返回的都是当前最新时刻的数据，如果我们想查看最近一段时间的数据，可以加一个 duration，</p>
+<pre class="line-numbers language-none"><code class="language-none">metric_name&#123;label_name1&#x3D;label_value1, ...&#125;[duration]<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>例如我们要显示最近 1 分钟内所有的 <code>promhttp_metric_handler_requests_total</code> 指标，可以输入 <code>promhttp_metric_handler_requests_total[1m]</code>：</p>
+<p><img src="/images/image-20220216144951153.png" alt="image-20220216144951153"></p>
+<p><strong>图 2.3</strong></p>
+<p>由于要返回一段时间内的多条数据，所以每个数据的值后面又标识上了时间戳，比如说第一行数据 <code>1229 @ 164994057.686</code> 代表在时间戳 164994057.686 搜刮上来的 HTTP 响应码为 200 的请求计数为 1229 个。将第二行的时间戳和第一行的时间戳相减，即 <code>1644988807.686 - 1644988822.686</code>, 得到的值为 15，代表当前 Prometheus 搜刮 <a target="_blank" rel="noopener" href="http://localhost:9090/metrics">http://localhost:9090/metrics</a> 的时间间隔为 15s，这个时间间隔也是 Prometheus 的默认值。</p>
+<p>通过上面的例子可以推断出来，Prometheus 不仅仅存储了当前指标的最新值，并且还存储了历史值，这样通过一段时间的历史数据，就给指标的变化曲线的绘制操作提供了数据支持。</p>
+<p>Prometheus 每次进行搜刮的时候，都会将搜刮到的各种指标添加一个时间戳字段，然后存储到本地。如下图所示，图中的每个圆点代表搜刮的来的指标内容。一个个的小圆点组成了一个类似矩阵的结构，矩阵的每一行都是具体某个指标在各个时间点上的取值；矩阵的每一列的时间戳属性都是同一个值。列与列之间的间隔就是 Prometheus 的搜刮的时间间隔。</p>
+<p><img src="/images/prometheus_time_series.drawio.png"></p>
+<p><strong>图 2.4</strong></p>
+<p>Prometheus 对于 <strong>图 2.1</strong> 中的查询语句，叫做瞬时向量查询（Instant vector selectors），但是它返回的仅仅是命中查询语句的所有指标的最新值。比如 <strong>图 2.1</strong> 中一共命中了三个指标，但是均返回每个指标的最新值。<strong>图 2.2</strong> 中增加了对于 label 的限定，它返回的依然是查询到每个指标的最新值，也就是说它也归属于瞬时向量的范畴。</p>
+<blockquote>
+<p>从数学意义上讲，它更像是点，而不是向量，虽然数学中可以允许只有一个点的向量存在。</p>
+</blockquote>
+<p>Prometheus 对于 <strong>图 2.3</strong> 中的查询语句，叫做区间向量查询（Range Vector Selectors），它跟瞬时向量不同的是，它能返回多个点，确切的说是从当前时刻往前推 duration 时间段内的多个点（对于 <strong>图 2.3</strong> 来说，duration 为 1分钟）。类似于 <strong>图 2.2</strong> ，你可以可以对 <strong>图 2.3</strong> 中的查询添加 label 限定。</p>
+<p>同时留意到我们在 <strong>图 2.1</strong> 使用的指标 <code>promhttp_metric_handler_requests_total</code> 在 Prometheus 中属于计数器（Counter）类型，它只能单调递增，我们一般用其来进行计数，比如说记录某个接口的请求次数。</p>
+<p><img src="/images/image-20220218134052626.png" alt="image-20220218134052626"></p>
+<p><strong>图 2.5</strong></p>
+<p>下面是一个使用 go 语言来暴漏计时器数据的代码示例：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"net/http"</span>
+	<span class="token string">"time"</span>
+
+	<span class="token string">"github.com/prometheus/client_golang/prometheus"</span>
+	<span class="token string">"github.com/prometheus/client_golang/prometheus/promauto"</span>
+	<span class="token string">"github.com/prometheus/client_golang/prometheus/promhttp"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">recordMetrics</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token keyword">go</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+			opsProcessed<span class="token punctuation">.</span><span class="token function">Inc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+			time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token keyword">var</span> <span class="token punctuation">(</span>
+	opsProcessed <span class="token operator">=</span> promauto<span class="token punctuation">.</span><span class="token function">NewCounter</span><span class="token punctuation">(</span>prometheus<span class="token punctuation">.</span>CounterOpts<span class="token punctuation">&#123;</span>
+		Name<span class="token punctuation">:</span> <span class="token string">"myapp_processed_ops_total"</span><span class="token punctuation">,</span>
+		Help<span class="token punctuation">:</span> <span class="token string">"The total number of processed events"</span><span class="token punctuation">,</span>
+	<span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	<span class="token function">recordMetrics</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	http<span class="token punctuation">.</span><span class="token function">Handle</span><span class="token punctuation">(</span><span class="token string">"/metrics"</span><span class="token punctuation">,</span> promhttp<span class="token punctuation">.</span><span class="token function">Handler</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	http<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token string">":2112"</span><span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 2.1</strong></p>
+<p>现实场景中，很多数据并不是单调递增的，比如操作系统中内存、CPU 资源的使用，不同时间点上数值上下波动是很正常的。在 Prometheus 中这种数据类型，适合用仪表盘（Guage）来进行处理。</p>
+<p><img src="/images/image-20220218154349451.png" alt="image-20220218154349451"></p>
+<p><strong>图 2.6</strong></p>
+<p>下面是一个使用仪表盘的 go 示例代码：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"net/http"</span>
+	<span class="token string">"time"</span>
+	<span class="token string">"math/rand"</span>
+	<span class="token string">"github.com/prometheus/client_golang/prometheus"</span>
+	<span class="token string">"github.com/prometheus/client_golang/prometheus/promhttp"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	opsQueued <span class="token operator">:=</span> prometheus<span class="token punctuation">.</span><span class="token function">NewGauge</span><span class="token punctuation">(</span>prometheus<span class="token punctuation">.</span>GaugeOpts<span class="token punctuation">&#123;</span>
+		Namespace<span class="token punctuation">:</span> <span class="token string">"our_company"</span><span class="token punctuation">,</span>
+		Subsystem<span class="token punctuation">:</span> <span class="token string">"blob_storage"</span><span class="token punctuation">,</span>
+		Name<span class="token punctuation">:</span>      <span class="token string">"ops_queued"</span><span class="token punctuation">,</span>
+		Help<span class="token punctuation">:</span>      <span class="token string">"Number of blob storage operations waiting to be processed."</span><span class="token punctuation">,</span>
+	<span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+	prometheus<span class="token punctuation">.</span><span class="token function">MustRegister</span><span class="token punctuation">(</span>opsQueued<span class="token punctuation">)</span>
+	<span class="token keyword">go</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+			num <span class="token operator">:=</span> rand<span class="token punctuation">.</span><span class="token function">Intn</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+			<span class="token keyword">if</span> num <span class="token operator">></span> <span class="token number">5</span> <span class="token punctuation">&#123;</span>
+				opsQueued<span class="token punctuation">.</span><span class="token function">Add</span><span class="token punctuation">(</span><span class="token function">float64</span><span class="token punctuation">(</span>num<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">5</span><span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+				opsQueued<span class="token punctuation">.</span><span class="token function">Sub</span><span class="token punctuation">(</span><span class="token function">float64</span><span class="token punctuation">(</span>num<span class="token punctuation">)</span><span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span>
+			
+			time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	
+	http<span class="token punctuation">.</span><span class="token function">Handle</span><span class="token punctuation">(</span><span class="token string">"/metrics"</span><span class="token punctuation">,</span> promhttp<span class="token punctuation">.</span><span class="token function">Handler</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	http<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token string">":2112"</span><span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 2.2</strong></p>
+<p>再考虑这么一种场景，就是你在记录响应时间数据时，希望对于当前服务的响应时间有一个估算值，在某些极端情况下，服务器确实会出现响应超长的情况，你想在查看的时候能够将这些异常值和正常值区分开。一个比较好的方法就是绘制直方图，将不同响应时间区间内的数据分开展示出来。Prometheus 中直接就含有直方图（Histogram）的指标类型。借助于 grafana，我们能够呈现出如下的图形，方便查阅</p>
+<p><img src="/images/image-20220218133244968.png" alt="image-20220218133244968"></p>
+<p><strong>图 2.7</strong></p>
+<p>对应的数据生成的 go 代码如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"math/rand"</span>
+	<span class="token string">"net/http"</span>
+	<span class="token string">"time"</span>
+
+	<span class="token string">"github.com/prometheus/client_golang/prometheus"</span>
+	<span class="token string">"github.com/prometheus/client_golang/prometheus/promhttp"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	durations <span class="token operator">:=</span> prometheus<span class="token punctuation">.</span><span class="token function">NewHistogram</span><span class="token punctuation">(</span>prometheus<span class="token punctuation">.</span>HistogramOpts<span class="token punctuation">&#123;</span>
+		Name<span class="token punctuation">:</span>    <span class="token string">"pond_duration_req"</span><span class="token punctuation">,</span>
+		Help<span class="token punctuation">:</span>    <span class="token string">"The duration of request process."</span><span class="token punctuation">,</span> <span class="token comment">// Sorry, we can't measure how badly it smells.</span>
+		Buckets<span class="token punctuation">:</span> prometheus<span class="token punctuation">.</span><span class="token function">LinearBuckets</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">,</span>  <span class="token comment">// 5 buckets, each 0.2 centigrade wide.</span>
+	<span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+	prometheus<span class="token punctuation">.</span><span class="token function">MustRegister</span><span class="token punctuation">(</span>durations<span class="token punctuation">)</span>
+	<span class="token keyword">go</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+			rand<span class="token punctuation">.</span><span class="token function">Seed</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">UnixNano</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment">//设置随机种子，使每次结果不一样</span>
+			i <span class="token operator">:=</span> <span class="token function">float64</span><span class="token punctuation">(</span>rand<span class="token punctuation">.</span><span class="token function">Intn</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">/</span> <span class="token number">100</span>
+			durations<span class="token punctuation">.</span><span class="token function">Observe</span><span class="token punctuation">(</span> i<span class="token punctuation">)</span>
+			
+			time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+	<span class="token punctuation">&#125;</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+	
+	http<span class="token punctuation">.</span><span class="token function">Handle</span><span class="token punctuation">(</span><span class="token string">"/metrics"</span><span class="token punctuation">,</span> promhttp<span class="token punctuation">.</span><span class="token function">Handler</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	http<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token string">":2112"</span><span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 2.3</strong></p>
+<p>注意，虽然在代码中指定的指标名字为 <code>pond_duration_req</code>，在 Prometheus 中存储的时候，会被转为 <code>pond_duration_req_bucket</code> 这个名字。</p>
+<p>和直方图类似，摘要（Summary）也提供了数据聚合功能，不过它是将数据按照百分比进行聚合，比如说占总量 50% 的数据有多少，占总量 90% 的数据有多少。</p>
+<p><img src="/images/image-20220218154554996.png" alt="image-20220218154554996"></p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"net/http"</span>
+	<span class="token string">"math"</span>
+	<span class="token string">"time"</span>
+	<span class="token string">"github.com/prometheus/client_golang/prometheus"</span>
+	<span class="token string">"github.com/prometheus/client_golang/prometheus/promhttp"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	temps <span class="token operator">:=</span> prometheus<span class="token punctuation">.</span><span class="token function">NewSummary</span><span class="token punctuation">(</span>prometheus<span class="token punctuation">.</span>SummaryOpts<span class="token punctuation">&#123;</span>
+		Name<span class="token punctuation">:</span>       <span class="token string">"demo_temperature_summary"</span><span class="token punctuation">,</span>
+		Help<span class="token punctuation">:</span>       <span class="token string">"The temperature of the frog pond."</span><span class="token punctuation">,</span>
+		Objectives<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">float64</span><span class="token punctuation">]</span><span class="token builtin">float64</span><span class="token punctuation">&#123;</span><span class="token number">0.5</span><span class="token punctuation">:</span> <span class="token number">0.05</span><span class="token punctuation">,</span> <span class="token number">0.9</span><span class="token punctuation">:</span> <span class="token number">0.01</span><span class="token punctuation">,</span> <span class="token number">0.99</span><span class="token punctuation">:</span> <span class="token number">0.001</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span><span class="token comment">//每个百分比计算的允许误差</span>
+	<span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+	prometheus<span class="token punctuation">.</span><span class="token function">MustRegister</span><span class="token punctuation">(</span>temps<span class="token punctuation">)</span>
+	<span class="token keyword">go</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+		<span class="token comment">// Simulate some observations.</span>
+		<span class="token keyword">for</span> <span class="token punctuation">&#123;</span>
+			<span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">1000</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">&#123;</span>
+				temps<span class="token punctuation">.</span><span class="token function">Observe</span><span class="token punctuation">(</span><span class="token number">30</span> <span class="token operator">+</span> math<span class="token punctuation">.</span><span class="token function">Floor</span><span class="token punctuation">(</span><span class="token number">120</span><span class="token operator">*</span>math<span class="token punctuation">.</span><span class="token function">Sin</span><span class="token punctuation">(</span><span class="token function">float64</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token operator">*</span><span class="token number">0.1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token operator">/</span><span class="token number">10</span><span class="token punctuation">)</span>
+			<span class="token punctuation">&#125;</span>
+
+			time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+		<span class="token punctuation">&#125;</span>
+		
+	<span class="token punctuation">&#125;</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+	http<span class="token punctuation">.</span><span class="token function">Handle</span><span class="token punctuation">(</span><span class="token string">"/metrics"</span><span class="token punctuation">,</span> promhttp<span class="token punctuation">.</span><span class="token function">Handler</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+	http<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token string">":2112"</span><span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 2.4</strong></p>
+<h2 id="3-使用-grafana-展示数据"><a href="#3-使用-grafana-展示数据" class="headerlink" title="3. 使用 grafana 展示数据"></a>3. 使用 grafana 展示数据</h2><p>第二小节已经展示了若干 grafana 中图标，这一小节讲述 grafana 的具体配置。首先选择配置按钮，然后选择 <code>Data Sources</code> 菜单，接着点击 <code>Add data source</code> 按钮，再打开的列表中选择 <code>Prometheus</code> 选项。</p>
+<p><img src="/images/image-20220218160509680.png" alt="image-20220218160509680"></p>
+<p><strong>图 3.1</strong></p>
+<p>在 <code>URL</code> 栏填写正确的 Prometheus 的访问地址，默认情况下这个输入框中会显示一个值为 <code>http://localhost:9090</code> 的 placeholder，即使你当前 Prometheus 的访问地址确实是 <code>http://localhost:9090</code>，依然要填写上一遍，否则该值就是空的。</p>
+<p>最后把滚动条拉到最后，点击按钮 <code>Save &amp; test</code>，正常情况下会提示成功。</p>
+<p><img src="/images/image-20220218160750176.png" alt="image-20220218160750176"></p>
+<p><strong>图 3.2</strong></p>
+<p>接着选择 <code>+</code> 按钮，然后选择 <code>Dashboard</code>，然后选择 <code>Add a new panel</code>，然后在 <code>Metrics browser</code> 输入框中填入一个 Prometheus 中的立即向量表达式，比如说 <code>pond_duration_req_bucket&#123;instance=&quot;host.docker.internal:2112&quot;&#125;</code>，默认情况下图表会以时间线的形式显示出来，如 <strong>图3.5</strong> 所示。当然你也可以在右上角下拉选择不同的图标展示模式，如 <strong>图 3.6</strong> 所示。</p>
+<p><img src="/images/image-20220218161148473.png" alt="image-20220218161148473"></p>
+<p><strong>图 3.3</strong></p>
+<p><img src="/images/image-20220218161303568.png" alt="image-20220218161303568"></p>
+<p><strong>图 3.4</strong></p>
+<p><img src="/images/image-20220218161552531.png" alt="image-20220218161552531"></p>
+<p><strong>图 3.5</strong></p>
+<p><img src="/images/image-20220218162106609.png" alt="image-20220218162106609"></p>
+<p><strong>图 3.6</strong></p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>Prometheus Cheat Sheet - Basics (Metrics, Labels, Time Series, Scraping) <a target="_blank" rel="noopener" href="https://iximiuz.com/en/posts/prometheus-metrics-labels-time-series/">https://iximiuz.com/en/posts/prometheus-metrics-labels-time-series/</a></li>
+</ul>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>本教程代码可以从这里找到 <a target="_blank" rel="noopener" href="https://gitlab.com/yunnysunny/prometheus-learn">https://gitlab.com/yunnysunny/prometheus-learn</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/prometheus-startup/" title="prometheus 启航">https://blog.whyun.com/posts/prometheus-startup/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/local-dns-masq/" rel="prev" title="内外网 DNS 分流解决方案">
+                  <i class="fa fa-chevron-left"></i> 内外网 DNS 分流解决方案
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>
