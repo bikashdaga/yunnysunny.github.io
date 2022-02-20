@@ -33,7 +33,7 @@
 <meta property="og:image" content="http://blog.whyun.com/images/add_new_vbox_share.png">
 <meta property="og:image" content="http://blog.whyun.com/images/noobs_files.jpg">
 <meta property="article:published_time" content="2014-11-21T00:00:00.000Z">
-<meta property="article:modified_time" content="2022-02-19T12:46:03.784Z">
+<meta property="article:modified_time" content="2022-02-20T02:39:53.727Z">
 <meta property="article:author" content="yunnysunny">
 <meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
 <meta name="twitter:card" content="summary">
@@ -96,6 +96,7 @@
 <nav class="site-nav">
   <ul class="main-menu menu">
         <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
         <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
         <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
   </ul>
@@ -141,9 +142,14 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-count">26</span>
           <span class="site-state-item-name">日志</span>
         </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">分类</span></a>
       </div>
   </nav>
 </div>
@@ -232,7 +238,16 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-02-19 12:46:03" itemprop="dateModified" datetime="2022-02-19T12:46:03+00:00">2022-02-19</time>
+      <time title="修改时间：2022-02-20 02:39:53" itemprop="dateModified" datetime="2022-02-20T02:39:53+00:00">2022-02-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Raspberry/" itemprop="url" rel="index"><span itemprop="name">Raspberry</span></a>
+        </span>
     </span>
 
   
@@ -274,8 +289,8 @@
       &quot;password&quot;: &quot;raspberry&quot;,
       &quot;feature_level&quot;: 123900
     &#125;
+**配置文件2.1 os.json**
 </code></pre>
-<p><strong>配置文件2.1 os.json</strong></p>
 <p>其中<code>name</code>肯定就是名称了，然后是<code>version</code>版本，<code>description</code>描述等信息。<br>同时，我们留意到文件<code>flavours.json</code>中的内容和<code>os</code>中很多重复，可以称作是<code>os.json</code>的简版，这个文件最终要被引导程序读取，显示引导菜单，供给用户选择安装哪些操作系统。注意由于我们的文件夹是复制产生的，所以这个文件也要相应的修改，否则引导菜单发现了两个一模一样的操作系统名称，就会忽略掉其中一个，这样你辛辛苦苦做出来的引导就不管用了。<br>6. 【可选】你可以放一个RetroPie.png来定义一下当前操作系统的logo。<br>7. 【可选】你可以在文件夹<code>slides_vga</code>中放一下说明性的图片，他会在安装过程中当成幻灯片播放出来。<br>8. 这一步是进行分区文件配置，先把做好的分区文件<code>partitions.json</code>贴出来：</p>
 <pre><code>&#123;
   &quot;partitions&quot;: [
@@ -299,11 +314,11 @@
 &#125;
 </code></pre>
 <p><strong>配置文件2.2 partitions.json</strong></p>
-<p>可以看到在json文件中属性partitions是一个数组类型，数组每个元素定义的是一个分区信息。首先看label为boot的分区，这是一个FAT格式的分区，被用作操作系统启动分区；然后label为root的是ext4分区，里面存放linux操作系统分区。partition_size_nominal是说分区的大小，want_maximised是说当前分区是否需要被扩展，如果为false，则分区的大小就是partition_size_nominal的指定值，如果为true，则noobs会根据sd卡的大小尽量的分配尽可能多的空间给当前分区。<br>9. 之前说过，我们从retropie官网上下载下来它的安装文件，将其解压后我们得到一个img文件。按照noobs给出的文档，根据partitions.json中的配置的信息，我们应该生成两个压缩文件，分别为boot.tar.xz和root.tar.gz，文件名实际上对应的是配置文件中的label属性。那么我们现在得到的是img文件，怎样得到这两个文件呢？<br>如果你是用linux，这个问题很好解决，linux下可以使用mount命令直接把img文件挂载到指定目录上；如果使用windows，那就只能用虚拟机了。好吧，我就是用的windows，打开自己的虚拟机，通过vbox上的共享目录，来访问windows上的这个img文件。<br><img src="http://blog.whyun.com/images/select_share.png" alt="vbox共享"><br><strong>图2.1 共享文件夹设置1</strong><br>在弹出的界面中新增一个共享设置，我们假设img文件放在e:\sharing下，那么可以做如下设置：<br><img src="http://blog.whyun.com/images/add_new_vbox_share.png" alt="新建共享"><br><strong>图2.2 新建共享</strong><br>最后在ubuntu下通过命令<code>mount -t vboxsf sharing /mnt/share</code>来加载这个共享（这里假设&#x2F;mnt&#x2F;share目录已经存在了）。在&#x2F;mnt&#x2F;share下我们用fdisk命令来查看img文件内部的分区情况：</p>
+<p>可以看到在json文件中属性partitions是一个数组类型，数组每个元素定义的是一个分区信息。首先看label为boot的分区，这是一个FAT格式的分区，被用作操作系统启动分区；然后label为root的是ext4分区，里面存放linux操作系统分区。partition_size_nominal是说分区的大小，want_maximised是说当前分区是否需要被扩展，如果为false，则分区的大小就是partition_size_nominal的指定值，如果为true，则noobs会根据sd卡的大小尽量的分配尽可能多的空间给当前分区。<br>9. 之前说过，我们从retropie官网上下载下来它的安装文件，将其解压后我们得到一个img文件。按照noobs给出的文档，根据partitions.json中的配置的信息，我们应该生成两个压缩文件，分别为boot.tar.xz和root.tar.gz，文件名实际上对应的是配置文件中的label属性。那么我们现在得到的是img文件，怎样得到这两个文件呢？<br>    如果你是用linux，这个问题很好解决，linux下可以使用mount命令直接把img文件挂载到指定目录上；如果使用windows，那就只能用虚拟机了。好吧，我就是用的windows，打开自己的虚拟机，通过vbox上的共享目录，来访问windows上的这个img文件。<br>    <img src="http://blog.whyun.com/images/select_share.png" alt="vbox共享"><br>    <strong>图2.1 共享文件夹设置1</strong><br>    在弹出的界面中新增一个共享设置，我们假设img文件放在e:\sharing下，那么可以做如下设置：<br>    <img src="http://blog.whyun.com/images/add_new_vbox_share.png" alt="新建共享"><br>    <strong>图2.2 新建共享</strong><br>    最后在ubuntu下通过命令<code>mount -t vboxsf sharing /mnt/share</code>来加载这个共享（这里假设&#x2F;mnt&#x2F;share目录已经存在了）。在&#x2F;mnt&#x2F;share下我们用fdisk命令来查看img文件内部的分区情况：</p>
 <pre><code>fdisk -lu RetroPieImage_ver2.3.img
-</code></pre>
-<p>该命令将会输出如下内容：</p>
-<pre><code>Disk RetroPieImage_ver2.3.img: 3460 MB, 3460300800 bytes
+该命令将会输出如下内容：
+
+Disk RetroPieImage_ver2.3.img: 3460 MB, 3460300800 bytes
 255 heads, 63 sectors/track, 420 cylinders, total 6758400 sectors
 Units = 扇区 of 1 * 512 = 512 bytes
 Sector size (logical/physical): 512 bytes / 512 bytes

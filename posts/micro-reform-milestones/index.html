@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="本文讲述了在笔者在直播间项目组工作时，践行微服务过程中的一系列趟坑的心路历程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="微服务改造心路历程">
+<meta property="og:url" content="https://blog.whyun.com/posts/micro-reform-milestones/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="本文讲述了在笔者在直播间项目组工作时，践行微服务过程中的一系列趟坑的心路历程。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.whyun.com/images/current_service_cell.png">
+<meta property="og:image" content="https://blog.whyun.com/images/answer_report_flow1.png">
+<meta property="og:image" content="https://blog.whyun.com/images/answer_report_flow2.png">
+<meta property="og:image" content="https://blog.whyun.com/images/future_service_cell.png">
+<meta property="og:image" content="https://blog.whyun.com/images/all_kafka.png">
+<meta property="og:image" content="https://blog.whyun.com/images/right_continue_flow.png">
+<meta property="og:image" content="https://blog.whyun.com/images/add_rpc.png">
+<meta property="og:image" content="https://blog.whyun.com/images/add_event_bus.png">
+<meta property="article:published_time" content="2022-02-20T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-02-20T02:39:53.731Z">
+<meta property="article:author" content="yunnysunny">
+<meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.whyun.com/images/current_service_cell.png">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/micro-reform-milestones/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/micro-reform-milestones/","path":"posts/micro-reform-milestones/","title":"微服务改造心路历程"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>微服务改造心路历程 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E6%94%B9%E9%80%A0%E5%89%8D%E7%8E%B0%E7%8A%B6"><span class="nav-text">1. 改造前现状</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%88%9D%E6%AD%A5%E6%94%B9%E9%80%A0%E6%96%B9%E6%A1%88"><span class="nav-text">2. 初步改造方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%BC%94%E8%BF%9B%E8%BF%87%E7%A8%8B"><span class="nav-text">3. 演进过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-%E5%85%A8%E9%83%A8%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E8%BF%9B%E8%A1%8C%E9%80%9A%E4%BF%A1"><span class="nav-text">3.1 全部使用消息队列进行通信</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-%E5%BC%95%E5%85%A5-RPC"><span class="nav-text">3.2 引入 RPC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-%E5%BC%95%E5%85%A5%E6%B6%88%E6%81%AF%E6%80%BB%E7%BA%BF"><span class="nav-text">3.3 引入消息总线</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description">白一梓的个人技术博客，涉猎 Node Go Java 等语言和 TCP HTTP 等网络协议。</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/micro-reform-milestones/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="白一梓的个人技术博客，涉猎 Node Go Java 等语言和 TCP HTTP 等网络协议。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          微服务改造心路历程
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-02-20 00:00:00 / 修改时间：02:39:53" itemprop="dateCreated datePublished" datetime="2022-02-20T00:00:00+00:00">2022-02-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Micro-Service/" itemprop="url" rel="index"><span itemprop="name">Micro Service</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">本文讲述了在笔者在直播间项目组工作时，践行微服务过程中的一系列趟坑的心路历程。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="1-改造前现状"><a href="#1-改造前现状" class="headerlink" title="1. 改造前现状"></a>1. 改造前现状</h2><p>直播间逻辑服务，包含了直播间内答题互动、聊天、抢红包等消息的逻辑处理。刚开始设计的时候，所有的消息混在一起处理，后来为了给优先级高的请求让路，逻辑服务后期根据消息类型拆分成了三类服务，很长一段时间内逻辑服务的拓扑结构是这样的：</p>
+<p><img src="/images/current_service_cell.png"></p>
+<p><strong>图 1.1 基于优先级的服务拓扑结构</strong></p>
+<p>不过随着业务的深入发展，具体到某一个消息类型的处理流程可能会越来越复杂。拿答题上报来说，我们第一版的流程是这样的：</p>
+<p><img src="/images/answer_report_flow1.png"></p>
+<p><strong>图 1.2 第一版的答题上报流程</strong></p>
+<p>不过随着后期需求的改进增加了以班组为单位的答题正确率的排行榜、学生在班组内的答题时间排行榜、学生在直播间内的答题时间排行榜等需求，流程图就变成了这个样子：</p>
+<p><img src="/images/answer_report_flow2.png"></p>
+<p><strong>图 1.3 第二版答题上报流程</strong></p>
+<p>最近答题的需求还要进行改进，增加诸如给连续答对的用户打标签的逻辑，这样最终演变的逻辑将会比 <strong>图 1.3</strong> 中的流程更加复杂，这样就会导致答题处理的后端代码越来越臃肿，难以为继。</p>
+<h2 id="2-初步改造方案"><a href="#2-初步改造方案" class="headerlink" title="2. 初步改造方案"></a>2. 初步改造方案</h2><p>重新分析一下答题上报流程，以上报者的视角来看，其实只关心上报是否成功，至于各个选项、各种人数的统计，上报者自身并不关心。将上报流程再次进行一次抽象，那么数据处理的答题分为两类：一类是学生自己关心的，比如说是否重复答题、同班同学都在学的提示语；一类是老师关心的，比如说各种统计。根据这个思路我们可以在答题流程中仅仅处理学生关心的流程，然后将统计处理丢到另外一个服务中进行处理。基于这个思想对现有服务拓扑结构做改造：</p>
+<p><img src="/images/future_service_cell.png"></p>
+<p><strong>图 2.1 未来的服务器拓扑结构</strong></p>
+<h2 id="3-演进过程"><a href="#3-演进过程" class="headerlink" title="3. 演进过程"></a>3. 演进过程</h2><p>首先的挑战是重构带来的时间成本，第二个就是新增服务后，维护成本会上升。同时由于对微服务的理解不是很完善，当中也历经了几次比较大的改进过程。</p>
+<h3 id="3-1-全部使用消息队列进行通信"><a href="#3-1-全部使用消息队列进行通信" class="headerlink" title="3.1 全部使用消息队列进行通信"></a>3.1 全部使用消息队列进行通信</h3><p><img src="/images/all_kafka.png"></p>
+<p><strong>图 3.1.1</strong></p>
+<blockquote>
+<p>图中 logical 代表逻辑服务，micro 代表微服务，下同。</p>
+</blockquote>
+<p>由于做微服务的初衷是将可以异步处理的部分抽离出来，所以很容易想到的就是在 logical 和 micro 之间假设一个消息队列。考虑一个答题连对的场景</p>
+<p><img src="/images/right_continue_flow.png"></p>
+<p><strong>图 3.1.2</strong></p>
+<p>一个老师触发答题时，logical 服务要做三个动作，发送开始答题消息到micro、给老师端答题响应、广播消息给学生，学生端收到广播后进行答题，如果答题正确服务器端会下发连对的提醒。正常情况下，这个时序是没有问题的，但是由于我们 logical 和 micro 之间使用的是异步通信，理论上 <code>2.1</code> 和 <code>2.3</code> 的时序是不能得到保证的。这个服务在上线后也遇到了问题，在极小概率下，用户答对了题，但是连对却没有出现，究其原因就是因为 <code>2.1</code>这一步出现了延迟。</p>
+<h3 id="3-2-引入-RPC"><a href="#3-2-引入-RPC" class="headerlink" title="3.2 引入 RPC"></a>3.2 引入 RPC</h3><p>将 <code>2.1</code> 步做成带有事务的 grpc 调用，等待当前调用返回数据时，再触发 <code>2.2</code> 和 <code>2.3</code> 步。这样解决了异步操作没有事务的问题。看上去一切都很完美了，但是随着业务的迭代，微服务越来越多，可能老师端做一个操作的时候，流程变成这样。</p>
+<p><img src="/images/add_rpc.png"></p>
+<p><strong>图 3.2.1 引入rpc</strong></p>
+<p>细品这个流程，其实跟 <strong>图 1.3</strong> 会面临同样的问题，请求处理函数代码会越写越长，最终难以维护。</p>
+<h3 id="3-3-引入消息总线"><a href="#3-3-引入消息总线" class="headerlink" title="3.3 引入消息总线"></a>3.3 引入消息总线</h3><p>后来总结了一下，一个上行消息到达后，我们通知各个微服务的请求的数据内容其实是相同的，这时候其实可以直接引入一条消息总线，会让代码简洁很多。微服务只需要监听自己关心的消息总线即可。</p>
+<p><img src="/images/add_event_bus.png"></p>
+<p><strong>图 3.3.1</strong></p>
+<p>不过这样同样会导致一个问题，就是数据流重新回到了类似使用消息队列的模式，所有的 logical 和 micro 之间的通信又变成了异步的了。目前解决的方法就是在微服务端增加 <strong>待处理</strong> 队列，如果在一个事务中学生的消息先到，就先先加入待处理带队中，等待老师的消息到来后，一并处理。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/micro-reform-milestones/" title="微服务改造心路历程">https://blog.whyun.com/posts/micro-reform-milestones/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/smarty-pen-issue/" rel="prev" title="某千里智能笔的深思">
+                  <i class="fa fa-chevron-left"></i> 某千里智能笔的深思
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>
