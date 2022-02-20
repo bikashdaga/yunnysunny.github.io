@@ -6,7 +6,7 @@
   <link href="https://blog.whyun.com/atom.xml" rel="self"/>
   
   <link href="https://blog.whyun.com/"/>
-  <updated>2022-02-20T02:39:53.731Z</updated>
+  <updated>2022-02-20T14:05:19.805Z</updated>
   <id>https://blog.whyun.com/</id>
   
   <author>
@@ -17,11 +17,30 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>微服务在前端的落地</title>
+    <link href="https://blog.whyun.com/posts/micro-for-frontend/"/>
+    <id>https://blog.whyun.com/posts/micro-for-frontend/</id>
+    <published>2022-02-20T00:00:00.000Z</published>
+    <updated>2022-02-20T14:05:19.805Z</updated>
+    
+    
+    <summary type="html">这篇文章讲述在前端中引入微服务的初衷，微服务在落地过程中遇到的各种问题和解决方案，同时给出微服务性能自查的方法。</summary>
+    
+    
+    
+    <category term="Micro Service" scheme="https://blog.whyun.com/categories/Micro-Service/"/>
+    
+    <category term="Engineering Design" scheme="https://blog.whyun.com/categories/Micro-Service/Engineering-Design/"/>
+    
+    
+  </entry>
+  
+  <entry>
     <title>微服务改造心路历程</title>
     <link href="https://blog.whyun.com/posts/micro-reform-milestones/"/>
     <id>https://blog.whyun.com/posts/micro-reform-milestones/</id>
     <published>2022-02-20T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">本文讲述了在笔者在直播间项目组工作时，践行微服务过程中的一系列趟坑的心路历程。</summary>
@@ -38,7 +57,7 @@
     <link href="https://blog.whyun.com/posts/smarty-pen-issue/"/>
     <id>https://blog.whyun.com/posts/smarty-pen-issue/</id>
     <published>2022-02-19T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">这篇文章不讲代码讲受力分析，主要讲在调研某千里智能笔过程中一些深思。</summary>
@@ -55,7 +74,7 @@
     <link href="https://blog.whyun.com/posts/prometheus-startup/"/>
     <id>https://blog.whyun.com/posts/prometheus-startup/</id>
     <published>2022-01-24T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">这篇文章主要讲述 prometheus 的入门内容，包括 promethues 的适用场景、promethues 的环境搭建、简单入门教程编写。</summary>
@@ -72,7 +91,7 @@
     <link href="https://blog.whyun.com/posts/local-dns-masq/"/>
     <id>https://blog.whyun.com/posts/local-dns-masq/</id>
     <published>2021-12-13T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">一般公司内部都会有内部 DNS 服务器，由于托管公司内网域名，且会当成公司内部上网的专用 DNS，同时承载外网的域名解析工作。但是有时候公司内网的 DNS 服务不稳定时，就比较尴尬，不用吧，解析不了内网域名，用吧，上不了外网。这时候用 DNS 的分流工具就是解决这个问题的好办法。这篇文章会拿 win10 举例，讲解 coredns 的简单配置，来解决 DNS 分流问题。</summary>
@@ -89,7 +108,7 @@
     <link href="https://blog.whyun.com/posts/the-defect-of-node/"/>
     <id>https://blog.whyun.com/posts/the-defect-of-node/</id>
     <published>2021-11-17T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">提起 Node.js ，大家可能认为对其的优劣已经分辨的很清楚：由于其默认单线程，所以不适合做计算密集型操作；由于其异步 IO 特性，所以对于 IO 处理比较友好。但这其实是一种误解，当 IO 并发到一定的量级，一样会损耗 CPU 资源。在 Node.js 引以为豪的 IO 处理方面，依然有其做的不完善的地方，本篇文章就给大家一一解密。</summary>
@@ -106,7 +125,7 @@
     <link href="https://blog.whyun.com/posts/service-discovery-start/"/>
     <id>https://blog.whyun.com/posts/service-discovery-start/</id>
     <published>2021-11-05T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">随着互联网业务的发展，互联网用户基数越来越大，对于服务提供者来说带来的并发压力也越来越大。以往通过单机提供服务的方式已经被淘汰，多机冗余、负载均衡等名词也已经成为当前服务开发的基本要求。如何感知到一个服务的多个节点，如何平滑的对于服务进行扩容，如何保证负载均衡的高效性，传统的负载均衡基础设施面对越来越多的挑战。而服务发现技术的出现，对于上述问题带来了一个更有的解决方案。</summary>
@@ -123,7 +142,7 @@
     <link href="https://blog.whyun.com/posts/k8s-startup/"/>
     <id>https://blog.whyun.com/posts/k8s-startup/</id>
     <published>2021-10-26T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">之前通过讲 docker compose 教程 初步了解容器编排技术。但是 docker compose 默认只能在单机模式下运行，如果想在多个宿主机上运行，你可以借助 docker swarm 技术，你可以方便的将 docker-compose.yml 文件运用到 swarm 集群创建中。不过由于 kubernetes 的出现，swarm 的市场受到了极大排挤，目前各大公司利用容器编排技术，一般都会选择 kubernetes。本文顺应时势，在讲解容器编排技术的时候也是选择了 kubernetes 作为入门教程。本文作为教程的第一章，选择主要讲解的 kubernetes 内部网络原理。</summary>
@@ -142,7 +161,7 @@
     <link href="https://blog.whyun.com/posts/docker-compose-tutorial/"/>
     <id>https://blog.whyun.com/posts/docker-compose-tutorial/</id>
     <published>2021-10-21T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.727Z</updated>
+    <updated>2022-02-20T14:05:19.801Z</updated>
     
     
     <summary type="html">docker 容器提供了一种封装格式，可以将应用和其运行环境封装在一起，但是在线上实践过程中，应用和应用之间难免要产生依赖，一个上游的应用，可能会依赖于下游的一个或者几个应用给其提供数据。正所谓一个好汉三个帮，现实情况中，一个服务部署完成之后，对外不产生依赖的情况还是比较少的，但是 docker 在开始设计的时候没有过多考虑到容器之间依赖关系的处理。为了解决这个问题，在后续的发展中，一系列的容器编排的技术出现，比如说 `Docker Swarm` `Marathon` `Kubernetes` 等。上面提到的编排工具都是可以用在生产环境上的解决方案，不过本文要讲一下 `Docker Compose` 这个官方给出的编排解决方案，由于其功能比较简单，一般出于测试目的来使用，不过正式由于其简单，对于理解更高级的编排工具来说，算是一个好的入门。</summary>
@@ -161,7 +180,7 @@
     <link href="https://blog.whyun.com/posts/gracefully-restart-on-docker/"/>
     <id>https://blog.whyun.com/posts/gracefully-restart-on-docker/</id>
     <published>2021-10-12T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">当我们将编写的程序部署到服务器之后，免不了会面临未知 bug 导致的程序崩溃退出问题，这个时候快速的将程序进行重启，显得尤为重要，特别是那种在后端和用户之间维持会话的服务。这篇文章就是讲一下，如果你的程序部署到 docker 后，如何做到优雅重启。</summary>
@@ -180,7 +199,7 @@
     <link href="https://blog.whyun.com/posts/dockerfile-tutorials/"/>
     <id>https://blog.whyun.com/posts/dockerfile-tutorials/</id>
     <published>2021-10-09T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">dockerfile 的使用教程，讲解 dockerfile 的 FROM COPY RUN ENTRYPOINT CMD 等指令的使用。</summary>
@@ -199,7 +218,7 @@
     <link href="https://blog.whyun.com/posts/go-private-package/"/>
     <id>https://blog.whyun.com/posts/go-private-package/</id>
     <published>2021-09-18T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">使用私有托管的 go 包仓库的折腾之路</summary>
@@ -216,7 +235,7 @@
     <link href="https://blog.whyun.com/posts/wsl-and-docker-desktop-install/"/>
     <id>https://blog.whyun.com/posts/wsl-and-docker-desktop-install/</id>
     <published>2021-09-09T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">win10 中提供了 wsl 的解决方案，可以在 Windows 中直接开启 linux 子系统，十分方便开发者使用。同时一些重要的功能也要依赖于 wsl 才能启动，比如说 docker desktop。本教程就是演示一下如何在 win10 中配置 wsl ，并且如何正常使用 docker desktop。</summary>
@@ -235,7 +254,7 @@
     <link href="https://blog.whyun.com/posts/request-dns/the-problem-of-dns-timeout-on-request-package/"/>
     <id>https://blog.whyun.com/posts/request-dns/the-problem-of-dns-timeout-on-request-package/</id>
     <published>2019-09-25T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">request 请求时 DNS 解析超时的问题探究，包括若干 node 源码的解读</summary>
@@ -252,7 +271,7 @@
     <link href="https://blog.whyun.com/posts/node/the-cache-design-in-node/"/>
     <id>https://blog.whyun.com/posts/node/the-cache-design-in-node/</id>
     <published>2018-10-16T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.727Z</updated>
+    <updated>2022-02-20T14:05:19.801Z</updated>
     
     
     <summary type="html">教你如何在Node中使用缓存，解决高并发问题</summary>
@@ -269,7 +288,7 @@
     <link href="https://blog.whyun.com/posts/the-design-of-sso-between-diffrent-domain/"/>
     <id>https://blog.whyun.com/posts/the-design-of-sso-between-diffrent-domain/</id>
     <published>2018-05-27T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">介绍单点登陆的原理和实现</summary>
@@ -286,7 +305,7 @@
     <link href="https://blog.whyun.com/posts/jni/use-thrid-part-library-in-ndk/"/>
     <id>https://blog.whyun.com/posts/jni/use-thrid-part-library-in-ndk/</id>
     <published>2015-12-31T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">主要讲述如何在NDK中使用第三方库</summary>
@@ -305,7 +324,7 @@
     <link href="https://blog.whyun.com/posts/jni-ndk/"/>
     <id>https://blog.whyun.com/posts/jni-ndk/</id>
     <published>2015-12-05T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">安卓NDK的编写入门  包括不同安卓版本 不同cpu架构引用头文件库文件的路径规则等知识点</summary>
@@ -324,7 +343,7 @@
     <link href="https://blog.whyun.com/posts/jni/2-struct-transform/"/>
     <id>https://blog.whyun.com/posts/jni/2-struct-transform/</id>
     <published>2015-11-25T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">JNI和java的数据结构的相互转化，JNI和java的函数相互调用</summary>
@@ -343,7 +362,7 @@
     <link href="https://blog.whyun.com/posts/jni/"/>
     <id>https://blog.whyun.com/posts/jni/</id>
     <published>2015-11-01T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
+    <updated>2022-02-20T14:05:19.805Z</updated>
     
     
     <summary type="html">JNI使用背景，windows、linux下JNI环境的配置，教你编译执行第一个JNI程序</summary>
@@ -353,23 +372,6 @@
     <category term="Java" scheme="https://blog.whyun.com/categories/Java/"/>
     
     <category term="JNI" scheme="https://blog.whyun.com/categories/Java/JNI/"/>
-    
-    
-  </entry>
-  
-  <entry>
-    <title>nan入门教程</title>
-    <link href="https://blog.whyun.com/posts/nan/"/>
-    <id>https://blog.whyun.com/posts/nan/</id>
-    <published>2015-05-24T00:00:00.000Z</published>
-    <updated>2022-02-20T02:39:53.731Z</updated>
-    
-    
-    <summary type="html">node的c++ API在不同版本中差异是巨大的，那么怎么解决这个问题呢，幸好有nan这个模块，它通过宏定义的方式把不同版本的API统一起来，极大简化了代码编写过程。</summary>
-    
-    
-    
-    <category term="Node" scheme="https://blog.whyun.com/categories/Node/"/>
     
     
   </entry>

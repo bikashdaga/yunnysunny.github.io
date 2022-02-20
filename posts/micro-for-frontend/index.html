@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="这篇文章讲述在前端中引入微服务的初衷，微服务在落地过程中遇到的各种问题和解决方案，同时给出微服务性能自查的方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="微服务在前端的落地">
+<meta property="og:url" content="https://blog.whyun.com/posts/micro-for-frontend/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="这篇文章讲述在前端中引入微服务的初衷，微服务在落地过程中遇到的各种问题和解决方案，同时给出微服务性能自查的方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.whyun.com/images/widget_proxy_via_native.png">
+<meta property="og:image" content="https://blog.whyun.com/images/mutil-proxy.png">
+<meta property="og:image" content="https://blog.whyun.com/images/widget-short.png">
+<meta property="og:image" content="https://blog.whyun.com/images/micro-all-domain.png">
+<meta property="og:image" content="https://blog.whyun.com/images/dns_proxy.png">
+<meta property="og:image" content="https://blog.whyun.com/images/3k_req_per_ms.png">
+<meta property="og:image" content="https://blog.whyun.com/images/edge_cloud.jpg">
+<meta property="og:image" content="https://blog.whyun.com/images/front_cache_server.png">
+<meta property="og:image" content="https://blog.whyun.com/images/nginx_timings.png">
+<meta property="og:image" content="https://blog.whyun.com/images/conn_timeout.png">
+<meta property="og:image" content="https://blog.whyun.com/images/res_timeout.png">
+<meta property="og:image" content="https://blog.whyun.com/images/client_timeout.png">
+<meta property="article:published_time" content="2022-02-20T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-02-20T14:05:19.805Z">
+<meta property="article:author" content="yunnysunny">
+<meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.whyun.com/images/widget_proxy_via_native.png">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/micro-for-frontend/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/micro-for-frontend/","path":"posts/micro-for-frontend/","title":"微服务在前端的落地"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>微服务在前端的落地 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E8%83%8C%E6%99%AF"><span class="nav-text">1. 背景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-%E8%AF%95%E6%B0%B4"><span class="nav-text">1.1 试水</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-1-%E6%BC%94%E8%BF%9B"><span class="nav-text">1.1.1 演进</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-%E5%9F%9F%E5%90%8D"><span class="nav-text">1.2 域名</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%AD%98%E5%9C%A8%E9%97%AE%E9%A2%98"><span class="nav-text">2. 存在问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E6%99%BA%E8%83%BD-DNS-%E8%A7%A3%E6%9E%90%E4%B8%8D%E5%9D%87%E8%A1%A1"><span class="nav-text">2.1 智能 DNS 解析不均衡</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-0-%E9%97%AE%E9%A2%98%E6%8F%8F%E8%BF%B0"><span class="nav-text">2.1.0 问题描述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-1-%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-text">2.1.1 解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-1-1-%E5%B8%82%E9%9D%A2%E4%B8%8A%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-text">2.1.1.1 市面上的解决方案</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-1-1-2-%E8%87%AA%E5%BB%BA%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-text">2.1.1.2 自建解决方案</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E5%AE%A2%E6%88%B7%E7%AB%AF%E7%BC%93%E5%AD%98"><span class="nav-text">2.2 客户端缓存</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-0-%E9%97%AE%E9%A2%98%E6%8F%8F%E8%BF%B0"><span class="nav-text">2.2.0 问题描述</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-1-%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-text">2.2.1 解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#2-2-1-1-%E5%B8%82%E9%9D%A2%E6%96%B9%E6%A1%88"><span class="nav-text">2.2.1.1 市面方案</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-2-1-2-%E8%87%AA%E5%BB%BA%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-text">2.2.1.2 自建解决方案</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5"><span class="nav-text">3. 性能问题排查</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description">白一梓的个人技术博客，涉猎 Node Go Java 等语言和 TCP HTTP 等网络协议。</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">27</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/micro-for-frontend/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="白一梓的个人技术博客，涉猎 Node Go Java 等语言和 TCP HTTP 等网络协议。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          微服务在前端的落地
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-02-20 00:00:00 / 修改时间：14:05:19" itemprop="dateCreated datePublished" datetime="2022-02-20T00:00:00+00:00">2022-02-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Micro-Service/" itemprop="url" rel="index"><span itemprop="name">Micro Service</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Micro-Service/Engineering-Design/" itemprop="url" rel="index"><span itemprop="name">Engineering Design</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">这篇文章讲述在前端中引入微服务的初衷，微服务在落地过程中遇到的各种问题和解决方案，同时给出微服务性能自查的方法。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="1-背景"><a href="#1-背景" class="headerlink" title="1. 背景"></a>1. 背景</h2><h3 id="1-1-试水"><a href="#1-1-试水" class="headerlink" title="1.1 试水"></a>1.1 试水</h3><p>公司的 PC 客户端的起先所有的 UI 界面都是 QT 开发，但是随着业务的深入，需求方对于数据展示的需求越来越强烈，但是使用 QT 代码做这种强 UI 的渲染会比较繁琐，所以 PC 客户端引入了内嵌网页来做数据展示。我们这里称这些内嵌网页为 Web 组件。</p>
+<h4 id="1-1-1-演进"><a href="#1-1-1-演进" class="headerlink" title="1.1.1 演进"></a>1.1.1 演进</h4><p>PC 客户端和服务器端之间的通信要依赖于长连接，使用原生代码编写 UI 时，直接在使用原生代码建立长连接即可，但是使用 Web 组件之后，无法再新增长连接，否则会出现同一个用户长连接互踢的问题，所以 Web 组件是借用原生端已经建立好的长连接进行通信。</p>
+<p><img src="/images/widget_proxy_via_native.png"></p>
+<p><strong>图 1.1.1.1 Web 组件通过原生代理通信</strong></p>
+<p>不过随着业务的发展，增加的 Web 组件也越来越多，最终整体的总览就变成下面这个样子：</p>
+<p><img src="/images/mutil-proxy.png"></p>
+<p><strong>图 1.1.1.2 Web 组件通信拓扑图</strong></p>
+<p>长连接处在整个架构中心的位置，根据以往的经验看，有中心就会有依赖，仔细考虑当前这条长连接还是有很多弊端的，比如说：</p>
+<ol>
+<li>挤占原生进程的资源，原生程序为了维护Web组件通信的信道必须额外维护上下文。</li>
+<li>增加了程序开发调试的复杂度，因为依赖于原生端的 js 调用，所以 web 端的程序必须嵌入到原生应用中才能运行。</li>
+</ol>
+<p>既然中心化是有缺陷的，那么最直接解决方案就是去中心化，鉴于长连接的维护成本较高，为了的解决方案中会采用短链接的架构：</p>
+<p><img src="/images/widget-short.png"></p>
+<p><strong>图 1.1.1.3 Web 组件使用短连接</strong></p>
+<p>从这里开始引入了微服务的概念，每个微服务负责独立的一个功能，与其对应的 Web 组件也相对独立。起初设计此架构是为了解决 PC 客户端的问题，后来此架构也延申到了移动 APP 端和网页端。</p>
+<h3 id="1-2-域名"><a href="#1-2-域名" class="headerlink" title="1.2 域名"></a>1.2 域名</h3><p><strong>图 1.1.1.3</strong> 中画了若干个 Web 组件，每个对应的都是不同的后端微服务，如果每次创建一个微服务都申请一个域名会对维护带来巨大的挑战。所以这个地方在设计的时候，所有的微服务采用同样一个域名，这里记这个域名为 micro-default。然后客户端在请求的时候，在请求路径前面添加微服务的标识，那么前置的域名解析 nginx 在做反代配置的时候，就可以做类似如下配置：</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">&#123;</span>
+  <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
+  <span class="token directive"><span class="token keyword">server_name</span> micro-default</span><span class="token punctuation">;</span>
+  <span class="token directive"><span class="token keyword">location</span> /service_name_of_one_micro/</span> <span class="token punctuation">&#123;</span>
+    <span class="token directive"><span class="token keyword">rewrite</span> ^/service_name_of_one_micro/(.*) /<span class="token variable">$1</span> break</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">proxy_pass</span> http://the_addr_of_current_micro_service</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">proxy_cache</span> my_cache</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">add_header</span> X-Cache-Status <span class="token variable">$upstream_cache_status</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$http_host</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Scheme <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
+  <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.2.1</strong></p>
+<h2 id="2-存在问题"><a href="#2-存在问题" class="headerlink" title="2. 存在问题"></a>2. 存在问题</h2><h3 id="2-1-智能-DNS-解析不均衡"><a href="#2-1-智能-DNS-解析不均衡" class="headerlink" title="2.1 智能 DNS 解析不均衡"></a>2.1 智能 DNS 解析不均衡</h3><h4 id="2-1-0-问题描述"><a href="#2-1-0-问题描述" class="headerlink" title="2.1.0 问题描述"></a>2.1.0 问题描述</h4><p>端上访问服务器的默认域名是 micro-default 这个域名，它是做了动态 DNS 解析，会根据用户的运营商的 DNS 来决定解析到哪里去</p>
+<p><img src="/images/micro-all-domain.png"></p>
+<p><strong>图 2.1</strong></p>
+<p>DNS 服务会根据用户上网设备用的 DNS 地址归属地来决定往哪调度，如果识别不出来就默认网北京节点调度，但是大部分用户的所用 DNS 地址的地址不被 DSN 服务所识别（比如说很多用户用的是 114 的DNS），所以就直接走默认值了。</p>
+<p>这样导致的问题是，虽然我们有三个入口点，但是 80% 的流量集中到北京节点了，另外两个节点空闲，好在当前的 http 流量并不大，北京的入口点高峰期间占用的资源也很小。</p>
+<h4 id="2-1-1-解决方案"><a href="#2-1-1-解决方案" class="headerlink" title="2.1.1 解决方案"></a>2.1.1 解决方案</h4><h5 id="2-1-1-1-市面上的解决方案"><a href="#2-1-1-1-市面上的解决方案" class="headerlink" title="2.1.1.1 市面上的解决方案"></a>2.1.1.1 市面上的解决方案</h5><p><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/DNS_over_HTTPS"><strong>D</strong>NS <strong>O</strong>ver <strong>h</strong>ttps</a>，使用 https 请求来代替传统 DNS 请求，根据请求者的出口 IP 可以精确的确定地理位置</p>
+<p>举个例子，阿里 DNS，</p>
+<p><a target="_blank" rel="noopener" href="https://dns.alidns.com/dns-query">https://dns.alidns.com/dns-query</a></p>
+<p><a target="_blank" rel="noopener" href="https://223.5.5.5/dns-query">https://223.5.5.5/dns-query</a><br><a target="_blank" rel="noopener" href="https://223.6.6.6/dns-query">https://223.6.6.6/dns-query</a><br>https:&#x2F;&#x2F;[2400:3200::1]&#x2F;dns-query<br>https:&#x2F;&#x2F;[2400:3200:baba::1]&#x2F;dns-query  </p>
+<p>不过这种技术需要用户自己单独在电脑上做配置，起码在电脑端当前解决方案实现起来不现实。</p>
+<h5 id="2-1-1-2-自建解决方案"><a href="#2-1-1-2-自建解决方案" class="headerlink" title="2.1.1.2 自建解决方案"></a>2.1.1.2 自建解决方案</h5><p>移动 APP 端或者 PC 客户端由于可以自行修改请求的 HTTP 数据包，所以可以在触发 http 请求之前，会尝试将域名发送一个调度接口，该接口能够返回后端配置过根据用户请求 IP 映射的服务器 IP，记为 <code>IPX</code>。如果 <code>IPX</code>存在，则使用这个 IP 去请求服务器端；否则就回退到传统的 DNS 解析模式。</p>
+<p><img src="/images/dns_proxy.png"></p>
+<p><strong>图 2.1.1.2</strong></p>
+<p>如果是浏览器端，则无法直接使用返回的 IP 地址来构建 https 请求，除非当前服务器的数字证书直接绑定在 IP 上，这种数字证书比较贵，一般公司不会购买。那么在上图第 2 步的时候，可以直接返回一个子域名来来解决，也就是说对于 <strong>图2.1</strong> 的每个 SLB 的 IP 都映射一个子域名。 </p>
+<h3 id="2-2-客户端缓存"><a href="#2-2-客户端缓存" class="headerlink" title="2.2 客户端缓存"></a>2.2 客户端缓存</h3><h4 id="2-2-0-问题描述"><a href="#2-2-0-问题描述" class="headerlink" title="2.2.0 问题描述"></a>2.2.0 问题描述</h4><p>同时留意到如果系统中存在集中跳转的情况出现，在短时间内就会有高并发查询接口的情况出现，下图是一个具体微服务请求日志的kibana统计，显示1ms发生了3000个并发请求，而这三千个请求都是同一个查询接口。</p>
+<p><img src="/images/3k_req_per_ms.png"></p>
+<p><strong>图 2.2.0.1 1ms 3000请求</strong></p>
+<h4 id="2-2-1-解决方案"><a href="#2-2-1-解决方案" class="headerlink" title="2.2.1 解决方案"></a>2.2.1 解决方案</h4><h5 id="2-2-1-1-市面方案"><a href="#2-2-1-1-市面方案" class="headerlink" title="2.2.1.1 市面方案"></a>2.2.1.1 市面方案</h5><p>在前置节点做文章（更多的称之为<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E8%BE%B9%E7%BC%98%E8%AE%A1%E7%AE%97/9044985">边缘计算</a>），即使后端 http 服务是非静态资源，依然可以在前置节点做文章，将请求缓存在前置节点。</p>
+<p><img src="/images/edge_cloud.jpg"></p>
+<p><strong>图 2.2.1.1.1</strong></p>
+<p>市面上常见的产品有<a target="_blank" rel="noopener" href="https://www.aliyun.com/product/dcdn?spm=5176.19720258.J_8058803260.60.e9392c4a3ANYHn">阿里云DCDN</a> <a target="_blank" rel="noopener" href="https://www.nginx.com/products/nginx/">nginx plus</a> <a target="_blank" rel="noopener" href="https://openresty.com/en/edge/">openresty edge</a></p>
+<h5 id="2-2-1-2-自建解决方案"><a href="#2-2-1-2-自建解决方案" class="headerlink" title="2.2.1.2 自建解决方案"></a>2.2.1.2 自建解决方案</h5><p>跟市面上的服务器的处理原理一样，只不过我们只关心缓存处理，具体缓存协商流程分析</p>
+<p><img src="/images/front_cache_server.png"></p>
+<p>可以看出来，前置节点像一个漏洞，将本来请求到机房的流量给拦截了一部分，流量拦截量的多少，就取决于机房里面的服务设置的缓存时间的长短（记为 <strong>CACHE-A</strong>）。同时前置节点和客户端之间还有缓存时长约定(记为 <strong>CACHE-B</strong>)，这个约定可以规范客户端的请求间隔时长，让客户端不要在短时间内发送过多的请求到前置节点。理论上讲，客户端端最终拿到数据的滞后时间为 **max(CACHE-A, CACHE-B)**。</p>
+<h2 id="3-性能问题排查"><a href="#3-性能问题排查" class="headerlink" title="3. 性能问题排查"></a>3. 性能问题排查</h2><p>在 nginx 的访问日志中可以配置如下几个字段：request_time upstream_connect_time upstream_header_time upstream_response_time，这几个字段的意义如下图所示：</p>
+<blockquote>
+<p>参考配置代码</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">log_format</span> json <span class="token string">'&#123;"@timestamp":"<span class="token variable">$time_iso8601</span>",'</span>
+          <span class="token string">'"server_addr":"<span class="token variable">$server_addr</span>",'</span>
+          <span class="token string">'"client":"<span class="token variable">$remote_addr</span>",'</span>
+          <span class="token string">'"method":"<span class="token variable">$request_method</span>",'</span>
+          <span class="token string">'"request":"<span class="token variable">$request</span>",'</span>
+          <span class="token string">'"request_length":<span class="token variable">$request_length,</span>'</span>
+          <span class="token string">'"status":<span class="token variable">$status</span>,'</span>
+          <span class="token string">'"bytes_sent":<span class="token variable">$bytes_sent,</span>'</span>
+          <span class="token string">'"body_bytes_sent":<span class="token variable">$body_bytes_sent,</span>'</span>
+          <span class="token string">'"http_referer":"<span class="token variable">$http_referer</span>",'</span>
+          <span class="token string">'"http_user_agent":"<span class="token variable">$http_user_agent</span>",'</span>
+          <span class="token string">'"upstream_addr":"<span class="token variable">$upstream_addr</span>",'</span>
+          <span class="token string">'"upstream_status":"<span class="token variable">$upstream_status</span>",'</span>
+          <span class="token string">'"request_time":<span class="token variable">$request_time,</span>'</span>
+          <span class="token string">'"upstream_response_time":"<span class="token variable">$upstream_response_time</span>",'</span>
+          <span class="token string">'"upstream_connect_time":"<span class="token variable">$upstream_connect_time</span>",'</span>
+          <span class="token string">'"upstream_header_time":"<span class="token variable">$upstream_header_time</span>",'</span>
+          <span class="token string">'"remote_user":"<span class="token variable">$remote_user</span>",'</span>
+          <span class="token string">'"http_host":"<span class="token variable">$host</span>",'</span>
+          <span class="token string">'"url":"<span class="token variable">$uri</span>",'</span>
+          <span class="token string">'"xff":"<span class="token variable">$http_x_forwarded_for</span>"&#125;'</span></span><span class="token punctuation">;</span>
+<span class="token directive"><span class="token keyword">log_format</span> main</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+
+</blockquote>
+<p><img src="/images/nginx_timings.png"></p>
+<p><strong>图 4.1</strong></p>
+<p>典型问题分析：</p>
+<p>情景1</p>
+<p><img src="/images/conn_timeout.png"></p>
+<p><strong>图 4.2</strong></p>
+<p>upstream_connect_time ≈ upstream_header_time ≈ upstream_response_time ≈ request_time</p>
+<p>时间耗费在跟后端服务器建连上，说明专线带宽不稳定（小概率），或者单位时间内并发过大（大概率，目前反向代理使用的http 1.0，容易出现这种问题）</p>
+<p>情景二</p>
+<p><img src="/images/res_timeout.png"></p>
+<p><strong>图 4.3</strong></p>
+<p>upstream_connect_time &lt;&lt; upstream_header_time ≈ upstream_response_time</p>
+<p>时间耗费在后端服务处理上</p>
+<p>情景三</p>
+<p><img src="/images/client_timeout.png"></p>
+<p><strong>图 4.4</strong></p>
+<p>upstream_connect_time ≈ upstream_header_time ≈ upstream_response_time &lt;&lt; request_time</p>
+<p>时间耗费在客户端数据读写上或者 客户端和 nginx 建连上，由于目前nginx版本比较低，nginx建连时间暂时取不到，但是这种情况出现的概率很低，大概率是耗费在读写客户端数据上。</p>
+<blockquote>
+<p>严格意义讲，request_time 不是客户端请求的真正时间，从客户端测观察的时间要比这个时间稍大。极端情况下会有大的偏差，因为客户端网卡满载情况下，服务器端网络层写入的数据有可能会被客户端丢包，继而会引发重传，耗费大量的时间，这部分时间在服务器端是没法记录的。</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/micro-for-frontend/" title="微服务在前端的落地">https://blog.whyun.com/posts/micro-for-frontend/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/micro-reform-milestones/" rel="prev" title="微服务改造心路历程">
+                  <i class="fa fa-chevron-left"></i> 微服务改造心路历程
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

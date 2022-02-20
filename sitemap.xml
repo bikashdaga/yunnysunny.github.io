@@ -83,6 +83,15 @@
   </url>
   
   <url>
+    <loc>https://blog.whyun.com/posts/micro-for-frontend/</loc>
+    
+    <lastmod>2022-02-20</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://blog.whyun.com/posts/micro-reform-milestones/</loc>
     
     <lastmod>2022-02-20</lastmod>
@@ -355,6 +364,13 @@
   
   <url>
     <loc>https://blog.whyun.com/categories/Network/</loc>
+    <lastmod>2022-02-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://blog.whyun.com/categories/Micro-Service/Engineering-Design/</loc>
     <lastmod>2022-02-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
