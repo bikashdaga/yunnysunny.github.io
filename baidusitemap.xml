@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://blog.whyun.com/posts/dockerfile-tutorials/</loc>
-    <lastmod>2022-02-27</lastmod>
-  </url>
-  <url>
     <loc>https://blog.whyun.com/posts/go-private-package/</loc>
     <lastmod>2022-02-27</lastmod>
   </url>
@@ -110,6 +106,10 @@
   </url>
   <url>
     <loc>https://blog.whyun.com/posts/docker-compose-tutorial/</loc>
+    <lastmod>2022-02-27</lastmod>
+  </url>
+  <url>
+    <loc>https://blog.whyun.com/posts/dockerfile-tutorials/</loc>
     <lastmod>2022-02-27</lastmod>
   </url>
 </urlset> 
