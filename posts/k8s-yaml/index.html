@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.0.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta name="google-site-verification" content="G1fh5LdQwTFHcGovLLQNlLyBut-RA-Z4tKs01Ml4ejA">
+  <meta name="baidu-site-verification" content="code-jxFFqRu4w9">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"blog.whyun.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.10.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+  <meta name="description" content="这篇文章通过讲解 k8s 中 yaml 配置文件的编写过程，来让大家熟悉如何在 k8s 中部署应用；同时会讲解初学者如何使用免费 k8s 环境来做练习。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="k8s 部署文件简谈">
+<meta property="og:url" content="https://blog.whyun.com/posts/k8s-yaml/">
+<meta property="og:site_name" content="白一梓的个人博客">
+<meta property="og:description" content="这篇文章通过讲解 k8s 中 yaml 配置文件的编写过程，来让大家熟悉如何在 k8s 中部署应用；同时会讲解初学者如何使用免费 k8s 环境来做练习。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220227203214263.png">
+<meta property="og:image" content="https://blog.whyun.com/images/image-20220227203127277.png">
+<meta property="article:published_time" content="2022-02-27T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-02-27T13:12:06.771Z">
+<meta property="article:author" content="yunnysunny">
+<meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.whyun.com/images/image-20220227203214263.png">
+
+
+<link rel="canonical" href="https://blog.whyun.com/posts/k8s-yaml/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://blog.whyun.com/posts/k8s-yaml/","path":"posts/k8s-yaml/","title":"k8s 部署文件简谈"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>k8s 部署文件简谈 | 白一梓的个人博客</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?628c040f31bc950845419d51d5cbebeb"></script>
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="白一梓的个人博客" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">白一梓的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+        <li class="menu-item menu-item-sitemap"><a href="/sitemap.xml" rel="section"><i class="fa fa-sitemap fa-fw"></i>站点地图</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C"><span class="nav-text">1. 基本操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-deployment"><span class="nav-text">1.1 deployment</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-service"><span class="nav-text">1.2 service</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="nav-text">1.3 负载均衡</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%85%8D%E8%B4%B9-k8s-%E8%B5%84%E6%BA%90"><span class="nav-text">2. 免费 k8s 资源</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E5%AE%9E%E8%B7%B5%E4%B8%8E%E6%89%A9%E5%B1%95"><span class="nav-text">3. 实践与扩展</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81"><span class="nav-text">代码</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yunnysunny</p>
+  <div class="site-description" itemprop="description">白一梓的个人技术博客，涉猎 Node Go Java 等语言和 TCP HTTP 等网络协议。</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yunnysunny" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yunnysunny" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/1261004702" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;1261004702" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-globe fa-fw"></i>
+      推广链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://upyun.com/" title="http:&#x2F;&#x2F;upyun.com" rel="noopener" target="_blank">又拍云</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/yunnysunny" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://blog.whyun.com/posts/k8s-yaml/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yunnysunny">
+      <meta itemprop="description" content="白一梓的个人技术博客，涉猎 Node Go Java 等语言和 TCP HTTP 等网络协议。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="白一梓的个人博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          k8s 部署文件简谈
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-02-27 00:00:00 / 修改时间：13:12:06" itemprop="dateCreated datePublished" datetime="2022-02-27T00:00:00+00:00">2022-02-27</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Cloud-Native/" itemprop="url" rel="index"><span itemprop="name">Cloud Native</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Cloud-Native/K8s/" itemprop="url" rel="index"><span itemprop="name">K8s</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+            <div class="post-description">这篇文章通过讲解 k8s 中 yaml 配置文件的编写过程，来让大家熟悉如何在 k8s 中部署应用；同时会讲解初学者如何使用免费 k8s 环境来做练习。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>在之前的教程 <a href="https://blog.whyun.com/posts/k8s-startup/">k8s 网络原理入门</a> 中，我们了解到更多的是 k8s 如何保证集群内部各个服务在网络上互通。而这篇教程主要是讲实操的内容，会讲如何在 k8s 内部部署服务。</p>
+<h2 id="1-基本操作"><a href="#1-基本操作" class="headerlink" title="1. 基本操作"></a>1. 基本操作</h2><h3 id="1-1-deployment"><a href="#1-1-deployment" class="headerlink" title="1.1 deployment"></a>1.1 deployment</h3><p>首先跟 docker 类似，k8s 的运行基本单元称之为 pod，我们通常会将一组 pod 作为一个部署单元部署到 k8s 集群中，这组 pod 里面的镜像等信息都是相同的。在 k8s 中，这种部署单元被称之为 <code>depolyment</code>，比如说下面这个配置文件就是一个 <code>depolyment</code>：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1	<span class="token comment">#与k8s集群版本有关，使用 kubectl api-versions 即可查看当前集群支持的版本</span>
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment	<span class="token comment">#该配置的类型，我们使用的是 Deployment</span>
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>	        <span class="token comment">#译名为元数据，即 Deployment 的一些基本属性和信息</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>deployment	<span class="token comment">#Deployment 的名称</span>
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span>	    <span class="token comment">#标签，可以灵活定位一个或多个资源，其中key和value均可自定义，可以定义多组，目前不需要理解</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx	<span class="token comment">#为该Deployment设置key为app，value为nginx的标签</span>
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>	        <span class="token comment">#这是关于该Deployment的描述，可以理解为你期待该Deployment在k8s中如何使用</span>
+  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">1</span>	<span class="token comment">#使用该Deployment创建一个应用程序实例</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>	    <span class="token comment">#标签选择器，与上面的标签共同作用，目前不需要理解</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span> <span class="token comment">#选择包含标签app:nginx的资源</span>
+      <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx
+  <span class="token key atrule">template</span><span class="token punctuation">:</span>	    <span class="token comment">#这是选择或创建的Pod的模板</span>
+    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>	<span class="token comment">#Pod的元数据</span>
+      <span class="token key atrule">labels</span><span class="token punctuation">:</span>	<span class="token comment">#Pod的标签，上面的selector即选择包含标签app:nginx的Pod</span>
+        <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span>	    <span class="token comment">#期望Pod实现的功能（即在pod中部署）</span>
+      <span class="token key atrule">containers</span><span class="token punctuation">:</span>	<span class="token comment">#生成container，与docker中的container是同一种</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx	<span class="token comment">#container的名称</span>
+        <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx<span class="token punctuation">:</span><span class="token number">1.21</span>	<span class="token comment">#使用镜像nginx:1.21创建container，该container默认80端口可访问</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.1.1 nginx-deployment.yaml</strong></p>
+<p>注意到上述代码中的 <code>spec.replicas</code> 属性为 <code>1</code>，这代表当前部署中仅包含一个 pod，使用 <code>kubectl apply -f nginx-deployment.yaml</code> 可以将当前 <code>deployment</code> 部署到集群。</p>
+<blockquote>
+<p>如果本地没有安装 k8s 环境，可以使用免费的 <a target="_blank" rel="noopener" href="https://cloud.okteto.com/">okteto</a> 服务，具体参见教程第 2 节部分。</p>
+</blockquote>
+<p>部署完之后通过 <code>kubectl get pods</code> 命令，可以看到我们部署成功的 pod 信息：</p>
+<pre class="line-numbers language-none"><code class="language-none">NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-5c95dfd78d-27kmw   1&#x2F;1     Running   0          6s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>通过命令 <code>kubectl get deployments</code> 即可以 <code>deployment</code> 的维度查看到刚才部署的 <code>nginx-deployment</code> (这个名字由 <strong>代码 1.1.1</strong> 中的 <code>metadata.name</code> 指定)</p>
+<pre class="line-numbers language-none"><code class="language-none">NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   1&#x2F;1     1            1           44m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>如果你感觉当前只有一个 pod 不够使，那么可以通过简单的命令就可以进行扩容 <code>kubectl scale deployment nginx-deployment --replicas 2</code> 上述命令会将 <code>nginx-deployment</code> 的 pod 个数增长为 2。再次通过运行 <code>kubectl get pods</code> 命令，会发现新增了一个 pod：</p>
+<pre class="line-numbers language-none"><code class="language-none">NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-5c95dfd78d-27kmw   1&#x2F;1     Running   0          58m
+nginx-deployment-5c95dfd78d-z5qnh   1&#x2F;1     Running   0          3s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="1-2-service"><a href="#1-2-service" class="headerlink" title="1.2 service"></a>1.2 service</h3><p>我们在上一节中已经将我们的应用部署到了 k8s 集群中，但是目前为止，部署的应用还是不能访问的，如果想让应用能够对外访问需要在 yaml 文件中定义 service。</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Service
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">80</span>
+    <span class="token comment">#nodePort: 31701</span>
+    <span class="token key atrule">protocol</span><span class="token punctuation">:</span> TCP
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.2.1 nginx-svc.yaml</strong></p>
+<p>注意 <strong>代码 1.2.1</strong> 中的 <code>spec.selector</code> 属性，他会筛选所有 pod 中 lable 名字为 <code>app</code> 且值为 <code>nginx</code> 的节点添加到当前 service 中。同时，根据字段 <code>metadata.name</code> 决定了当前 service 的名字为 <code>nginx</code>。</p>
+<p>运行命令 <code>kubectl apply -f nginx-svc.yaml</code> 可以在 k8s 集群中创建当前 service。</p>
+<p>同时留意到我们指定属性 <code>spec.ports[0].port</code> 的值为 <code>80</code>，这个属性将新建一个 <code>Cluster IP</code>，同时指定 <code>Cluster IP</code> 上开放 80 端口，作为集群内部机器的访问端口。如果想让集群外部访问，需要指定 <code>nodePort</code> 端口，这个端口会绑定到集群中所有宿主机节点的外网 IP 上（要想启用 nodePort 属性，需要指定 <code>spec.type</code> 属性为 <code>NodePort</code>，<code>sepc.type</code> 的默认值为 <code>ClusterIp</code>）。</p>
+<p>通过命令 <code>kubectl get svc nginx</code> 可以查看当前创建的 service 的简介：</p>
+<pre class="line-numbers language-none"><code class="language-none">NAME    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+nginx   ClusterIP   10.155.128.177   &lt;none&gt;        80&#x2F;TCP    19m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>从上面输出可以得出 nginx 服务的 <code>Cluster IP 为 </code>10.155.128.177&#96;</p>
+<p>我们通过命令 <code>kubectl run curl --image=radial/busyboxplus:curl -i --tty</code> 可以创建一个带有 curl 命令支持的 pod，并进入其控制台。输入命令 <code>curl http://10.155.128.177:80</code> ，会得到如下输出：</p>
+<pre class="line-numbers language-html" data-language="html"><code class="language-html"><span class="token doctype"><span class="token punctuation">&lt;!</span><span class="token doctype-tag">DOCTYPE</span> <span class="token name">html</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>head</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>title</span><span class="token punctuation">></span></span>Welcome to nginx!<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>title</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>style</span><span class="token punctuation">></span></span><span class="token style"><span class="token language-css">
+<span class="token selector">html</span> <span class="token punctuation">&#123;</span> <span class="token property">color-scheme</span><span class="token punctuation">:</span> light dark<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+<span class="token selector">body</span> <span class="token punctuation">&#123;</span> <span class="token property">width</span><span class="token punctuation">:</span> 35em<span class="token punctuation">;</span> <span class="token property">margin</span><span class="token punctuation">:</span> 0 auto<span class="token punctuation">;</span>
+<span class="token property">font-family</span><span class="token punctuation">:</span> Tahoma<span class="token punctuation">,</span> Verdana<span class="token punctuation">,</span> Arial<span class="token punctuation">,</span> sans-serif<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>style</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>head</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>body</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>h1</span><span class="token punctuation">></span></span>Welcome to nginx!<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>h1</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">></span></span>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">></span></span>For online documentation and support please refer to
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>http://nginx.org/<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>nginx.org<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>a</span><span class="token punctuation">></span></span>.<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>br</span><span class="token punctuation">/></span></span>
+Commercial support is available at
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>http://nginx.com/<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>nginx.com<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>a</span><span class="token punctuation">></span></span>.<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>em</span><span class="token punctuation">></span></span>Thank you for using nginx.<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>em</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>body</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>代表我们的服务没有问题。</p>
+<h3 id="1-3-负载均衡"><a href="#1-3-负载均衡" class="headerlink" title="1.3 负载均衡"></a>1.3 负载均衡</h3><p>在之前教程 <a href="https://blog.whyun.com/posts/k8s-startup/">k8s 网络原理入门</a> 中讲到 k8s 中通过 <code>虚 IP</code>，也就是 <code>Cluster IP</code> 来做请求入口 IP，操作系统内核根据  <code>虚 IP</code> 和 请求端口做 NAT 转发。但是这个端口转发还有一个特性，一旦 TCP 报文被转发过一次后，操作系统就记住了当前的请求者的源 IP、源端口号、目的 IP、目的端口号的映射关系，下次报文再过来的时候，就不用再做转发了。这本来是一个利于性能的方案，但是同样会导致新的问题。</p>
+<p>如果当前的请求是 http 1.0 协议或者没有启动 keep alive 的 1.1 协议，那么请求在发送完一次后，句柄立马就销毁了，下次请求会重新创建新的句柄，操作系统内核会重新走一遍端口转发，由于操作系统做 NAT 的时候，是随机选择一个 pod IP，所以从客户端的角度来说，负载可以认为均衡的。</p>
+<p>不过如果我们的请求是长连接（比如普通 TCP 请求、启用了 keep alive 的 http 1.1、http 2.0 等创建的连接），那么请求者在发送完一次请求后，句柄还是复用的。这时候如果请求者的数目低于服务者的数目，就会导致一个很尴尬的事情，有些服务器可能不会得到请求者的光临而处于饥饿状态。</p>
+<p>k8s 本身没有提供负载均衡解决方案，虽然它预留了 <code>LoadBalancer</code> 类型的 service 定义（也就是将 <strong>代码 1.2.1</strong> 中的 <code>spec.type</code> 改为 <code>LoadBalancer</code> ），但是官方却没有给出具体实现方式。也就是说你自建一个 k8s 集群的话，是没有负载均衡功能的，不过你使用 阿里云、谷歌云之类的云服务倒是都实现 <code>LoadBalancer</code>，不过那就需要牵扯到付费服务了。</p>
+<p>业内对于这个问题的解决方案大体上分为一下几个个思路，一个是使用类似 Istio 、Linkerd 这些 Service Mesh 解决方案，不但给你解决负载均衡问题，还令带给你解决流量管控等问题，不过这种全家桶类型的解决方案对于原有架构来说是一个重大的升级。如果想追求，还可以使用一些第三方的反代工具，比如说 Envoy 。还有一种方案是直接对接 k8s 的 API，在客户端做服务发现和负载均衡，彻底做到自研。当然如果你想脱离 k8s 自身的服务转而使用第三方的服务发现组件，比如说 consul，也算是一种选择，主要看当前项目组在哪方面技术积累更深厚了。</p>
+<h2 id="2-免费-k8s-资源"><a href="#2-免费-k8s-资源" class="headerlink" title="2. 免费 k8s 资源"></a>2. 免费 k8s 资源</h2><p>由于 k8s 环境搭建需要一定的时间，且需要耗费一定的硬件资源，如果手动暂时没有 k8s 环境的话，可能连第 1 小节练习 k8s 命令的机会都没有。不过，不要慌，<a target="_blank" rel="noopener" href="https://cloud.okteto.com/">https://cloud.okteto.com/</a> 上可以申请免费的 k8s 资源，只需要用 github 账户登录即可。它最多可以创建 10 个 pod，一般练习使用够用了。不过毕竟是免费的，有一些功能是不能用的，比如说创建 NodePort 类型的 service、修改操作系统内核参数等若干影响到宿主机的功能是不给提供的。</p>
+<p>接着点击左侧 <strong>Settings</strong> 菜单，然后点击按钮 <strong>Download Config File</strong>，然后会弹出设置 <code>KUBECONFIG</code> 环境变量的提示框，将其命令拷贝到终端执行，则当前终端中就能直接找到 k8s 的配置文件，否则的话你执行 kubectl 命令的时候，都需要添加 <code>--kubeconfig</code> 的参数。</p>
+<p><img src="/images/image-20220227203214263.png" alt="image-20220227203214263"></p>
+<p><strong>图 2.1</strong></p>
+<img src="/images/image-20220227203127277.png" alt="image-20220227203127277" style="zoom: 80%;" />
+
+<p><strong>图 2.2</strong></p>
+<h2 id="3-实践与扩展"><a href="#3-实践与扩展" class="headerlink" title="3. 实践与扩展"></a>3. 实践与扩展</h2><p>由于 k8s 可以方便的做扩容，所以在执行压测程序时特别方便，这里给出一个在 k8s 中做打压的实例。</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1 <span class="token comment">#与k8s集群版本有关，使用 kubectl api-versions 即可查看当前集群支持的版本</span>
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment <span class="token comment">#该配置的类型，我们使用的是 Deployment</span>
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span> <span class="token comment">#译名为元数据，即 Deployment 的一些基本属性和信息</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> hello<span class="token punctuation">-</span>deployment <span class="token comment">#Deployment 的名称</span>
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span> <span class="token comment">#标签，可以灵活定位一个或多个资源，其中key和value均可自定义，可以定义多组，目前不需要理解</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> hello <span class="token comment">#为该Deployment设置key为app，value为nginx的标签</span>
+<span class="token key atrule">spec</span><span class="token punctuation">:</span> <span class="token comment">#这是关于该Deployment的描述，可以理解为你期待该Deployment在k8s中如何使用</span>
+  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">1</span> <span class="token comment">#使用该Deployment创建一个应用程序实例</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span> <span class="token comment">#标签选择器，与上面的标签共同作用，目前不需要理解</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span> <span class="token comment">#选择包含标签app:nginx的资源</span>
+      <span class="token key atrule">app</span><span class="token punctuation">:</span> hello
+  <span class="token key atrule">template</span><span class="token punctuation">:</span> <span class="token comment">#这是选择或创建的Pod的模板</span>
+    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> hello<span class="token punctuation">-</span>app
+      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+        <span class="token key atrule">app</span><span class="token punctuation">:</span> hello
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
+      <span class="token key atrule">initContainers</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">image</span><span class="token punctuation">:</span> busybox
+        <span class="token key atrule">command</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> sh
+        <span class="token punctuation">-</span> <span class="token punctuation">-</span>c
+        <span class="token punctuation">-</span> <span class="token punctuation">|</span><span class="token scalar string">
+          sysctl -w net.core.somaxconn=10240
+          sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+          sysctl -w net.ipv4.tcp_tw_reuse=1
+          sysctl -w fs.file-max=6048576</span>
+        <span class="token key atrule">name</span><span class="token punctuation">:</span> setsysctl
+        <span class="token key atrule">securityContext</span><span class="token punctuation">:</span>
+          <span class="token key atrule">privileged</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> hello<span class="token punctuation">-</span>app
+          <span class="token key atrule">image</span><span class="token punctuation">:</span> registry.cn<span class="token punctuation">-</span>hangzhou.aliyuncs.com/whyun/base<span class="token punctuation">:</span>hello<span class="token punctuation">-</span>latest
+          <span class="token key atrule">imagePullPolicy</span><span class="token punctuation">:</span> Always
+          <span class="token key atrule">resources</span><span class="token punctuation">:</span>
+            <span class="token key atrule">requests</span><span class="token punctuation">:</span>
+              <span class="token key atrule">cpu</span><span class="token punctuation">:</span> 2000m
+              <span class="token key atrule">memory</span><span class="token punctuation">:</span> 2Gi
+            <span class="token key atrule">limits</span><span class="token punctuation">:</span>
+              <span class="token key atrule">cpu</span><span class="token punctuation">:</span> 4000m
+              <span class="token key atrule">memory</span><span class="token punctuation">:</span> 4Gi
+          <span class="token key atrule">env</span><span class="token punctuation">:</span>
+            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> test
+              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">"1"</span>
+
+
+<span class="token punctuation">---</span>
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Service
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> hello<span class="token punctuation">-</span>service
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> hello
+  <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">8000</span> <span class="token comment"># Default port for image</span>
+
+
+<span class="token punctuation">---</span>
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1 <span class="token comment">#与k8s集群版本有关，使用 kubectl api-versions 即可查看当前集群支持的版本</span>
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment <span class="token comment">#该配置的类型，我们使用的是 Deployment</span>
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span> <span class="token comment">#译名为元数据，即 Deployment 的一些基本属性和信息</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> bench<span class="token punctuation">-</span>deployment <span class="token comment">#Deployment 的名称</span>
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span> <span class="token comment">#标签，可以灵活定位一个或多个资源，其中key和value均可自定义，可以定义多组，目前不需要理解</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> bench <span class="token comment">#为该Deployment设置key为app，value为nginx的标签</span>
+<span class="token key atrule">spec</span><span class="token punctuation">:</span> <span class="token comment">#这是关于该Deployment的描述，可以理解为你期待该Deployment在k8s中如何使用</span>
+  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">6</span> <span class="token comment">#使用该Deployment创建一个应用程序实例</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span> <span class="token comment">#标签选择器，与上面的标签共同作用，目前不需要理解</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span> <span class="token comment">#选择包含标签app:nginx的资源</span>
+      <span class="token key atrule">app</span><span class="token punctuation">:</span> bench
+  <span class="token key atrule">template</span><span class="token punctuation">:</span> <span class="token comment">#这是选择或创建的Pod的模板</span>
+    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> bench<span class="token punctuation">-</span>node
+      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+        <span class="token key atrule">app</span><span class="token punctuation">:</span> bench
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
+      <span class="token key atrule">initContainers</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">image</span><span class="token punctuation">:</span> busybox
+        <span class="token key atrule">command</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> sh
+        <span class="token punctuation">-</span> <span class="token punctuation">-</span>c
+        <span class="token punctuation">-</span> <span class="token punctuation">|</span><span class="token scalar string">
+          sysctl -w net.core.somaxconn=10240
+          sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+          sysctl -w net.ipv4.tcp_tw_reuse=1
+          sysctl -w fs.file-max=1048576</span>
+        <span class="token key atrule">name</span><span class="token punctuation">:</span> setsysctl
+        <span class="token key atrule">securityContext</span><span class="token punctuation">:</span>
+          <span class="token key atrule">privileged</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> bench<span class="token punctuation">-</span>node
+          <span class="token key atrule">image</span><span class="token punctuation">:</span> registry.cn<span class="token punctuation">-</span>hangzhou.aliyuncs.com/whyun/base<span class="token punctuation">:</span>node<span class="token punctuation">-</span>bench<span class="token punctuation">-</span>0.2.0
+          <span class="token key atrule">env</span><span class="token punctuation">:</span>
+            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> REQ_URL
+              <span class="token key atrule">value</span><span class="token punctuation">:</span> http<span class="token punctuation">:</span>//hello<span class="token punctuation">-</span>service<span class="token punctuation">:</span>8000/
+            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> REQ_INTERVAL_MS
+              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">"5"</span>
+            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> REQ_TIMEOUT_MS
+              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">"20"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 3.1</strong></p>
+<p>从肉眼上看，明显看的出来上述代码比较长，而且中间会有 <code>---</code> 分隔符，这是 yaml 文件中固有语法，可以用来分割多个配置。</p>
+<p>同时在 <code>spec.template.spec</code> 属性下多了一个 <code>initContainers</code> 属性，它一般用来执行一些初始化操作的命令，运行完成后就退出，这里可以指定若干初始化容器，按照顺序指定，初始化容器都执行完成后，才会轮到应用容器启动。不过这里我们使用 initContainers 的一个重要原因，还在于我们需要修改操作系统内核参数，这在普通容器中是做不到的。也就是由于我们要修改内核参数，所以这个例子在 okteto 中无法运行。</p>
+<p>同时还新增了  <code>spec.template.spec.containers[0].env</code> 属性，用来指定容器启动时的环境变量。它比 Dockerfile 中的 ENV 指定定义的环境变量要高。</p>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>本文代码 <a target="_blank" rel="noopener" href="https://gitlab.com/yunnysunny/k8s-learn">https://gitlab.com/yunnysunny/k8s-learn</a></p>
+<p>本文中引用的部分镜像代码来源于 <a target="_blank" rel="noopener" href="https://github.com/yunnysunny/dockerfiles">https://github.com/yunnysunny/dockerfiles</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>yunnysunny
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="https://blog.whyun.com/posts/k8s-yaml/" title="k8s 部署文件简谈">https://blog.whyun.com/posts/k8s-yaml/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="/atom.xml">
+          <span class="icon">
+            <i class="fa fa-rss"></i>
+          </span>
+
+          <span class="label">RSS</span>
+        </a>
+      </div>
+
+      <div class="social-item">
+        <a target="_blank" class="social-link" href="https://www.zhihu.com/people/yunnysunny">
+          <span class="icon">
+            <i class="fab fa-zhihu"></i>
+          </span>
+
+          <span class="label">知乎</span>
+        </a>
+      </div>
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/micro-for-frontend/" rel="prev" title="微服务在前端的落地">
+                  <i class="fa fa-chevron-left"></i> 微服务在前端的落地
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    
+  
+  <div class="comments">
+    <script src="https://giscus.app/client.js"
+        data-repo="yunnysunny/yunnysunny.github.io" 
+        data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU4ODk4Ng==" 
+        data-category="Show and tell"
+        data-category-id="DIC_kwDOATopus4B_4of"
+        data-mapping="pathname" 
+        data-reactions-enabled="1" 
+        data-emit-metadata="1" 
+        data-theme="light"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async>
+    </script>
+  </div>
+  
+  
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yunnysunny</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+  <div class="addthis_inline_share_toolbox">
+    <script src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-614ace0bda715cc7" async="async"></script>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+</body>
+</html>

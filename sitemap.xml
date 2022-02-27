@@ -2,6 +2,51 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://blog.whyun.com/posts/dockerfile-tutorials/</loc>
+    
+    <lastmod>2022-02-27</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://blog.whyun.com/posts/go-private-package/</loc>
+    
+    <lastmod>2022-02-27</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://blog.whyun.com/posts/gracefully-restart-on-docker/</loc>
+    
+    <lastmod>2022-02-27</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://blog.whyun.com/posts/jni/</loc>
+    
+    <lastmod>2022-02-27</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://blog.whyun.com/posts/jni-ndk/</loc>
+    
+    <lastmod>2022-02-27</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://blog.whyun.com/posts/jni/use-thrid-part-library-in-ndk/</loc>
     
     <lastmod>2022-02-27</lastmod>
@@ -21,6 +66,15 @@
   
   <url>
     <loc>https://blog.whyun.com/posts/k8s-startup/</loc>
+    
+    <lastmod>2022-02-27</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://blog.whyun.com/posts/k8s-yaml/</loc>
     
     <lastmod>2022-02-27</lastmod>
     
@@ -201,51 +255,6 @@
   
   <url>
     <loc>https://blog.whyun.com/posts/docker-compose-tutorial/</loc>
-    
-    <lastmod>2022-02-27</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://blog.whyun.com/posts/dockerfile-tutorials/</loc>
-    
-    <lastmod>2022-02-27</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://blog.whyun.com/posts/go-private-package/</loc>
-    
-    <lastmod>2022-02-27</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://blog.whyun.com/posts/gracefully-restart-on-docker/</loc>
-    
-    <lastmod>2022-02-27</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://blog.whyun.com/posts/jni/</loc>
-    
-    <lastmod>2022-02-27</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://blog.whyun.com/posts/jni-ndk/</loc>
     
     <lastmod>2022-02-27</lastmod>
     

@@ -587,7 +587,7 @@ password 你内网 gitlab 的密码<span aria-hidden="true" class="line-numbers-
     insteadOf &#x3D; https:&#x2F;&#x2F;gitlab.your-company.com&#x2F;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p><strong>代码 1.2</strong></p>
-<p>如果你的 git 服务器使用的端口号并不是标准的 22 端口，你可能对于上述配置比较疑惑，为何配置中不需要加端口号呢，其实一个默认的 ssh 格式的 git 链接是这种格式的 <a href="mailto:&#x67;&#105;&#x74;&#64;&#x67;&#105;&#116;&#104;&#x75;&#98;&#46;&#99;&#x6f;&#x6d;">&#x67;&#105;&#x74;&#64;&#x67;&#105;&#116;&#104;&#x75;&#98;&#46;&#99;&#x6f;&#x6d;</a>:yunnysunny&#x2F;nodebook.git 这里拿 github 上的一个项目举例，其中 yunnysunny 为账号，nodebook 为项目名。假设 git 没有开启默认的端口 22 作为 ssh 访问端口，而是使用 1234 的话，我们的 ssh 地址应该是这样子：<a href="mailto:&#x67;&#x69;&#x74;&#x40;&#103;&#x69;&#x74;&#104;&#x75;&#98;&#46;&#x63;&#111;&#109;">&#x67;&#x69;&#x74;&#x40;&#103;&#x69;&#x74;&#104;&#x75;&#98;&#46;&#x63;&#111;&#109;</a>:1234&#x2F;yunnysunny&#x2F;nodebook.git，也就是说  <a href="mailto:&#x67;&#x69;&#116;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#x62;&#46;&#99;&#111;&#109;">&#x67;&#x69;&#116;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#x62;&#46;&#99;&#111;&#109;</a>: 是固定格式，那端口号的配置从哪里获取呢，答案是 .ssh 目录（此目录在 Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）下的 config 文件，如果你的 git 服务开启的是 1234 的，应该会有如下配置</p>
+<p>如果你的 git 服务器使用的端口号并不是标准的 22 端口，你可能对于上述配置比较疑惑，为何配置中不需要加端口号呢，其实一个默认的 ssh 格式的 git 链接是这种格式的 <a href="mailto:&#x67;&#x69;&#116;&#64;&#103;&#x69;&#116;&#104;&#117;&#98;&#46;&#99;&#111;&#109;">&#x67;&#x69;&#116;&#64;&#103;&#x69;&#116;&#104;&#117;&#98;&#46;&#99;&#111;&#109;</a>:yunnysunny&#x2F;nodebook.git 这里拿 github 上的一个项目举例，其中 yunnysunny 为账号，nodebook 为项目名。假设 git 没有开启默认的端口 22 作为 ssh 访问端口，而是使用 1234 的话，我们的 ssh 地址应该是这样子：<a href="mailto:&#103;&#x69;&#x74;&#64;&#x67;&#105;&#116;&#104;&#117;&#98;&#x2e;&#x63;&#111;&#x6d;">&#103;&#x69;&#x74;&#64;&#x67;&#105;&#116;&#104;&#117;&#98;&#x2e;&#x63;&#111;&#x6d;</a>:1234&#x2F;yunnysunny&#x2F;nodebook.git，也就是说  <a href="mailto:&#103;&#x69;&#x74;&#64;&#x67;&#x69;&#116;&#104;&#117;&#x62;&#46;&#x63;&#x6f;&#x6d;">&#103;&#x69;&#x74;&#64;&#x67;&#x69;&#116;&#104;&#117;&#x62;&#46;&#x63;&#x6f;&#x6d;</a>: 是固定格式，那端口号的配置从哪里获取呢，答案是 .ssh 目录（此目录在 Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）下的 config 文件，如果你的 git 服务开启的是 1234 的，应该会有如下配置</p>
 <pre class="line-numbers language-none"><code class="language-none">Host gitlab.your-company.com
   Hostname gitlab.your-company.com
   User 你内网 gitlab 的用户名
@@ -1343,6 +1343,224 @@ JNIEXPORT <span class="token keyword">void</span> JNICALL <span class="token fun
 <li>Cracking kubernetes node proxy (aka kube-proxy) <a href="https://arthurchiao.art/blog/cracking-k8s-node-proxy/">https://arthurchiao.art/blog/cracking-k8s-node-proxy/</a></li>
 <li>linux内核网络协议栈–linux bridge（十九）<a href="https://blog.csdn.net/qq_20817327/article/details/106843154">https://blog.csdn.net/qq_20817327/article/details/106843154</a></li>
 </ol>
+]]></content>
+      <categories>
+        <category>Cloud Native</category>
+        <category>K8s</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>k8s 部署文件简谈</title>
+    <url>/posts/k8s-yaml/</url>
+    <content><![CDATA[<p>在之前的教程 <a href="https://blog.whyun.com/posts/k8s-startup/">k8s 网络原理入门</a> 中，我们了解到更多的是 k8s 如何保证集群内部各个服务在网络上互通。而这篇教程主要是讲实操的内容，会讲如何在 k8s 内部部署服务。</p>
+<h2 id="1-基本操作"><a href="#1-基本操作" class="headerlink" title="1. 基本操作"></a>1. 基本操作</h2><h3 id="1-1-deployment"><a href="#1-1-deployment" class="headerlink" title="1.1 deployment"></a>1.1 deployment</h3><p>首先跟 docker 类似，k8s 的运行基本单元称之为 pod，我们通常会将一组 pod 作为一个部署单元部署到 k8s 集群中，这组 pod 里面的镜像等信息都是相同的。在 k8s 中，这种部署单元被称之为 <code>depolyment</code>，比如说下面这个配置文件就是一个 <code>depolyment</code>：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1	<span class="token comment">#与k8s集群版本有关，使用 kubectl api-versions 即可查看当前集群支持的版本</span>
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment	<span class="token comment">#该配置的类型，我们使用的是 Deployment</span>
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>	        <span class="token comment">#译名为元数据，即 Deployment 的一些基本属性和信息</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx<span class="token punctuation">-</span>deployment	<span class="token comment">#Deployment 的名称</span>
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span>	    <span class="token comment">#标签，可以灵活定位一个或多个资源，其中key和value均可自定义，可以定义多组，目前不需要理解</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx	<span class="token comment">#为该Deployment设置key为app，value为nginx的标签</span>
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>	        <span class="token comment">#这是关于该Deployment的描述，可以理解为你期待该Deployment在k8s中如何使用</span>
+  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">1</span>	<span class="token comment">#使用该Deployment创建一个应用程序实例</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>	    <span class="token comment">#标签选择器，与上面的标签共同作用，目前不需要理解</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span> <span class="token comment">#选择包含标签app:nginx的资源</span>
+      <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx
+  <span class="token key atrule">template</span><span class="token punctuation">:</span>	    <span class="token comment">#这是选择或创建的Pod的模板</span>
+    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>	<span class="token comment">#Pod的元数据</span>
+      <span class="token key atrule">labels</span><span class="token punctuation">:</span>	<span class="token comment">#Pod的标签，上面的selector即选择包含标签app:nginx的Pod</span>
+        <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span>	    <span class="token comment">#期望Pod实现的功能（即在pod中部署）</span>
+      <span class="token key atrule">containers</span><span class="token punctuation">:</span>	<span class="token comment">#生成container，与docker中的container是同一种</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx	<span class="token comment">#container的名称</span>
+        <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx<span class="token punctuation">:</span><span class="token number">1.21</span>	<span class="token comment">#使用镜像nginx:1.21创建container，该container默认80端口可访问</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.1.1 nginx-deployment.yaml</strong></p>
+<p>注意到上述代码中的 <code>spec.replicas</code> 属性为 <code>1</code>，这代表当前部署中仅包含一个 pod，使用 <code>kubectl apply -f nginx-deployment.yaml</code> 可以将当前 <code>deployment</code> 部署到集群。</p>
+<blockquote>
+<p>如果本地没有安装 k8s 环境，可以使用免费的 <a href="https://cloud.okteto.com/">okteto</a> 服务，具体参见教程第 2 节部分。</p>
+</blockquote>
+<p>部署完之后通过 <code>kubectl get pods</code> 命令，可以看到我们部署成功的 pod 信息：</p>
+<pre class="line-numbers language-none"><code class="language-none">NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-5c95dfd78d-27kmw   1&#x2F;1     Running   0          6s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>通过命令 <code>kubectl get deployments</code> 即可以 <code>deployment</code> 的维度查看到刚才部署的 <code>nginx-deployment</code> (这个名字由 <strong>代码 1.1.1</strong> 中的 <code>metadata.name</code> 指定)</p>
+<pre class="line-numbers language-none"><code class="language-none">NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   1&#x2F;1     1            1           44m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>如果你感觉当前只有一个 pod 不够使，那么可以通过简单的命令就可以进行扩容 <code>kubectl scale deployment nginx-deployment --replicas 2</code> 上述命令会将 <code>nginx-deployment</code> 的 pod 个数增长为 2。再次通过运行 <code>kubectl get pods</code> 命令，会发现新增了一个 pod：</p>
+<pre class="line-numbers language-none"><code class="language-none">NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-5c95dfd78d-27kmw   1&#x2F;1     Running   0          58m
+nginx-deployment-5c95dfd78d-z5qnh   1&#x2F;1     Running   0          3s<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="1-2-service"><a href="#1-2-service" class="headerlink" title="1.2 service"></a>1.2 service</h3><p>我们在上一节中已经将我们的应用部署到了 k8s 集群中，但是目前为止，部署的应用还是不能访问的，如果想让应用能够对外访问需要在 yaml 文件中定义 service。</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Service
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> nginx
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">80</span>
+    <span class="token comment">#nodePort: 31701</span>
+    <span class="token key atrule">protocol</span><span class="token punctuation">:</span> TCP
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> nginx<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.2.1 nginx-svc.yaml</strong></p>
+<p>注意 <strong>代码 1.2.1</strong> 中的 <code>spec.selector</code> 属性，他会筛选所有 pod 中 lable 名字为 <code>app</code> 且值为 <code>nginx</code> 的节点添加到当前 service 中。同时，根据字段 <code>metadata.name</code> 决定了当前 service 的名字为 <code>nginx</code>。</p>
+<p>运行命令 <code>kubectl apply -f nginx-svc.yaml</code> 可以在 k8s 集群中创建当前 service。</p>
+<p>同时留意到我们指定属性 <code>spec.ports[0].port</code> 的值为 <code>80</code>，这个属性将新建一个 <code>Cluster IP</code>，同时指定 <code>Cluster IP</code> 上开放 80 端口，作为集群内部机器的访问端口。如果想让集群外部访问，需要指定 <code>nodePort</code> 端口，这个端口会绑定到集群中所有宿主机节点的外网 IP 上（要想启用 nodePort 属性，需要指定 <code>spec.type</code> 属性为 <code>NodePort</code>，<code>sepc.type</code> 的默认值为 <code>ClusterIp</code>）。</p>
+<p>通过命令 <code>kubectl get svc nginx</code> 可以查看当前创建的 service 的简介：</p>
+<pre class="line-numbers language-none"><code class="language-none">NAME    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+nginx   ClusterIP   10.155.128.177   &lt;none&gt;        80&#x2F;TCP    19m<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>从上面输出可以得出 nginx 服务的 <code>Cluster IP 为 </code>10.155.128.177&#96;</p>
+<p>我们通过命令 <code>kubectl run curl --image=radial/busyboxplus:curl -i --tty</code> 可以创建一个带有 curl 命令支持的 pod，并进入其控制台。输入命令 <code>curl http://10.155.128.177:80</code> ，会得到如下输出：</p>
+<pre class="line-numbers language-html" data-language="html"><code class="language-html"><span class="token doctype"><span class="token punctuation">&lt;!</span><span class="token doctype-tag">DOCTYPE</span> <span class="token name">html</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>head</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>title</span><span class="token punctuation">></span></span>Welcome to nginx!<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>title</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>style</span><span class="token punctuation">></span></span><span class="token style"><span class="token language-css">
+<span class="token selector">html</span> <span class="token punctuation">&#123;</span> <span class="token property">color-scheme</span><span class="token punctuation">:</span> light dark<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+<span class="token selector">body</span> <span class="token punctuation">&#123;</span> <span class="token property">width</span><span class="token punctuation">:</span> 35em<span class="token punctuation">;</span> <span class="token property">margin</span><span class="token punctuation">:</span> 0 auto<span class="token punctuation">;</span>
+<span class="token property">font-family</span><span class="token punctuation">:</span> Tahoma<span class="token punctuation">,</span> Verdana<span class="token punctuation">,</span> Arial<span class="token punctuation">,</span> sans-serif<span class="token punctuation">;</span> <span class="token punctuation">&#125;</span>
+</span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>style</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>head</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>body</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>h1</span><span class="token punctuation">></span></span>Welcome to nginx!<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>h1</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">></span></span>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">></span></span>For online documentation and support please refer to
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>http://nginx.org/<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>nginx.org<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>a</span><span class="token punctuation">></span></span>.<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>br</span><span class="token punctuation">/></span></span>
+Commercial support is available at
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>a</span> <span class="token attr-name">href</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>http://nginx.com/<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>nginx.com<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>a</span><span class="token punctuation">></span></span>.<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>p</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>em</span><span class="token punctuation">></span></span>Thank you for using nginx.<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>em</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>p</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>body</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>代表我们的服务没有问题。</p>
+<h3 id="1-3-负载均衡"><a href="#1-3-负载均衡" class="headerlink" title="1.3 负载均衡"></a>1.3 负载均衡</h3><p>在之前教程 <a href="https://blog.whyun.com/posts/k8s-startup/">k8s 网络原理入门</a> 中讲到 k8s 中通过 <code>虚 IP</code>，也就是 <code>Cluster IP</code> 来做请求入口 IP，操作系统内核根据  <code>虚 IP</code> 和 请求端口做 NAT 转发。但是这个端口转发还有一个特性，一旦 TCP 报文被转发过一次后，操作系统就记住了当前的请求者的源 IP、源端口号、目的 IP、目的端口号的映射关系，下次报文再过来的时候，就不用再做转发了。这本来是一个利于性能的方案，但是同样会导致新的问题。</p>
+<p>如果当前的请求是 http 1.0 协议或者没有启动 keep alive 的 1.1 协议，那么请求在发送完一次后，句柄立马就销毁了，下次请求会重新创建新的句柄，操作系统内核会重新走一遍端口转发，由于操作系统做 NAT 的时候，是随机选择一个 pod IP，所以从客户端的角度来说，负载可以认为均衡的。</p>
+<p>不过如果我们的请求是长连接（比如普通 TCP 请求、启用了 keep alive 的 http 1.1、http 2.0 等创建的连接），那么请求者在发送完一次请求后，句柄还是复用的。这时候如果请求者的数目低于服务者的数目，就会导致一个很尴尬的事情，有些服务器可能不会得到请求者的光临而处于饥饿状态。</p>
+<p>k8s 本身没有提供负载均衡解决方案，虽然它预留了 <code>LoadBalancer</code> 类型的 service 定义（也就是将 <strong>代码 1.2.1</strong> 中的 <code>spec.type</code> 改为 <code>LoadBalancer</code> ），但是官方却没有给出具体实现方式。也就是说你自建一个 k8s 集群的话，是没有负载均衡功能的，不过你使用 阿里云、谷歌云之类的云服务倒是都实现 <code>LoadBalancer</code>，不过那就需要牵扯到付费服务了。</p>
+<p>业内对于这个问题的解决方案大体上分为一下几个个思路，一个是使用类似 Istio 、Linkerd 这些 Service Mesh 解决方案，不但给你解决负载均衡问题，还令带给你解决流量管控等问题，不过这种全家桶类型的解决方案对于原有架构来说是一个重大的升级。如果想追求，还可以使用一些第三方的反代工具，比如说 Envoy 。还有一种方案是直接对接 k8s 的 API，在客户端做服务发现和负载均衡，彻底做到自研。当然如果你想脱离 k8s 自身的服务转而使用第三方的服务发现组件，比如说 consul，也算是一种选择，主要看当前项目组在哪方面技术积累更深厚了。</p>
+<h2 id="2-免费-k8s-资源"><a href="#2-免费-k8s-资源" class="headerlink" title="2. 免费 k8s 资源"></a>2. 免费 k8s 资源</h2><p>由于 k8s 环境搭建需要一定的时间，且需要耗费一定的硬件资源，如果手动暂时没有 k8s 环境的话，可能连第 1 小节练习 k8s 命令的机会都没有。不过，不要慌，<a href="https://cloud.okteto.com/">https://cloud.okteto.com/</a> 上可以申请免费的 k8s 资源，只需要用 github 账户登录即可。它最多可以创建 10 个 pod，一般练习使用够用了。不过毕竟是免费的，有一些功能是不能用的，比如说创建 NodePort 类型的 service、修改操作系统内核参数等若干影响到宿主机的功能是不给提供的。</p>
+<p>接着点击左侧 <strong>Settings</strong> 菜单，然后点击按钮 <strong>Download Config File</strong>，然后会弹出设置 <code>KUBECONFIG</code> 环境变量的提示框，将其命令拷贝到终端执行，则当前终端中就能直接找到 k8s 的配置文件，否则的话你执行 kubectl 命令的时候，都需要添加 <code>--kubeconfig</code> 的参数。</p>
+<p><img src="/images/image-20220227203214263.png" alt="image-20220227203214263"></p>
+<p><strong>图 2.1</strong></p>
+<img src="/images/image-20220227203127277.png" alt="image-20220227203127277" style="zoom: 80%;" />
+
+<p><strong>图 2.2</strong></p>
+<h2 id="3-实践与扩展"><a href="#3-实践与扩展" class="headerlink" title="3. 实践与扩展"></a>3. 实践与扩展</h2><p>由于 k8s 可以方便的做扩容，所以在执行压测程序时特别方便，这里给出一个在 k8s 中做打压的实例。</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1 <span class="token comment">#与k8s集群版本有关，使用 kubectl api-versions 即可查看当前集群支持的版本</span>
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment <span class="token comment">#该配置的类型，我们使用的是 Deployment</span>
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span> <span class="token comment">#译名为元数据，即 Deployment 的一些基本属性和信息</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> hello<span class="token punctuation">-</span>deployment <span class="token comment">#Deployment 的名称</span>
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span> <span class="token comment">#标签，可以灵活定位一个或多个资源，其中key和value均可自定义，可以定义多组，目前不需要理解</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> hello <span class="token comment">#为该Deployment设置key为app，value为nginx的标签</span>
+<span class="token key atrule">spec</span><span class="token punctuation">:</span> <span class="token comment">#这是关于该Deployment的描述，可以理解为你期待该Deployment在k8s中如何使用</span>
+  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">1</span> <span class="token comment">#使用该Deployment创建一个应用程序实例</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span> <span class="token comment">#标签选择器，与上面的标签共同作用，目前不需要理解</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span> <span class="token comment">#选择包含标签app:nginx的资源</span>
+      <span class="token key atrule">app</span><span class="token punctuation">:</span> hello
+  <span class="token key atrule">template</span><span class="token punctuation">:</span> <span class="token comment">#这是选择或创建的Pod的模板</span>
+    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> hello<span class="token punctuation">-</span>app
+      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+        <span class="token key atrule">app</span><span class="token punctuation">:</span> hello
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
+      <span class="token key atrule">initContainers</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">image</span><span class="token punctuation">:</span> busybox
+        <span class="token key atrule">command</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> sh
+        <span class="token punctuation">-</span> <span class="token punctuation">-</span>c
+        <span class="token punctuation">-</span> <span class="token punctuation">|</span><span class="token scalar string">
+          sysctl -w net.core.somaxconn=10240
+          sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+          sysctl -w net.ipv4.tcp_tw_reuse=1
+          sysctl -w fs.file-max=6048576</span>
+        <span class="token key atrule">name</span><span class="token punctuation">:</span> setsysctl
+        <span class="token key atrule">securityContext</span><span class="token punctuation">:</span>
+          <span class="token key atrule">privileged</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> hello<span class="token punctuation">-</span>app
+          <span class="token key atrule">image</span><span class="token punctuation">:</span> registry.cn<span class="token punctuation">-</span>hangzhou.aliyuncs.com/whyun/base<span class="token punctuation">:</span>hello<span class="token punctuation">-</span>latest
+          <span class="token key atrule">imagePullPolicy</span><span class="token punctuation">:</span> Always
+          <span class="token key atrule">resources</span><span class="token punctuation">:</span>
+            <span class="token key atrule">requests</span><span class="token punctuation">:</span>
+              <span class="token key atrule">cpu</span><span class="token punctuation">:</span> 2000m
+              <span class="token key atrule">memory</span><span class="token punctuation">:</span> 2Gi
+            <span class="token key atrule">limits</span><span class="token punctuation">:</span>
+              <span class="token key atrule">cpu</span><span class="token punctuation">:</span> 4000m
+              <span class="token key atrule">memory</span><span class="token punctuation">:</span> 4Gi
+          <span class="token key atrule">env</span><span class="token punctuation">:</span>
+            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> test
+              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">"1"</span>
+
+
+<span class="token punctuation">---</span>
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Service
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> hello<span class="token punctuation">-</span>service
+<span class="token key atrule">spec</span><span class="token punctuation">:</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> hello
+  <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+    <span class="token punctuation">-</span> <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">8000</span> <span class="token comment"># Default port for image</span>
+
+
+<span class="token punctuation">---</span>
+<span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1 <span class="token comment">#与k8s集群版本有关，使用 kubectl api-versions 即可查看当前集群支持的版本</span>
+<span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment <span class="token comment">#该配置的类型，我们使用的是 Deployment</span>
+<span class="token key atrule">metadata</span><span class="token punctuation">:</span> <span class="token comment">#译名为元数据，即 Deployment 的一些基本属性和信息</span>
+  <span class="token key atrule">name</span><span class="token punctuation">:</span> bench<span class="token punctuation">-</span>deployment <span class="token comment">#Deployment 的名称</span>
+  <span class="token key atrule">labels</span><span class="token punctuation">:</span> <span class="token comment">#标签，可以灵活定位一个或多个资源，其中key和value均可自定义，可以定义多组，目前不需要理解</span>
+    <span class="token key atrule">app</span><span class="token punctuation">:</span> bench <span class="token comment">#为该Deployment设置key为app，value为nginx的标签</span>
+<span class="token key atrule">spec</span><span class="token punctuation">:</span> <span class="token comment">#这是关于该Deployment的描述，可以理解为你期待该Deployment在k8s中如何使用</span>
+  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">6</span> <span class="token comment">#使用该Deployment创建一个应用程序实例</span>
+  <span class="token key atrule">selector</span><span class="token punctuation">:</span> <span class="token comment">#标签选择器，与上面的标签共同作用，目前不需要理解</span>
+    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span> <span class="token comment">#选择包含标签app:nginx的资源</span>
+      <span class="token key atrule">app</span><span class="token punctuation">:</span> bench
+  <span class="token key atrule">template</span><span class="token punctuation">:</span> <span class="token comment">#这是选择或创建的Pod的模板</span>
+    <span class="token key atrule">metadata</span><span class="token punctuation">:</span>
+      <span class="token key atrule">name</span><span class="token punctuation">:</span> bench<span class="token punctuation">-</span>node
+      <span class="token key atrule">labels</span><span class="token punctuation">:</span>
+        <span class="token key atrule">app</span><span class="token punctuation">:</span> bench
+    <span class="token key atrule">spec</span><span class="token punctuation">:</span>
+      <span class="token key atrule">initContainers</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token key atrule">image</span><span class="token punctuation">:</span> busybox
+        <span class="token key atrule">command</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> sh
+        <span class="token punctuation">-</span> <span class="token punctuation">-</span>c
+        <span class="token punctuation">-</span> <span class="token punctuation">|</span><span class="token scalar string">
+          sysctl -w net.core.somaxconn=10240
+          sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+          sysctl -w net.ipv4.tcp_tw_reuse=1
+          sysctl -w fs.file-max=1048576</span>
+        <span class="token key atrule">name</span><span class="token punctuation">:</span> setsysctl
+        <span class="token key atrule">securityContext</span><span class="token punctuation">:</span>
+          <span class="token key atrule">privileged</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
+      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> bench<span class="token punctuation">-</span>node
+          <span class="token key atrule">image</span><span class="token punctuation">:</span> registry.cn<span class="token punctuation">-</span>hangzhou.aliyuncs.com/whyun/base<span class="token punctuation">:</span>node<span class="token punctuation">-</span>bench<span class="token punctuation">-</span>0.2.0
+          <span class="token key atrule">env</span><span class="token punctuation">:</span>
+            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> REQ_URL
+              <span class="token key atrule">value</span><span class="token punctuation">:</span> http<span class="token punctuation">:</span>//hello<span class="token punctuation">-</span>service<span class="token punctuation">:</span>8000/
+            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> REQ_INTERVAL_MS
+              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">"5"</span>
+            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> REQ_TIMEOUT_MS
+              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">"20"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 3.1</strong></p>
+<p>从肉眼上看，明显看的出来上述代码比较长，而且中间会有 <code>---</code> 分隔符，这是 yaml 文件中固有语法，可以用来分割多个配置。</p>
+<p>同时在 <code>spec.template.spec</code> 属性下多了一个 <code>initContainers</code> 属性，它一般用来执行一些初始化操作的命令，运行完成后就退出，这里可以指定若干初始化容器，按照顺序指定，初始化容器都执行完成后，才会轮到应用容器启动。不过这里我们使用 initContainers 的一个重要原因，还在于我们需要修改操作系统内核参数，这在普通容器中是做不到的。也就是由于我们要修改内核参数，所以这个例子在 okteto 中无法运行。</p>
+<p>同时还新增了  <code>spec.template.spec.containers[0].env</code> 属性，用来指定容器启动时的环境变量。它比 Dockerfile 中的 ENV 指定定义的环境变量要高。</p>
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>本文代码 <a href="https://gitlab.com/yunnysunny/k8s-learn">https://gitlab.com/yunnysunny/k8s-learn</a></p>
+<p>本文中引用的部分镜像代码来源于 <a href="https://github.com/yunnysunny/dockerfiles">https://github.com/yunnysunny/dockerfiles</a></p>
 ]]></content>
       <categories>
         <category>Cloud Native</category>
