@@ -218,6 +218,59 @@ c85a7f7e1a68   none                   null      local<span aria-hidden="true" cl
 
 <p>当然你也可以在 docker-compose.yml 文件中手动指定 network 名称，假设 docker-compose 中有三个容器，可以把 容器 1 和容器 2 使用一个网络，容器 2 和容器 3 使用一个网络，容器 1 和 容器 3 之间网络不能直接访问。上述用法在实践中用的比较少，这里省略不讲。如果读者比较关心，可以参考官方文档的<a href="https://docs.docker.com/compose/networking/#specify-custom-networks">例子</a>。</p>
 <p>由于大家的使用习惯是在 docker-compose.yml 文件中直接使用 <code>docker-compose up -d</code> 来拉起一组 docker 容器，这时候一定要留意你不同 yml 文件所在的文件名要做成不一样的，否则它在创建 network 名称的时候会冲突。</p>
+<h3 id="2-3-举个例子"><a href="#2-3-举个例子" class="headerlink" title="2.3 举个例子"></a>2.3 举个例子</h3><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">version</span><span class="token punctuation">:</span> <span class="token string">"3"</span>
+<span class="token key atrule">services</span><span class="token punctuation">:</span>
+  <span class="token key atrule">elasticsearch</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> <span class="token string">'elastic/elasticsearch:8.1.0'</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> always
+    <span class="token key atrule">container_name</span><span class="token punctuation">:</span> elasticsearch
+    <span class="token key atrule">ulimits</span><span class="token punctuation">:</span>
+      <span class="token key atrule">nofile</span><span class="token punctuation">:</span> <span class="token number">65536</span>
+      <span class="token key atrule">memlock</span><span class="token punctuation">:</span> <span class="token number">-1</span>
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">'9200:9200'</span>
+      <span class="token punctuation">-</span> <span class="token string">'9300:9300'</span>
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> ES_JAVA_OPTS=<span class="token punctuation">-</span>Xms1g <span class="token punctuation">-</span>Xmx1g
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> ./elasticsearch.yml<span class="token punctuation">:</span>/usr/share/elasticsearch/config/elasticsearch.yml
+      <span class="token punctuation">-</span> ./data<span class="token punctuation">:</span>/usr/share/elasticsearch/data
+      <span class="token punctuation">-</span> ./log<span class="token punctuation">:</span>/usr/share/elasticsearch/logs
+
+  <span class="token key atrule">logstash</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> <span class="token string">'elastic/logstash:8.1.0'</span>
+    <span class="token key atrule">user</span><span class="token punctuation">:</span> root
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> always
+    <span class="token key atrule">container_name</span><span class="token punctuation">:</span> logstash
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">'5000:5000'</span>
+      <span class="token punctuation">-</span> <span class="token string">'5050:5050/udp'</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span> 
+      <span class="token punctuation">-</span> ./logstash.yml<span class="token punctuation">:</span>/usr/share/logstash/config/logstash.yml<span class="token punctuation">:</span>ro
+      <span class="token punctuation">-</span> ./log4j2.properties<span class="token punctuation">:</span>/usr/share/logstash/config/log4j2.properties<span class="token punctuation">:</span>ro
+      <span class="token punctuation">-</span> ./pipeline<span class="token punctuation">:</span>/usr/share/logstash/pipeline
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> LS_JAVA_OPTS=<span class="token punctuation">-</span>Xms1024m <span class="token punctuation">-</span>Xmx1024m <span class="token punctuation">-</span><span class="token punctuation">-</span>illegal<span class="token punctuation">-</span>access=warn
+      <span class="token punctuation">-</span> JRUBY_OPTS=<span class="token punctuation">-</span>J<span class="token punctuation">-</span><span class="token punctuation">-</span>illegal<span class="token punctuation">-</span>access=warn
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> elasticsearch
+  <span class="token key atrule">kibana</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> elastic/kibana<span class="token punctuation">:</span>8.1.0
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> always
+    <span class="token key atrule">container_name</span><span class="token punctuation">:</span> kibana
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> 5601<span class="token punctuation">:</span><span class="token number">5601</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span> 
+      <span class="token punctuation">-</span> ./kibana.yml<span class="token punctuation">:</span>/usr/share/kibana/config/kibana.yml<span class="token punctuation">:</span>ro
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> elasticsearch
+<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 2.3.1</strong></p>
+<p>注意由于 elasticsearch 镜像中要求不能使用 root 用户启动，其内部使用 elasticsearch 用户启动，且 elasticsearch 的 uid 和 gid 的值都是 <code>1000</code>，所以要提前将挂载的 <code>data</code> <code>log</code> 目录都修改一下所属用户，即运行 <code>chown -R 1000:1000 data log</code>。 </p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://www.cnblogs.com/woshimrf/p/understand-docker-uid.html">docker挂载volume的用户权限问题,理解docker容器的uid</a></li>
+</ul>
 <blockquote>
 <p>本教程源代码项目：<a href="https://gitlab.com/yunnysunny/docker-compose-tutorial">https://gitlab.com/yunnysunny/docker-compose-tutorial</a></p>
 </blockquote>
@@ -587,7 +640,7 @@ password 你内网 gitlab 的密码<span aria-hidden="true" class="line-numbers-
     insteadOf &#x3D; https:&#x2F;&#x2F;gitlab.your-company.com&#x2F;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p><strong>代码 1.2</strong></p>
-<p>如果你的 git 服务器使用的端口号并不是标准的 22 端口，你可能对于上述配置比较疑惑，为何配置中不需要加端口号呢，其实一个默认的 ssh 格式的 git 链接是这种格式的 <a href="mailto:&#103;&#x69;&#x74;&#x40;&#x67;&#105;&#x74;&#104;&#x75;&#98;&#46;&#x63;&#x6f;&#x6d;">&#103;&#x69;&#x74;&#x40;&#x67;&#105;&#x74;&#104;&#x75;&#98;&#46;&#x63;&#x6f;&#x6d;</a>:yunnysunny&#x2F;nodebook.git 这里拿 github 上的一个项目举例，其中 yunnysunny 为账号，nodebook 为项目名。假设 git 没有开启默认的端口 22 作为 ssh 访问端口，而是使用 1234 的话，我们的 ssh 地址应该是这样子：<a href="mailto:&#x67;&#x69;&#x74;&#x40;&#103;&#x69;&#x74;&#104;&#x75;&#x62;&#x2e;&#x63;&#x6f;&#x6d;">&#x67;&#x69;&#x74;&#x40;&#103;&#x69;&#x74;&#104;&#x75;&#x62;&#x2e;&#x63;&#x6f;&#x6d;</a>:1234&#x2F;yunnysunny&#x2F;nodebook.git，也就是说  <a href="mailto:&#x67;&#x69;&#116;&#x40;&#103;&#x69;&#x74;&#x68;&#x75;&#98;&#46;&#x63;&#111;&#109;">&#x67;&#x69;&#116;&#x40;&#103;&#x69;&#x74;&#x68;&#x75;&#98;&#46;&#x63;&#111;&#109;</a>: 是固定格式，那端口号的配置从哪里获取呢，答案是 .ssh 目录（此目录在 Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）下的 config 文件，如果你的 git 服务开启的是 1234 的，应该会有如下配置</p>
+<p>如果你的 git 服务器使用的端口号并不是标准的 22 端口，你可能对于上述配置比较疑惑，为何配置中不需要加端口号呢，其实一个默认的 ssh 格式的 git 链接是这种格式的 <a href="mailto:&#x67;&#x69;&#x74;&#x40;&#x67;&#105;&#x74;&#104;&#117;&#98;&#x2e;&#99;&#x6f;&#x6d;">&#x67;&#x69;&#x74;&#x40;&#x67;&#105;&#x74;&#104;&#117;&#98;&#x2e;&#99;&#x6f;&#x6d;</a>:yunnysunny&#x2F;nodebook.git 这里拿 github 上的一个项目举例，其中 yunnysunny 为账号，nodebook 为项目名。假设 git 没有开启默认的端口 22 作为 ssh 访问端口，而是使用 1234 的话，我们的 ssh 地址应该是这样子：<a href="mailto:&#103;&#x69;&#x74;&#64;&#x67;&#x69;&#116;&#x68;&#117;&#x62;&#46;&#99;&#x6f;&#x6d;">&#103;&#x69;&#x74;&#64;&#x67;&#x69;&#116;&#x68;&#117;&#x62;&#46;&#99;&#x6f;&#x6d;</a>:1234&#x2F;yunnysunny&#x2F;nodebook.git，也就是说  <a href="mailto:&#103;&#105;&#x74;&#x40;&#x67;&#105;&#116;&#x68;&#117;&#x62;&#46;&#x63;&#111;&#109;">&#103;&#105;&#x74;&#x40;&#x67;&#105;&#116;&#x68;&#117;&#x62;&#46;&#x63;&#111;&#109;</a>: 是固定格式，那端口号的配置从哪里获取呢，答案是 .ssh 目录（此目录在 Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）下的 config 文件，如果你的 git 服务开启的是 1234 的，应该会有如下配置</p>
 <pre class="line-numbers language-none"><code class="language-none">Host gitlab.your-company.com
   Hostname gitlab.your-company.com
   User 你内网 gitlab 的用户名
@@ -692,6 +745,107 @@ replace gitlab.your-company.com&#x2F;your-account&#x2F;your-mod-name v0.0.0 &#x3
 ]]></content>
       <categories>
         <category>Golang</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>JNI系列教程一——入门</title>
+    <url>/posts/jni/</url>
+    <content><![CDATA[<h2 id="1-1-背景"><a href="#1-1-背景" class="headerlink" title="1.1 背景"></a>1.1 背景</h2><p>和很多语言类似，java也提供了调用原生代码的功能，这门技术叫做JNI。有了JNI，可以在付出更小的代价的前提下，复用大量已经写好的C&#x2F;C++库，当然一般用JNI的目的还是由于java在处理<strong>计算密集型</strong>（比如说非对称运算）的操作时有时会力不从心。<br>从结构上来看JNI是一个中间层，具体的调用步骤是这个样子的：java-&gt;JNI-&gt;C&#x2F;C++。  </p>
+<blockquote>
+<p>本文源地址<a href="http://blog.whyun.com/posts/jni">http://blog.whyun.com/posts/jni</a> 转载请注明出处</p>
+</blockquote>
+<h2 id="1-2-准备活动"><a href="#1-2-准备活动" class="headerlink" title="1.2 准备活动"></a>1.2 准备活动</h2><h3 id="1-2-1-编写java代码"><a href="#1-2-1-编写java代码" class="headerlink" title="1.2.1 编写java代码"></a>1.2.1 编写java代码</h3><pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">com<span class="token punctuation">.</span>whyun<span class="token punctuation">.</span>jni<span class="token punctuation">.</span>chapter1</span><span class="token punctuation">;</span>
+
+<span class="token comment">/**
+ * User: sunny
+ * Date: 15-10-28
+ * Time: 下午12:29
+ */</span>
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">FirstDemo</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">static</span><span class="token punctuation">&#123;</span>
+        <span class="token class-name">System</span><span class="token punctuation">.</span><span class="token function">loadLibrary</span><span class="token punctuation">(</span><span class="token string">"firstdemo"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">int</span> <span class="token function">getNum</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token class-name">String</span> <span class="token function">getString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token class-name">String</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>args<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token class-name">FirstDemo</span> demo <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">FirstDemo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token class-name">System</span><span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"num:"</span><span class="token operator">+</span>demo<span class="token punctuation">.</span><span class="token function">getNum</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">+</span><span class="token string">",string:"</span><span class="token operator">+</span>demo<span class="token punctuation">.</span><span class="token function">getString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>代码 1.2.1.1</strong><br>注意到我们在类<code>FirstDemo</code>中定义了两个成员函数都没有函数体，且都加了关键字<code>native</code>声明，如果函数写成这样，则代表当前函数需要调用底层C&#x2F;C++代码。注意<code>System.loadLibrary</code>这句话，java中使用这个函数来加载动态库，windows平台下运行此段代码要保证<code>firstdemo.dll</code>存在环境变量<code>%path%</code>中，linux平台下要保证<code>libfirstdemo.so</code>存在环境变量<code>$LD_LIBRARY_PATH</code>中。</p>
+<blockquote>
+<p>其实java在<code>loadLibrary</code>的时候，是读取的系统变量<code>java.library.path</code>来搜寻动态库位置的，你可以用<code>System.getProperty(&quot;java.library.path&quot;)</code>来输出这个变量的内容。只不过在windows中会把环境变量<code>%path%</code>的内容加入到这个变量中，在linux中会把环境变量<code>$LD_LIBRARY_PATH</code>加入到这个变量中。在我的一台linux上打印<code>java.library.path</code>，会输入如下内容：<br><code>/usr/jdk1.6.0_45/jre/lib/i386/server:/usr/jdk1.6.0_45/jre/lib/i386: /usr/jdk1.6.0_45/jre/../lib/i386: /home/username/lib::/usr/java/packages/lib/i386 :/lib:/usr/lib</code><br>其中<code>/home/username/lib:</code>是从环境变量<code>$LD_LIBRARY_PATH</code>读取的。不推荐将生成的动态库放置到系统目录中，首先是不一定有管理员权限，其次会导致系统库目录下的文件过多，不易管理。</p>
+</blockquote>
+<h3 id="1-2-2-生成头文件"><a href="#1-2-2-生成头文件" class="headerlink" title="1.2.2 生成头文件"></a>1.2.2 生成头文件</h3><p>本文用到的项目源码在文后给出，项目的目录结构如下：<br><img src="http://blog.whyun.com/images/chapter1_dir.jpg" alt="项目目录结构"><br><strong>图1.2.2 项目目录结构</strong><br>其中目录<code>out/production</code>为我们的class文件生成的目录，在命令行下进入该目录，运行如下命令<code>javah com.whyun.jni.chapter1.FirstDemo</code>，运行成功之后则在运行命令行的目录下生成文件<code>com_whyun_jni_chapter1_FirstDemo.h</code>,用文本编辑器打开这个头文件，会显示如下内容：</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">/* DO NOT EDIT THIS FILE - it is machine generated */</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;jni.h></span></span>
+<span class="token comment">/* Header for class com_whyun_jni_chapter1_FirstDemo */</span>
+
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifndef</span> <span class="token expression">_Included_com_whyun_jni_chapter1_FirstDemo</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">_Included_com_whyun_jni_chapter1_FirstDemo</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifdef</span> <span class="token expression">__cplusplus</span></span>
+<span class="token keyword">extern</span> <span class="token string">"C"</span> <span class="token punctuation">&#123;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span></span>
+<span class="token comment">/*
+ * Class:     com_whyun_jni_chapter1_FirstDemo
+ * Method:    getNum
+ * Signature: ()I
+ */</span>
+JNIEXPORT jint JNICALL <span class="token function">Java_com_whyun_jni_chapter1_FirstDemo_getNum</span>
+  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span><span class="token punctuation">,</span> jobject<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment">/*
+ * Class:     com_whyun_jni_chapter1_FirstDemo
+ * Method:    getString
+ * Signature: ()Ljava/lang/String;
+ */</span>
+JNIEXPORT jstring JNICALL <span class="token function">Java_com_whyun_jni_chapter1_FirstDemo_getString</span>
+  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span><span class="token punctuation">,</span> jobject<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifdef</span> <span class="token expression">__cplusplus</span></span>
+<span class="token punctuation">&#125;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>代码 1.2.1</strong></p>
+<h2 id="1-3-编译运行"><a href="#1-3-编译运行" class="headerlink" title="1.3 编译运行"></a>1.3 编译运行</h2><p>为了简化在windows和linux下配置编译步骤，我们先在操作系统中配置两个环境变量，在windows上将<code>JAVA_HOME</code>配置为JDK的安装路径，很多情况下这个环境变量在配置JDK编译环境的时候已经配置过，可以通过<code>echo %JAVA_HOME%</code>的输出来判断之前是否已经配置过；同理我们在linux上也配置环境变量<code>JAVA_HOME</code>(通过运行<code>echo $JAVA_HOME</code>来检测是否存在)。同时我们在windows上将目录<code>d:\lib</code>加入环境变量<code>PATH</code>中，在linux上将<code>/opt/lib</code>加入环境变量<code>LD_LIBRARY_PATH</code>中。</p>
+<h3 id="1-3-1-windows编译环境配置"><a href="#1-3-1-windows编译环境配置" class="headerlink" title="1.3.1 windows编译环境配置"></a>1.3.1 windows编译环境配置</h3><p>windows下需要安装visual studio（简称vs）环境来完成C&#x2F;C++编译，vs 有professional、ultimate和Express三个版本，前两者收费，我们使用免费的Express就够用了。我电脑上装的是vs express for desktop版本。<br>打开vs，新建项目，选择Visual C++，然后选择Empty Project，输入项目名<code>firstdemo</code>,点击确定。<br>接着设置项目属性，右击项目，然后选择properties，在Configuration Properties-&gt;General-&gt;Project Defaults-&gt;Configuration Type中，选择<code>Dynamic Library (.dll)</code>。然后在Configuration Properties-&gt;VC++ Directories-&gt;General-&gt;Include Directories中添加两个路径：<code>$(JAVA_HOME)\include</code>和<code>$(JAVA_HOME)\include\win32</code>。<br>最后编写c代码，在vs中新建源代码的时候，默认是cpp后缀，我们这里建一个c后缀的文件，因为我的编写习惯是c语法。</p>
+<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"com_whyun_jni_chapter1_FirstDemo.h"</span></span>
+
+<span class="token comment">/*
+ * Class:     com_whyun_jni_chapter1_FirstDemo
+ * Method:    getNum
+ * Signature: ()I
+ */</span>
+JNIEXPORT jint JNICALL <span class="token function">Java_com_whyun_jni_chapter1_FirstDemo_getNum</span>
+  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span>env<span class="token punctuation">,</span> jobject obj<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	  <span class="token keyword">return</span> <span class="token punctuation">(</span>jint<span class="token punctuation">)</span><span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token comment">/*
+ * Class:     com_whyun_jni_chapter1_FirstDemo
+ * Method:    getString
+ * Signature: ()Ljava/lang/String;
+ */</span>
+JNIEXPORT jstring JNICALL <span class="token function">Java_com_whyun_jni_chapter1_FirstDemo_getString</span>
+  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span>env<span class="token punctuation">,</span> jobject ob<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	  jstring jinfo			<span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">NewStringUTF</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span><span class="token string">"the first demo."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+	  <span class="token keyword">return</span> jinfo<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>代码1.3.1 firstdemo.c</strong><br>注意我们引用了之前的<code>com_whyun_jni_chapter1_FirstDemo.h</code>，我们把它放到<code>firstdemo.c</code>同一级目录下了。<br>接着运行编译，产生dll文件，默认情况下会在项目目录Debug文件夹下产生firstdeom.dll，你可以把这个文件夹添加到环境变量PATH中去，也可以写脚本在编译完成之后将dll拷贝到电脑的任何一个PATH路径下，在Configuration Properties-&gt;Build Events-&gt;Post-Build Event-&gt;Command Line中写入如下命令：<code>copy &quot;$(TargetDir)$(TargetName).dll&quot; d:\lib\$(TargetName).dll</code>。</p>
+<h3 id="1-3-2-linux编译"><a href="#1-3-2-linux编译" class="headerlink" title="1.3.2 linux编译"></a>1.3.2 linux编译</h3><p>在linux下使用命令行GCC即可，将<code>com_whyun_jni_chapter1_FirstDemo.h</code>和<code>firstdemo.c</code>放到同一个目录下，然后运行脚本</p>
+<pre class="line-numbers language-none"><code class="language-none">saveDir&#x3D;&#x2F;opt&#x2F;lib
+gcc -g -Wall -I $JAVA_HOME&#x2F;include&#x2F; -I $JAVA_HOME&#x2F;include&#x2F;linux -fPIC -shared -o $saveDir&#x2F;libfirstdemo.so firstdemo.c<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<h3 id="1-3-3-运行"><a href="#1-3-3-运行" class="headerlink" title="1.3.3 运行"></a>1.3.3 运行</h3><p>运行java代码，最终输出</p>
+<pre><code>num:1,string:the first demo.
+</code></pre>
+<blockquote>
+<p>本文用到的源代码可以从<a href="http://git.oschina.net/yunnysunny/jni">http://git.oschina.net/yunnysunny/jni</a> 获得到</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>Java</category>
+        <category>JNI</category>
       </categories>
   </entry>
   <entry>
@@ -888,107 +1042,6 @@ ENTRYPOINT [ &quot;&#x2F;entrypoint.sh&quot; ]<span aria-hidden="true" class="li
       <categories>
         <category>Cloud Native</category>
         <category>Docker</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>JNI系列教程一——入门</title>
-    <url>/posts/jni/</url>
-    <content><![CDATA[<h2 id="1-1-背景"><a href="#1-1-背景" class="headerlink" title="1.1 背景"></a>1.1 背景</h2><p>和很多语言类似，java也提供了调用原生代码的功能，这门技术叫做JNI。有了JNI，可以在付出更小的代价的前提下，复用大量已经写好的C&#x2F;C++库，当然一般用JNI的目的还是由于java在处理<strong>计算密集型</strong>（比如说非对称运算）的操作时有时会力不从心。<br>从结构上来看JNI是一个中间层，具体的调用步骤是这个样子的：java-&gt;JNI-&gt;C&#x2F;C++。  </p>
-<blockquote>
-<p>本文源地址<a href="http://blog.whyun.com/posts/jni">http://blog.whyun.com/posts/jni</a> 转载请注明出处</p>
-</blockquote>
-<h2 id="1-2-准备活动"><a href="#1-2-准备活动" class="headerlink" title="1.2 准备活动"></a>1.2 准备活动</h2><h3 id="1-2-1-编写java代码"><a href="#1-2-1-编写java代码" class="headerlink" title="1.2.1 编写java代码"></a>1.2.1 编写java代码</h3><pre class="line-numbers language-java" data-language="java"><code class="language-java"><span class="token keyword">package</span> <span class="token namespace">com<span class="token punctuation">.</span>whyun<span class="token punctuation">.</span>jni<span class="token punctuation">.</span>chapter1</span><span class="token punctuation">;</span>
-
-<span class="token comment">/**
- * User: sunny
- * Date: 15-10-28
- * Time: 下午12:29
- */</span>
-<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">FirstDemo</span> <span class="token punctuation">&#123;</span>
-    <span class="token keyword">static</span><span class="token punctuation">&#123;</span>
-        <span class="token class-name">System</span><span class="token punctuation">.</span><span class="token function">loadLibrary</span><span class="token punctuation">(</span><span class="token string">"firstdemo"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token punctuation">&#125;</span>
-    <span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token keyword">int</span> <span class="token function">getNum</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token keyword">public</span> <span class="token keyword">native</span> <span class="token class-name">String</span> <span class="token function">getString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token class-name">String</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>args<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        <span class="token class-name">FirstDemo</span> demo <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">FirstDemo</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-        <span class="token class-name">System</span><span class="token punctuation">.</span>out<span class="token punctuation">.</span><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"num:"</span><span class="token operator">+</span>demo<span class="token punctuation">.</span><span class="token function">getNum</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">+</span><span class="token string">",string:"</span><span class="token operator">+</span>demo<span class="token punctuation">.</span><span class="token function">getString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p><strong>代码 1.2.1.1</strong><br>注意到我们在类<code>FirstDemo</code>中定义了两个成员函数都没有函数体，且都加了关键字<code>native</code>声明，如果函数写成这样，则代表当前函数需要调用底层C&#x2F;C++代码。注意<code>System.loadLibrary</code>这句话，java中使用这个函数来加载动态库，windows平台下运行此段代码要保证<code>firstdemo.dll</code>存在环境变量<code>%path%</code>中，linux平台下要保证<code>libfirstdemo.so</code>存在环境变量<code>$LD_LIBRARY_PATH</code>中。</p>
-<blockquote>
-<p>其实java在<code>loadLibrary</code>的时候，是读取的系统变量<code>java.library.path</code>来搜寻动态库位置的，你可以用<code>System.getProperty(&quot;java.library.path&quot;)</code>来输出这个变量的内容。只不过在windows中会把环境变量<code>%path%</code>的内容加入到这个变量中，在linux中会把环境变量<code>$LD_LIBRARY_PATH</code>加入到这个变量中。在我的一台linux上打印<code>java.library.path</code>，会输入如下内容：<br><code>/usr/jdk1.6.0_45/jre/lib/i386/server:/usr/jdk1.6.0_45/jre/lib/i386: /usr/jdk1.6.0_45/jre/../lib/i386: /home/username/lib::/usr/java/packages/lib/i386 :/lib:/usr/lib</code><br>其中<code>/home/username/lib:</code>是从环境变量<code>$LD_LIBRARY_PATH</code>读取的。不推荐将生成的动态库放置到系统目录中，首先是不一定有管理员权限，其次会导致系统库目录下的文件过多，不易管理。</p>
-</blockquote>
-<h3 id="1-2-2-生成头文件"><a href="#1-2-2-生成头文件" class="headerlink" title="1.2.2 生成头文件"></a>1.2.2 生成头文件</h3><p>本文用到的项目源码在文后给出，项目的目录结构如下：<br><img src="http://blog.whyun.com/images/chapter1_dir.jpg" alt="项目目录结构"><br><strong>图1.2.2 项目目录结构</strong><br>其中目录<code>out/production</code>为我们的class文件生成的目录，在命令行下进入该目录，运行如下命令<code>javah com.whyun.jni.chapter1.FirstDemo</code>，运行成功之后则在运行命令行的目录下生成文件<code>com_whyun_jni_chapter1_FirstDemo.h</code>,用文本编辑器打开这个头文件，会显示如下内容：</p>
-<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token comment">/* DO NOT EDIT THIS FILE - it is machine generated */</span>
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;jni.h></span></span>
-<span class="token comment">/* Header for class com_whyun_jni_chapter1_FirstDemo */</span>
-
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifndef</span> <span class="token expression">_Included_com_whyun_jni_chapter1_FirstDemo</span></span>
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">_Included_com_whyun_jni_chapter1_FirstDemo</span></span>
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifdef</span> <span class="token expression">__cplusplus</span></span>
-<span class="token keyword">extern</span> <span class="token string">"C"</span> <span class="token punctuation">&#123;</span>
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span></span>
-<span class="token comment">/*
- * Class:     com_whyun_jni_chapter1_FirstDemo
- * Method:    getNum
- * Signature: ()I
- */</span>
-JNIEXPORT jint JNICALL <span class="token function">Java_com_whyun_jni_chapter1_FirstDemo_getNum</span>
-  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span><span class="token punctuation">,</span> jobject<span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-<span class="token comment">/*
- * Class:     com_whyun_jni_chapter1_FirstDemo
- * Method:    getString
- * Signature: ()Ljava/lang/String;
- */</span>
-JNIEXPORT jstring JNICALL <span class="token function">Java_com_whyun_jni_chapter1_FirstDemo_getString</span>
-  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span><span class="token punctuation">,</span> jobject<span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">ifdef</span> <span class="token expression">__cplusplus</span></span>
-<span class="token punctuation">&#125;</span>
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span></span>
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">endif</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p><strong>代码 1.2.1</strong></p>
-<h2 id="1-3-编译运行"><a href="#1-3-编译运行" class="headerlink" title="1.3 编译运行"></a>1.3 编译运行</h2><p>为了简化在windows和linux下配置编译步骤，我们先在操作系统中配置两个环境变量，在windows上将<code>JAVA_HOME</code>配置为JDK的安装路径，很多情况下这个环境变量在配置JDK编译环境的时候已经配置过，可以通过<code>echo %JAVA_HOME%</code>的输出来判断之前是否已经配置过；同理我们在linux上也配置环境变量<code>JAVA_HOME</code>(通过运行<code>echo $JAVA_HOME</code>来检测是否存在)。同时我们在windows上将目录<code>d:\lib</code>加入环境变量<code>PATH</code>中，在linux上将<code>/opt/lib</code>加入环境变量<code>LD_LIBRARY_PATH</code>中。</p>
-<h3 id="1-3-1-windows编译环境配置"><a href="#1-3-1-windows编译环境配置" class="headerlink" title="1.3.1 windows编译环境配置"></a>1.3.1 windows编译环境配置</h3><p>windows下需要安装visual studio（简称vs）环境来完成C&#x2F;C++编译，vs 有professional、ultimate和Express三个版本，前两者收费，我们使用免费的Express就够用了。我电脑上装的是vs express for desktop版本。<br>打开vs，新建项目，选择Visual C++，然后选择Empty Project，输入项目名<code>firstdemo</code>,点击确定。<br>接着设置项目属性，右击项目，然后选择properties，在Configuration Properties-&gt;General-&gt;Project Defaults-&gt;Configuration Type中，选择<code>Dynamic Library (.dll)</code>。然后在Configuration Properties-&gt;VC++ Directories-&gt;General-&gt;Include Directories中添加两个路径：<code>$(JAVA_HOME)\include</code>和<code>$(JAVA_HOME)\include\win32</code>。<br>最后编写c代码，在vs中新建源代码的时候，默认是cpp后缀，我们这里建一个c后缀的文件，因为我的编写习惯是c语法。</p>
-<pre class="line-numbers language-c" data-language="c"><code class="language-c"><span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
-<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">include</span> <span class="token string">"com_whyun_jni_chapter1_FirstDemo.h"</span></span>
-
-<span class="token comment">/*
- * Class:     com_whyun_jni_chapter1_FirstDemo
- * Method:    getNum
- * Signature: ()I
- */</span>
-JNIEXPORT jint JNICALL <span class="token function">Java_com_whyun_jni_chapter1_FirstDemo_getNum</span>
-  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span>env<span class="token punctuation">,</span> jobject obj<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-	  <span class="token keyword">return</span> <span class="token punctuation">(</span>jint<span class="token punctuation">)</span><span class="token number">1</span><span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span>
-
-<span class="token comment">/*
- * Class:     com_whyun_jni_chapter1_FirstDemo
- * Method:    getString
- * Signature: ()Ljava/lang/String;
- */</span>
-JNIEXPORT jstring JNICALL <span class="token function">Java_com_whyun_jni_chapter1_FirstDemo_getString</span>
-  <span class="token punctuation">(</span>JNIEnv <span class="token operator">*</span>env<span class="token punctuation">,</span> jobject ob<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-	  jstring jinfo			<span class="token operator">=</span> <span class="token punctuation">(</span><span class="token operator">*</span>env<span class="token punctuation">)</span><span class="token operator">-></span><span class="token function">NewStringUTF</span><span class="token punctuation">(</span>env<span class="token punctuation">,</span><span class="token string">"the first demo."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-	  <span class="token keyword">return</span> jinfo<span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p><strong>代码1.3.1 firstdemo.c</strong><br>注意我们引用了之前的<code>com_whyun_jni_chapter1_FirstDemo.h</code>，我们把它放到<code>firstdemo.c</code>同一级目录下了。<br>接着运行编译，产生dll文件，默认情况下会在项目目录Debug文件夹下产生firstdeom.dll，你可以把这个文件夹添加到环境变量PATH中去，也可以写脚本在编译完成之后将dll拷贝到电脑的任何一个PATH路径下，在Configuration Properties-&gt;Build Events-&gt;Post-Build Event-&gt;Command Line中写入如下命令：<code>copy &quot;$(TargetDir)$(TargetName).dll&quot; d:\lib\$(TargetName).dll</code>。</p>
-<h3 id="1-3-2-linux编译"><a href="#1-3-2-linux编译" class="headerlink" title="1.3.2 linux编译"></a>1.3.2 linux编译</h3><p>在linux下使用命令行GCC即可，将<code>com_whyun_jni_chapter1_FirstDemo.h</code>和<code>firstdemo.c</code>放到同一个目录下，然后运行脚本</p>
-<pre class="line-numbers language-none"><code class="language-none">saveDir&#x3D;&#x2F;opt&#x2F;lib
-gcc -g -Wall -I $JAVA_HOME&#x2F;include&#x2F; -I $JAVA_HOME&#x2F;include&#x2F;linux -fPIC -shared -o $saveDir&#x2F;libfirstdemo.so firstdemo.c<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-<h3 id="1-3-3-运行"><a href="#1-3-3-运行" class="headerlink" title="1.3.3 运行"></a>1.3.3 运行</h3><p>运行java代码，最终输出</p>
-<pre><code>num:1,string:the first demo.
-</code></pre>
-<blockquote>
-<p>本文用到的源代码可以从<a href="http://git.oschina.net/yunnysunny/jni">http://git.oschina.net/yunnysunny/jni</a> 获得到</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>Java</category>
-        <category>JNI</category>
       </categories>
   </entry>
   <entry>
@@ -1472,34 +1525,33 @@ Commercial support is available at
       <span class="token key atrule">labels</span><span class="token punctuation">:</span>
         <span class="token key atrule">app</span><span class="token punctuation">:</span> hello
     <span class="token key atrule">spec</span><span class="token punctuation">:</span>
-      <span class="token key atrule">initContainers</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token key atrule">image</span><span class="token punctuation">:</span> busybox
-        <span class="token key atrule">command</span><span class="token punctuation">:</span>
-        <span class="token punctuation">-</span> sh
-        <span class="token punctuation">-</span> <span class="token punctuation">-</span>c
-        <span class="token punctuation">-</span> <span class="token punctuation">|</span><span class="token scalar string">
-          sysctl -w net.core.somaxconn=10240
-          sysctl -w net.ipv4.ip_local_port_range="1024 65535"
-          sysctl -w net.ipv4.tcp_tw_reuse=1
-          sysctl -w fs.file-max=6048576</span>
-        <span class="token key atrule">name</span><span class="token punctuation">:</span> setsysctl
-        <span class="token key atrule">securityContext</span><span class="token punctuation">:</span>
-          <span class="token key atrule">privileged</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
-      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
-        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> hello<span class="token punctuation">-</span>app
-          <span class="token key atrule">image</span><span class="token punctuation">:</span> registry.cn<span class="token punctuation">-</span>hangzhou.aliyuncs.com/whyun/base<span class="token punctuation">:</span>hello<span class="token punctuation">-</span>latest
-          <span class="token key atrule">imagePullPolicy</span><span class="token punctuation">:</span> Always
-          <span class="token key atrule">resources</span><span class="token punctuation">:</span>
-            <span class="token key atrule">requests</span><span class="token punctuation">:</span>
-              <span class="token key atrule">cpu</span><span class="token punctuation">:</span> 2000m
-              <span class="token key atrule">memory</span><span class="token punctuation">:</span> 2Gi
-            <span class="token key atrule">limits</span><span class="token punctuation">:</span>
-              <span class="token key atrule">cpu</span><span class="token punctuation">:</span> 4000m
-              <span class="token key atrule">memory</span><span class="token punctuation">:</span> 4Gi
-          <span class="token key atrule">env</span><span class="token punctuation">:</span>
-            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> test
-              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">"1"</span>
-
+      <span class="token comment"># initContainers:</span>
+      <span class="token comment"># - image: busybox</span>
+      <span class="token comment">#   command:</span>
+      <span class="token comment">#   - sh</span>
+      <span class="token comment">#   - -c</span>
+      <span class="token comment">#   - |</span><span class="token scalar string">
+      #     sysctl -w net.core.somaxconn=10240
+      #     sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+      #     sysctl -w net.ipv4.tcp_tw_reuse=1
+      #     sysctl -w fs.file-max=6048576
+      #   name: setsysctl
+      #   securityContext:
+      #     privileged: true
+      containers:
+        - name: hello-app
+          image: registry.cn-hangzhou.aliyuncs.com/whyun/base:hello-latest
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: 2000m
+              memory: 2Gi
+            limits:
+              cpu: 4000m
+              memory: 4Gi
+          env:
+            - name: test
+              value: "1"</span>
 
 <span class="token punctuation">---</span>
 <span class="token key atrule">kind</span><span class="token punctuation">:</span> Service
@@ -1531,33 +1583,33 @@ Commercial support is available at
       <span class="token key atrule">labels</span><span class="token punctuation">:</span>
         <span class="token key atrule">app</span><span class="token punctuation">:</span> bench
     <span class="token key atrule">spec</span><span class="token punctuation">:</span>
-      <span class="token key atrule">initContainers</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token key atrule">image</span><span class="token punctuation">:</span> busybox
-        <span class="token key atrule">command</span><span class="token punctuation">:</span>
-        <span class="token punctuation">-</span> sh
-        <span class="token punctuation">-</span> <span class="token punctuation">-</span>c
-        <span class="token punctuation">-</span> <span class="token punctuation">|</span><span class="token scalar string">
-          sysctl -w net.core.somaxconn=10240
-          sysctl -w net.ipv4.ip_local_port_range="1024 65535"
-          sysctl -w net.ipv4.tcp_tw_reuse=1
-          sysctl -w fs.file-max=1048576</span>
-        <span class="token key atrule">name</span><span class="token punctuation">:</span> setsysctl
-        <span class="token key atrule">securityContext</span><span class="token punctuation">:</span>
-          <span class="token key atrule">privileged</span><span class="token punctuation">:</span> <span class="token boolean important">true</span>
-      <span class="token key atrule">containers</span><span class="token punctuation">:</span>
-        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> bench<span class="token punctuation">-</span>node
-          <span class="token key atrule">image</span><span class="token punctuation">:</span> registry.cn<span class="token punctuation">-</span>hangzhou.aliyuncs.com/whyun/base<span class="token punctuation">:</span>node<span class="token punctuation">-</span>bench<span class="token punctuation">-</span>0.2.0
-          <span class="token key atrule">env</span><span class="token punctuation">:</span>
-            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> REQ_URL
-              <span class="token key atrule">value</span><span class="token punctuation">:</span> http<span class="token punctuation">:</span>//hello<span class="token punctuation">-</span>service<span class="token punctuation">:</span>8000/
-            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> REQ_INTERVAL_MS
-              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">"5"</span>
-            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> REQ_TIMEOUT_MS
-              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">"20"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+      <span class="token comment"># initContainers:</span>
+      <span class="token comment"># - image: busybox</span>
+      <span class="token comment">#   command:</span>
+      <span class="token comment">#   - sh</span>
+      <span class="token comment">#   - -c</span>
+      <span class="token comment">#   - |</span><span class="token scalar string">
+      #     sysctl -w net.core.somaxconn=10240
+      #     sysctl -w net.ipv4.ip_local_port_range="1024 65535"
+      #     sysctl -w net.ipv4.tcp_tw_reuse=1
+      #     sysctl -w fs.file-max=1048576
+      #   name: setsysctl
+      #   securityContext:
+      #     privileged: true
+      containers:
+        - name: bench-node
+          image: registry.cn-hangzhou.aliyuncs.com/whyun/base:node-bench-0.2.0
+          env:
+            - name: REQ_URL
+              value: http://hello-service:8000/
+            - name: REQ_INTERVAL_MS
+              value: "5"
+            - name: REQ_TIMEOUT_MS
+              value: "20"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p><strong>代码 3.1</strong></p>
+<p><strong>代码 3.1 node-bench.yaml</strong></p>
 <p>从肉眼上看，明显看的出来上述代码比较长，而且中间会有 <code>---</code> 分隔符，这是 yaml 文件中固有语法，可以用来分割多个配置。</p>
-<p>同时在 <code>spec.template.spec</code> 属性下多了一个 <code>initContainers</code> 属性，它一般用来执行一些初始化操作的命令，运行完成后就退出，这里可以指定若干初始化容器，按照顺序指定，初始化容器都执行完成后，才会轮到应用容器启动。不过这里我们使用 initContainers 的一个重要原因，还在于我们需要修改操作系统内核参数，这在普通容器中是做不到的。也就是由于我们要修改内核参数，所以这个例子在 okteto 中无法运行。</p>
+<p>注意在 <code>spec.template.spec</code> 属性下的 <code>initContainers</code> 属性都被我们注释掉了，原因会在下面解释，先介绍一下它的作用，它一般用来执行一些初始化操作的命令，运行完成后就退出。这里可以指定若干初始化容器，按照顺序指定，初始化容器都执行完成后，才会轮到应用容器启动。不过这里我们使用 initContainers 的一个重要原因，还在于我们需要修改操作系统内核参数，这在普通容器中是做不到的。但是正是由于我们要修改内核参数，相当于修改宿主机的配置，这在 okteto 是不允许的，所以这里注释掉了。</p>
 <p>同时还新增了  <code>spec.template.spec.containers[0].env</code> 属性，用来指定容器启动时的环境变量。它比 Dockerfile 中的 ENV 指定定义的环境变量要高。</p>
 <h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>本文代码 <a href="https://gitlab.com/yunnysunny/k8s-learn">https://gitlab.com/yunnysunny/k8s-learn</a></p>
 <p>本文中引用的部分镜像代码来源于 <a href="https://github.com/yunnysunny/dockerfiles">https://github.com/yunnysunny/dockerfiles</a></p>
@@ -1752,45 +1804,6 @@ Aliases: www.baidu.com<span aria-hidden="true" class="line-numbers-rows"><span><
       </categories>
   </entry>
   <entry>
-    <title>微服务改造心路历程</title>
-    <url>/posts/micro-reform-milestones/</url>
-    <content><![CDATA[<h2 id="1-改造前现状"><a href="#1-改造前现状" class="headerlink" title="1. 改造前现状"></a>1. 改造前现状</h2><p>直播间逻辑服务，包含了直播间内答题互动、聊天、抢红包等消息的逻辑处理。刚开始设计的时候，所有的消息混在一起处理，后来为了给优先级高的请求让路，逻辑服务后期根据消息类型拆分成了三类服务，很长一段时间内逻辑服务的拓扑结构是这样的：</p>
-<p><img src="/images/current_service_cell.png"></p>
-<p><strong>图 1.1 基于优先级的服务拓扑结构</strong></p>
-<p>不过随着业务的深入发展，具体到某一个消息类型的处理流程可能会越来越复杂。拿答题上报来说，我们第一版的流程是这样的：</p>
-<p><img src="/images/answer_report_flow1.png"></p>
-<p><strong>图 1.2 第一版的答题上报流程</strong></p>
-<p>不过随着后期需求的改进增加了以班组为单位的答题正确率的排行榜、学生在班组内的答题时间排行榜、学生在直播间内的答题时间排行榜等需求，流程图就变成了这个样子：</p>
-<p><img src="/images/answer_report_flow2.png"></p>
-<p><strong>图 1.3 第二版答题上报流程</strong></p>
-<p>最近答题的需求还要进行改进，增加诸如给连续答对的用户打标签的逻辑，这样最终演变的逻辑将会比 <strong>图 1.3</strong> 中的流程更加复杂，这样就会导致答题处理的后端代码越来越臃肿，难以为继。</p>
-<h2 id="2-初步改造方案"><a href="#2-初步改造方案" class="headerlink" title="2. 初步改造方案"></a>2. 初步改造方案</h2><p>重新分析一下答题上报流程，以上报者的视角来看，其实只关心上报是否成功，至于各个选项、各种人数的统计，上报者自身并不关心。将上报流程再次进行一次抽象，那么数据处理的答题分为两类：一类是学生自己关心的，比如说是否重复答题、同班同学都在学的提示语；一类是老师关心的，比如说各种统计。根据这个思路我们可以在答题流程中仅仅处理学生关心的流程，然后将统计处理丢到另外一个服务中进行处理。基于这个思想对现有服务拓扑结构做改造：</p>
-<p><img src="/images/future_service_cell.png"></p>
-<p><strong>图 2.1 未来的服务器拓扑结构</strong></p>
-<h2 id="3-演进过程"><a href="#3-演进过程" class="headerlink" title="3. 演进过程"></a>3. 演进过程</h2><p>首先的挑战是重构带来的时间成本，第二个就是新增服务后，维护成本会上升。同时由于对微服务的理解不是很完善，当中也历经了几次比较大的改进过程。</p>
-<h3 id="3-1-全部使用消息队列进行通信"><a href="#3-1-全部使用消息队列进行通信" class="headerlink" title="3.1 全部使用消息队列进行通信"></a>3.1 全部使用消息队列进行通信</h3><p><img src="/images/all_kafka.png"></p>
-<p><strong>图 3.1.1</strong></p>
-<blockquote>
-<p>图中 logical 代表逻辑服务，micro 代表微服务，下同。</p>
-</blockquote>
-<p>由于做微服务的初衷是将可以异步处理的部分抽离出来，所以很容易想到的就是在 logical 和 micro 之间假设一个消息队列。考虑一个答题连对的场景</p>
-<p><img src="/images/right_continue_flow.png"></p>
-<p><strong>图 3.1.2</strong></p>
-<p>一个老师触发答题时，logical 服务要做三个动作，发送开始答题消息到micro、给老师端答题响应、广播消息给学生，学生端收到广播后进行答题，如果答题正确服务器端会下发连对的提醒。正常情况下，这个时序是没有问题的，但是由于我们 logical 和 micro 之间使用的是异步通信，理论上 <code>2.1</code> 和 <code>2.3</code> 的时序是不能得到保证的。这个服务在上线后也遇到了问题，在极小概率下，用户答对了题，但是连对却没有出现，究其原因就是因为 <code>2.1</code>这一步出现了延迟。</p>
-<h3 id="3-2-引入-RPC"><a href="#3-2-引入-RPC" class="headerlink" title="3.2 引入 RPC"></a>3.2 引入 RPC</h3><p>将 <code>2.1</code> 步做成带有事务的 grpc 调用，等待当前调用返回数据时，再触发 <code>2.2</code> 和 <code>2.3</code> 步。这样解决了异步操作没有事务的问题。看上去一切都很完美了，但是随着业务的迭代，微服务越来越多，可能老师端做一个操作的时候，流程变成这样。</p>
-<p><img src="/images/add_rpc.png"></p>
-<p><strong>图 3.2.1 引入rpc</strong></p>
-<p>细品这个流程，其实跟 <strong>图 1.3</strong> 会面临同样的问题，请求处理函数代码会越写越长，最终难以维护。</p>
-<h3 id="3-3-引入消息总线"><a href="#3-3-引入消息总线" class="headerlink" title="3.3 引入消息总线"></a>3.3 引入消息总线</h3><p>后来总结了一下，一个上行消息到达后，我们通知各个微服务的请求的数据内容其实是相同的，这时候其实可以直接引入一条消息总线，会让代码简洁很多。微服务只需要监听自己关心的消息总线即可。</p>
-<p><img src="/images/add_event_bus.png"></p>
-<p><strong>图 3.3.1</strong></p>
-<p>不过这样同样会导致一个问题，就是数据流重新回到了类似使用消息队列的模式，所有的 logical 和 micro 之间的通信又变成了异步的了。目前解决的方法就是在微服务端增加 <strong>待处理</strong> 队列，如果在一个事务中学生的消息先到，就先先加入待处理带队中，等待老师的消息到来后，一并处理。</p>
-]]></content>
-      <categories>
-        <category>Micro Service</category>
-      </categories>
-  </entry>
-  <entry>
     <title>即将面临的Node0.12中的C++API的改变</title>
     <url>/posts/node0-12capi/</url>
     <content><![CDATA[<p>原文地址：<a href="https://strongloop.com/strongblog/node-js-v0-12-c-apis-breaking/">https://strongloop.com/strongblog/node-js-v0-12-c-apis-breaking/</a></p>
@@ -1977,6 +1990,45 @@ v8::Local&lt;v8::Value&gt; exception &#x3D; &#x2F;* ... *&#x2F;;
 isolate-&gt;ThrowException(exception);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>]]></content>
       <categories>
         <category>Node</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>微服务改造心路历程</title>
+    <url>/posts/micro-reform-milestones/</url>
+    <content><![CDATA[<h2 id="1-改造前现状"><a href="#1-改造前现状" class="headerlink" title="1. 改造前现状"></a>1. 改造前现状</h2><p>直播间逻辑服务，包含了直播间内答题互动、聊天、抢红包等消息的逻辑处理。刚开始设计的时候，所有的消息混在一起处理，后来为了给优先级高的请求让路，逻辑服务后期根据消息类型拆分成了三类服务，很长一段时间内逻辑服务的拓扑结构是这样的：</p>
+<p><img src="/images/current_service_cell.png"></p>
+<p><strong>图 1.1 基于优先级的服务拓扑结构</strong></p>
+<p>不过随着业务的深入发展，具体到某一个消息类型的处理流程可能会越来越复杂。拿答题上报来说，我们第一版的流程是这样的：</p>
+<p><img src="/images/answer_report_flow1.png"></p>
+<p><strong>图 1.2 第一版的答题上报流程</strong></p>
+<p>不过随着后期需求的改进增加了以班组为单位的答题正确率的排行榜、学生在班组内的答题时间排行榜、学生在直播间内的答题时间排行榜等需求，流程图就变成了这个样子：</p>
+<p><img src="/images/answer_report_flow2.png"></p>
+<p><strong>图 1.3 第二版答题上报流程</strong></p>
+<p>最近答题的需求还要进行改进，增加诸如给连续答对的用户打标签的逻辑，这样最终演变的逻辑将会比 <strong>图 1.3</strong> 中的流程更加复杂，这样就会导致答题处理的后端代码越来越臃肿，难以为继。</p>
+<h2 id="2-初步改造方案"><a href="#2-初步改造方案" class="headerlink" title="2. 初步改造方案"></a>2. 初步改造方案</h2><p>重新分析一下答题上报流程，以上报者的视角来看，其实只关心上报是否成功，至于各个选项、各种人数的统计，上报者自身并不关心。将上报流程再次进行一次抽象，那么数据处理的答题分为两类：一类是学生自己关心的，比如说是否重复答题、同班同学都在学的提示语；一类是老师关心的，比如说各种统计。根据这个思路我们可以在答题流程中仅仅处理学生关心的流程，然后将统计处理丢到另外一个服务中进行处理。基于这个思想对现有服务拓扑结构做改造：</p>
+<p><img src="/images/future_service_cell.png"></p>
+<p><strong>图 2.1 未来的服务器拓扑结构</strong></p>
+<h2 id="3-演进过程"><a href="#3-演进过程" class="headerlink" title="3. 演进过程"></a>3. 演进过程</h2><p>首先的挑战是重构带来的时间成本，第二个就是新增服务后，维护成本会上升。同时由于对微服务的理解不是很完善，当中也历经了几次比较大的改进过程。</p>
+<h3 id="3-1-全部使用消息队列进行通信"><a href="#3-1-全部使用消息队列进行通信" class="headerlink" title="3.1 全部使用消息队列进行通信"></a>3.1 全部使用消息队列进行通信</h3><p><img src="/images/all_kafka.png"></p>
+<p><strong>图 3.1.1</strong></p>
+<blockquote>
+<p>图中 logical 代表逻辑服务，micro 代表微服务，下同。</p>
+</blockquote>
+<p>由于做微服务的初衷是将可以异步处理的部分抽离出来，所以很容易想到的就是在 logical 和 micro 之间假设一个消息队列。考虑一个答题连对的场景</p>
+<p><img src="/images/right_continue_flow.png"></p>
+<p><strong>图 3.1.2</strong></p>
+<p>一个老师触发答题时，logical 服务要做三个动作，发送开始答题消息到micro、给老师端答题响应、广播消息给学生，学生端收到广播后进行答题，如果答题正确服务器端会下发连对的提醒。正常情况下，这个时序是没有问题的，但是由于我们 logical 和 micro 之间使用的是异步通信，理论上 <code>2.1</code> 和 <code>2.3</code> 的时序是不能得到保证的。这个服务在上线后也遇到了问题，在极小概率下，用户答对了题，但是连对却没有出现，究其原因就是因为 <code>2.1</code>这一步出现了延迟。</p>
+<h3 id="3-2-引入-RPC"><a href="#3-2-引入-RPC" class="headerlink" title="3.2 引入 RPC"></a>3.2 引入 RPC</h3><p>将 <code>2.1</code> 步做成带有事务的 grpc 调用，等待当前调用返回数据时，再触发 <code>2.2</code> 和 <code>2.3</code> 步。这样解决了异步操作没有事务的问题。看上去一切都很完美了，但是随着业务的迭代，微服务越来越多，可能老师端做一个操作的时候，流程变成这样。</p>
+<p><img src="/images/add_rpc.png"></p>
+<p><strong>图 3.2.1 引入rpc</strong></p>
+<p>细品这个流程，其实跟 <strong>图 1.3</strong> 会面临同样的问题，请求处理函数代码会越写越长，最终难以维护。</p>
+<h3 id="3-3-引入消息总线"><a href="#3-3-引入消息总线" class="headerlink" title="3.3 引入消息总线"></a>3.3 引入消息总线</h3><p>后来总结了一下，一个上行消息到达后，我们通知各个微服务的请求的数据内容其实是相同的，这时候其实可以直接引入一条消息总线，会让代码简洁很多。微服务只需要监听自己关心的消息总线即可。</p>
+<p><img src="/images/add_event_bus.png"></p>
+<p><strong>图 3.3.1</strong></p>
+<p>不过这样同样会导致一个问题，就是数据流重新回到了类似使用消息队列的模式，所有的 logical 和 micro 之间的通信又变成了异步的了。目前解决的方法就是在微服务端增加 <strong>待处理</strong> 队列，如果在一个事务中学生的消息先到，就先先加入待处理带队中，等待老师的消息到来后，一并处理。</p>
+]]></content>
+      <categories>
+        <category>Micro Service</category>
       </categories>
   </entry>
   <entry>
@@ -3309,6 +3361,133 @@ so_linger<span class="token punctuation">.</span>l_linger <span class="token ope
       </categories>
   </entry>
   <entry>
+    <title>wsl 和 docker desktop 的安装教程</title>
+    <url>/posts/wsl-and-docker-desktop-install/</url>
+    <content><![CDATA[<p>win10 中提供了 wsl 的解决方案，可以在 Windows 中直接开启 linux 子系统，十分方便开发者使用。同时一些重要的功能也要依赖于 wsl 才能启动，比如说 docker desktop。本教程就是演示一下如何在 win10 中配置 wsl ，并且如何正常使用 docker desktop。</p>
+<h2 id="1-安装"><a href="#1-安装" class="headerlink" title="1. 安装"></a>1. 安装</h2><h3 id="1-1-安装-wsl"><a href="#1-1-安装-wsl" class="headerlink" title="1.1 安装 wsl"></a>1.1 安装 wsl</h3><h4 id="1-1-1-启用-linux-子系统"><a href="#1-1-1-启用-linux-子系统" class="headerlink" title="1.1.1 启用 linux 子系统"></a>1.1.1 启用 linux 子系统</h4><p>用管理员身份打开 powershell ，然后输入如下命令回车：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">dism<span class="token punctuation">.</span>exe <span class="token operator">/</span>online <span class="token operator">/</span><span class="token function">enable-feature</span> <span class="token operator">/</span>featurename:Microsoft<span class="token operator">-</span>Windows<span class="token operator">-</span>Subsystem<span class="token operator">-</span>Linux <span class="token operator">/</span>all <span class="token operator">/</span>norestart<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h4 id="1-1-2-启动虚拟机功能"><a href="#1-1-2-启动虚拟机功能" class="headerlink" title="1.1.2 启动虚拟机功能"></a>1.1.2 启动虚拟机功能</h4><p>由于我们后续要安装 docker desktop，需要依赖于 wsl 2，所以需要启动 Windows 自带的虚拟机平台功能，同样是管理员身份打开 powershell，然后输入如下命令：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">dism<span class="token punctuation">.</span>exe <span class="token operator">/</span>online <span class="token operator">/</span><span class="token function">enable-feature</span> <span class="token operator">/</span>featurename:Microsoft<span class="token operator">-</span>Windows<span class="token operator">-</span>Subsystem<span class="token operator">-</span>Linux <span class="token operator">/</span>all <span class="token operator">/</span>norestart<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h4 id="1-1-3-安装-Linux-内核更新包"><a href="#1-1-3-安装-Linux-内核更新包" class="headerlink" title="1.1.3 安装 Linux 内核更新包"></a>1.1.3 安装 Linux 内核更新包</h4><p>下载 <a href="https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi">适用于 x64 计算机的 WSL2 Linux 内核更新包</a> ，然后安装。</p>
+<h4 id="1-1-4-设置-wsl-版本为-wsl-2"><a href="#1-1-4-设置-wsl-版本为-wsl-2" class="headerlink" title="1.1.4 设置 wsl 版本为 wsl 2"></a>1.1.4 设置 wsl 版本为 wsl 2</h4><p>打开 powershell ，然后运行如下命令，即可将默认 wsl 版本切换为 wsl 2，默认为 wsl 1</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">wsl <span class="token operator">--</span><span class="token function">set-default</span><span class="token operator">-</span>version 2<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>至此 wsl 的安装就完成了，下面就是选择一个 Linux 子系统进行安装。</p>
+<h3 id="1-2-安装-Linux-子系统"><a href="#1-2-安装-Linux-子系统" class="headerlink" title="1.2 安装 Linux 子系统"></a>1.2 安装 Linux 子系统</h3><p>wsl 支持很多 Linux 发行版系统，比如说 <a href="https://www.microsoft.com/store/apps/9n6svws3rx71">Ubuntu</a> <a href="https://www.microsoft.com/store/apps/9NJFZK00FGKV">openSUSE</a> <a href="https://www.microsoft.com/store/apps/9MSVKQC78PK6">Debian</a> <a href="https://www.microsoft.com/store/apps/9n6gdm4k2hnc">Fedora</a> <a href="https://www.microsoft.com/store/apps/9p804crf0395">Alpine</a> 等。鉴于大家使用最多的就是 Ubuntu，下面就显示如何安装 Ubuntu，根据上面的链接，打开 Microsoft Store，然后选择 <strong>获取</strong> 按钮。</p>
+<p><img src="/images/install_wsl_ubuntu.png"></p>
+<p><strong>图 1.2.1</strong></p>
+<blockquote>
+<p>由于我已经安装了 Ubuntu 20.04，所以这里使用的 Ubuntu 18.04 的展示界面截的图。</p>
+</blockquote>
+<p>安装完成后，可以从开始菜单中找到 Ubuntu 的快捷方式，点击打开后第一次运行，会要求输入用户名、密码，等待几分钟后初始化完成，以后就可以直接点击快捷方式进入 Ubuntu 系统了。</p>
+<h3 id="1-3-安装-docker-desktop"><a href="#1-3-安装-docker-desktop" class="headerlink" title="1.3 安装 docker desktop"></a>1.3 安装 docker desktop</h3><p>docker desktop 基于 WSL2，所以要完成 1.1 小节所有的安装步骤，否则安装完成后无法启动。docker desktop 的安装包可以从官网下载 <a href="https://www.docker.com/products/docker-desktop">https://www.docker.com/products/docker-desktop</a> 。</p>
+<h3 id="1-4-docker-desktop-下配置-kubernetes"><a href="#1-4-docker-desktop-下配置-kubernetes" class="headerlink" title="1.4 docker desktop 下配置 kubernetes"></a>1.4 docker desktop 下配置 kubernetes</h3><p>Windows 下可以从 Docker Desktop 中直接开启 kubernetes 功能，它会通过创建 docker 容器的模式来提供 kubernetes 服务，不过由于众所周知的原因，其容器用到的镜像在国内无法下载，你需要使用这个 <a href="https://github.com/AliyunContainerService/k8s-for-docker-desktop">k8s-for-docker-desktop</a> 项目提供的解决方案。</p>
+<p>我们在设置里找到当前 docker-desktop 的版本</p>
+<p><img src="/images/docker_desktop_k8s.png"></p>
+<p><strong>图 1.4.1</strong></p>
+<p>笔者安装的是 1.21.5 版本，clone 一下 k8s-for-docker-desktop 项目，切换到 v1.21.5 分支</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell"><span class="token function">git</span> clone https://github.com/AliyunContainerService/k8s-for-docker-desktop.git
+<span class="token function">git</span> checkout v1.21.5
+.<span class="token punctuation">\</span>load_images.ps1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.4.1</strong></p>
+<p>接着还是在项目 k8s-for-docker-desktop 目录中，执行下述命令来配置 kubernetes 控制台：</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">kubectl create -f kubernetes-dashboard.yaml
+kubectl proxy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.4.2</strong></p>
+<p><code>kubectl proxy</code> 命令，会输出如下提示 <code>Starting to serve on 127.0.0.1:8001</code>，说明启动控制台成功，然后你需要在浏览器中访问下面地址</p>
+<p><a href="http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/">http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/</a></p>
+<p>这个地址会提示输入 token，在 Windows 中 token 可以通过在 powsershell 中执行如下命令获得：</p>
+<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token variable">$TOKEN</span>=<span class="token punctuation">(</span><span class="token punctuation">(</span>kubectl <span class="token operator">-</span>n kube<span class="token operator">-</span>system describe secret default <span class="token punctuation">|</span> <span class="token function">Select-String</span> <span class="token string">"token:"</span><span class="token punctuation">)</span> <span class="token operator">-</span>split <span class="token string">" +"</span><span class="token punctuation">)</span><span class="token punctuation">[</span>1<span class="token punctuation">]</span>
+kubectl config <span class="token function">set-credentials</span> docker<span class="token operator">-</span><span class="token keyword">for</span><span class="token operator">-</span>desktop <span class="token operator">--</span>token=<span class="token string">"$&#123;TOKEN&#125;"</span>
+<span class="token function">echo</span> <span class="token variable">$TOKEN</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="2-问题总结"><a href="#2-问题总结" class="headerlink" title="2 问题总结"></a>2 问题总结</h2><h3 id="2-1-Win10-下-WSL2-预留端口"><a href="#2-1-Win10-下-WSL2-预留端口" class="headerlink" title="2.1 Win10 下 WSL2 预留端口"></a>2.1 Win10 下 WSL2 预留端口</h3><p>win10 下的 wsl2 默认会预留若干端口，导致我们程序中无法再使用这些端口做监听，在启动时程序会报错误 <code>listen EACCES: permission denied</code>，通过命令 <code>netsh interface ipv4 show excludedportrange protocol=tcp</code> 可以查看哪些端口被占用了。</p>
+<h3 id="2-2-WSL2-下运行-docker-命令提示无权限"><a href="#2-2-WSL2-下运行-docker-命令提示无权限" class="headerlink" title="2.2 WSL2 下运行 docker 命令提示无权限"></a>2.2 WSL2 下运行 docker 命令提示无权限</h3><p>运行 docker 命令后提示 <code>Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock</code>，则证明当前运行 docker 命令的用户不是 root 用户，需要加 sudo 来运行。</p>
+<h3 id="2-3-docker-命令在-WSL2-中找不到"><a href="#2-3-docker-命令在-WSL2-中找不到" class="headerlink" title="2.3 docker 命令在 WSL2 中找不到"></a>2.3 docker 命令在 WSL2 中找不到</h3><p>在 WSL 命令行中执行 docker 命令，如果有如下输出，则证明 docker desktop 中没有开启对于当前 WSL 系统的支持。</p>
+<pre class="line-numbers language-none"><code class="language-none">The command &#39;docker&#39; could not be found in this WSL 2 distro.
+We recommend to activate the WSL integration in Docker Desktop settings.
+
+See https:&#x2F;&#x2F;docs.docker.com&#x2F;docker-for-windows&#x2F;wsl&#x2F; for details.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>需要手动开启一下，找到  <strong>Resources</strong> &gt;  <strong>WSL Integration</strong>，选中 <strong>Enableinteration with my default WSL distro</strong>， 如果这个复选框已经处于选中状态，说明当前你用的 WSL 系统不是默认的 WSL 系统，可以通过 <code>wsl --set-default &lt;distro name&gt;</code>，或者在下面的 <strong>Enable integration with additional distros</strong> 中选中你使用的系统。最后选择 <strong>Apply &amp; Restart</strong> 按钮即可，更加详细的说明参见<a href="https://docs.docker.com/desktop/windows/wsl/#install">官方文档</a>。</p>
+<p><img src="/images/enable_docker_for_wsl.png"></p>
+<p><strong>图 2.3.1</strong></p>
+<h3 id="2-4-无法从私有镜像仓库拉取镜像"><a href="#2-4-无法从私有镜像仓库拉取镜像" class="headerlink" title="2.4 无法从私有镜像仓库拉取镜像"></a>2.4 无法从私有镜像仓库拉取镜像</h3><p>拉取私有镜像仓库时提示如下错误：</p>
+<pre class="line-numbers language-none"><code class="language-none"> &#x3D;&gt; ERROR [internal] load metadata for private-registry-domian:port&#x2F;image-name:latest                                            0.0s
+------
+ &gt; [internal] load metadata for private-registry-domian:port&#x2F;image-name:latest:
+------
+failed to solve with frontend dockerfile.v0: failed to create LLB definition: failed to do request: Head https:&#x2F;&#x2F;private-registry-domian:port&#x2F;image-name&#x2F;manifests&#x2F;latest: http: server gave HTTP response to HTTPS client<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>究其原因是由于私有镜像仓库没有启用 https 文件，需要更改 docker 的配置文件，让其信任私有的镜像仓库。在 在 Docker Desktop 中，需要在设置界面中进行修改</p>
+<p><img src="/images/insecure_registries.png"></p>
+<p>在 <code>insecure-registries</code> 数组中添加公司的镜像仓库根地址。</p>
+<h3 id="2-5-WSL2-无法启动"><a href="#2-5-WSL2-无法启动" class="headerlink" title="2.5 WSL2 无法启动"></a>2.5 WSL2 无法启动</h3><p>启动时显示错误 <strong>0x80070003</strong> 或错误 <strong>0x80370102</strong>，这种情况一般出现在新出厂的电脑上，或者 BIOS 升级后的电脑上，很多品牌电脑的 BIOS 默认关闭了 CPU 的虚拟化功能，需要进入 BIOS 自己手动开启，然后才能启动 WSL2。</p>
+<h3 id="2-6-WSL2-内的-DNS-不稳定"><a href="#2-6-WSL2-内的-DNS-不稳定" class="headerlink" title="2.6 WSL2 内的 DNS 不稳定"></a>2.6 WSL2 内的 DNS 不稳定</h3><p>wsl2 算是新出的技术，很多方面并不稳定，DNS 解析也隔三岔五会出现问题。通过查看 &#x2F;etc&#x2F;resolv.conf 发现里面配置的是一个内网 DNS 服务地址</p>
+<pre class="line-numbers language-none"><code class="language-none"># This file was automatically generated by WSL. To stop automatic generation of this file, add the following entry to &#x2F;etc&#x2F;wsl.conf:
+# [network]
+# generateResolvConf &#x3D; false
+nameserver 172.29.48.1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>如果你使用 WSL 的时候，只解析公网域名的话，比较简单，直接改成公网的域名服务地址即可，比如说 114.114.114.114 ；不过如果你有解析内网域名的需求话，也可以将其改成你的内网 DNS 的服务地址。但是如果你的电脑是移动电脑，同时会在内网环境下和外网环境下都使用，那么配置成内网 DNS 的话，出了内网就没法解析域名了(当然你可以通过播 VPN 来解决，不过那样会比较麻烦)。这个时候就需要派上我们的 Dnsmasq 这个工具了，它是一个 DNS 分流工具，可以根据不同域名后缀来使用不同 DNS server 进行解析。以下的教程同样以 Ubuntu 为例进行讲解。</p>
+<blockquote>
+<p>类似的工具还有好多，比如 <a href="https://coredns.io/">CoreDns</a> 这个工具也能实现 DNS 分流的工作。</p>
+</blockquote>
+<p>首先我们需要卸载 systemd-resolved，这个程序默认会占用 53 端口，跟我们的 Dnsmasq 是冲突的。</p>
+<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell"><span class="token function">sudo</span> systemctl disable systemd-resolved 
+<span class="token function">sudo</span> systemctl stop systemd-resolved<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>按理来说，我们需要修改 &#x2F;etc&#x2F;resolv.conf 文件，不过在 wsl 中 &#x2F;etc&#x2F;resolv.conf 默认会在 WSL 启动的时候被重写，所以需要先修改 &#x2F;etc&#x2F;wsl.conf 文件。这个文件默认不存在，所以不存在的时候，可以创建一个：</p>
+<pre class="line-numbers language-none"><code class="language-none">[network]
+generateResolvConf &#x3D; false<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p>修改完配置后，还需要在 Windows 命令中执行 <code>wsl.exe --shutdown</code>，然后重新打开 wsl 命令行才能生效。</p>
+</blockquote>
+<p>接下来运行 <code>sudo apt-get install dnsmasq</code> 来安装 Dnsmasq ，安装完之后，会生成一个 &#x2F;etc&#x2F;dnsmasq.conf  文件。我们可以在其最后追加一行配置</p>
+<pre class="line-numbers language-none"><code class="language-none">conf-dir&#x3D;&#x2F;etc&#x2F;dnsmasq.d&#x2F;,*.conf<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p> 这样我们自定义的域名配置，就可以都放在 &#x2F;etc&#x2F;dnsmasq.d 目录下，在这个目录下创建一个文件 mydns.conf ，然后写入如下配置</p>
+<pre class="line-numbers language-none"><code class="language-none">server&#x3D;&#x2F;your_inner_domian&#x2F;your_inner_dns_server
+server&#x3D;&#x2F;your_inner_domian&#x2F;::
+server&#x3D;119.29.29.29
+server&#x3D;223.5.5.5<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>上面配置文件的第一行代表如果要解析的域名中包含 your_inner_domian 字符，则使用 dns 服务器 your_inner_dns_server 进行解析。这是一个子字符串匹配，不论你的域名为 <code>your_inner_domian.com</code> 或者 <code>your_inner_domain.net</code>，使用 your_inner_domian 都可匹配成功。 如果你的 your_inner_dns_server 不支持 ipv6，记得要加入第二行配置，它是用来禁用 ipv6 dns 解析用的（如果你的内网 DNS 服务器不支持 ipv6 协议的话，这个配置特别有用），不过这个功能仅支持 dnsmasq 2.80 及以上版本（使用 Ubuntu 20.02 安装的 Dnsmasq 是 2.80 版本，可以放心使用）。最后一行是留一个默认的 DNS 服务器（<code>119.29.29.29</code> 是腾讯的公共 DNS，<code>223.5.5.5</code> 是阿里的公共 DNS，这里之所有没有使用常用的 114 DNS，是由于它解析国外域名的时候，经常会失败），用来解析公网域名。</p>
+<p>配置完成后，修改 &#x2F;etc&#x2F;resolv.conf，将里面的 <code>nameserver</code> 修改为 <code>127.0.0.1</code>。最后执行  <code>service dnsmasq start</code> 来启动 dnsmasq，就可以测试我们的配置了。执行 <code>dig baidu.com</code>，正常情况下会有如下输出：</p>
+<pre class="line-numbers language-none"><code class="language-none">; &lt;&lt;&gt;&gt; DiG 9.16.1-Ubuntu &lt;&lt;&gt;&gt; baidu.com
+;; global options: +cmd
+;; Got answer:
+;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 56800
+;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;baidu.com.                     IN      A
+
+;; ANSWER SECTION:
+baidu.com.              200     IN      A       220.181.38.148
+baidu.com.              200     IN      A       220.181.38.251
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.1#53(127.0.0.1)
+;; WHEN: Mon Sep 13 14:52:44 CST 2021
+;; MSG SIZE  rcvd: 70<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>上面输出中 <code>ANSWER SECTION</code> 中列出来了解析出来的 IP，代表解析成功。同样执行 dig 内网域名，也能被正常解析则证明配置正确。</p>
+<p>最后需要说明的是 wsl 不好做 service 的开机自启动，下次启动后需要手动执行 <code>sudo service dnsmasq start</code> 才能启动 dnsmasq 。这样就显得不是很友好，可以修改 &#x2F;etc&#x2F;resolv.conf，在 <code>nameserver 127.0.0.1</code> 的后面再追加一行 <code>nameserver 119.29.29.29</code> 这样 dnsmasq 没有启动时，可以保证公网域名能解析。</p>
+]]></content>
+      <categories>
+        <category>Cloud Native</category>
+        <category>Docker</category>
+      </categories>
+  </entry>
+  <entry>
     <title>Node 的缺陷</title>
     <url>/posts/the-defect-of-node/</url>
     <content><![CDATA[<p>提起 Node.js ，大家可能认为对其的优劣已经分辨的很清楚：由于其默认单线程，所以不适合做计算密集型操作；由于其异步 IO 特性，所以对于 IO 处理比较友好。但这其实是一种误解，当 IO 并发到一定的量级，一样会损耗 CPU 资源。在 Node.js 引以为豪的 IO 处理方面，依然有其做的不完善的地方，本篇文章就给大家一一解密。 </p>
@@ -3671,133 +3850,6 @@ console<span class="token punctuation">.</span><span class="token function">log<
 ]]></content>
       <categories>
         <category>Node</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>wsl 和 docker desktop 的安装教程</title>
-    <url>/posts/wsl-and-docker-desktop-install/</url>
-    <content><![CDATA[<p>win10 中提供了 wsl 的解决方案，可以在 Windows 中直接开启 linux 子系统，十分方便开发者使用。同时一些重要的功能也要依赖于 wsl 才能启动，比如说 docker desktop。本教程就是演示一下如何在 win10 中配置 wsl ，并且如何正常使用 docker desktop。</p>
-<h2 id="1-安装"><a href="#1-安装" class="headerlink" title="1. 安装"></a>1. 安装</h2><h3 id="1-1-安装-wsl"><a href="#1-1-安装-wsl" class="headerlink" title="1.1 安装 wsl"></a>1.1 安装 wsl</h3><h4 id="1-1-1-启用-linux-子系统"><a href="#1-1-1-启用-linux-子系统" class="headerlink" title="1.1.1 启用 linux 子系统"></a>1.1.1 启用 linux 子系统</h4><p>用管理员身份打开 powershell ，然后输入如下命令回车：</p>
-<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">dism<span class="token punctuation">.</span>exe <span class="token operator">/</span>online <span class="token operator">/</span><span class="token function">enable-feature</span> <span class="token operator">/</span>featurename:Microsoft<span class="token operator">-</span>Windows<span class="token operator">-</span>Subsystem<span class="token operator">-</span>Linux <span class="token operator">/</span>all <span class="token operator">/</span>norestart<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<h4 id="1-1-2-启动虚拟机功能"><a href="#1-1-2-启动虚拟机功能" class="headerlink" title="1.1.2 启动虚拟机功能"></a>1.1.2 启动虚拟机功能</h4><p>由于我们后续要安装 docker desktop，需要依赖于 wsl 2，所以需要启动 Windows 自带的虚拟机平台功能，同样是管理员身份打开 powershell，然后输入如下命令：</p>
-<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">dism<span class="token punctuation">.</span>exe <span class="token operator">/</span>online <span class="token operator">/</span><span class="token function">enable-feature</span> <span class="token operator">/</span>featurename:Microsoft<span class="token operator">-</span>Windows<span class="token operator">-</span>Subsystem<span class="token operator">-</span>Linux <span class="token operator">/</span>all <span class="token operator">/</span>norestart<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<h4 id="1-1-3-安装-Linux-内核更新包"><a href="#1-1-3-安装-Linux-内核更新包" class="headerlink" title="1.1.3 安装 Linux 内核更新包"></a>1.1.3 安装 Linux 内核更新包</h4><p>下载 <a href="https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi">适用于 x64 计算机的 WSL2 Linux 内核更新包</a> ，然后安装。</p>
-<h4 id="1-1-4-设置-wsl-版本为-wsl-2"><a href="#1-1-4-设置-wsl-版本为-wsl-2" class="headerlink" title="1.1.4 设置 wsl 版本为 wsl 2"></a>1.1.4 设置 wsl 版本为 wsl 2</h4><p>打开 powershell ，然后运行如下命令，即可将默认 wsl 版本切换为 wsl 2，默认为 wsl 1</p>
-<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">wsl <span class="token operator">--</span><span class="token function">set-default</span><span class="token operator">-</span>version 2<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>至此 wsl 的安装就完成了，下面就是选择一个 Linux 子系统进行安装。</p>
-<h3 id="1-2-安装-Linux-子系统"><a href="#1-2-安装-Linux-子系统" class="headerlink" title="1.2 安装 Linux 子系统"></a>1.2 安装 Linux 子系统</h3><p>wsl 支持很多 Linux 发行版系统，比如说 <a href="https://www.microsoft.com/store/apps/9n6svws3rx71">Ubuntu</a> <a href="https://www.microsoft.com/store/apps/9NJFZK00FGKV">openSUSE</a> <a href="https://www.microsoft.com/store/apps/9MSVKQC78PK6">Debian</a> <a href="https://www.microsoft.com/store/apps/9n6gdm4k2hnc">Fedora</a> <a href="https://www.microsoft.com/store/apps/9p804crf0395">Alpine</a> 等。鉴于大家使用最多的就是 Ubuntu，下面就显示如何安装 Ubuntu，根据上面的链接，打开 Microsoft Store，然后选择 <strong>获取</strong> 按钮。</p>
-<p><img src="/images/install_wsl_ubuntu.png"></p>
-<p><strong>图 1.2.1</strong></p>
-<blockquote>
-<p>由于我已经安装了 Ubuntu 20.04，所以这里使用的 Ubuntu 18.04 的展示界面截的图。</p>
-</blockquote>
-<p>安装完成后，可以从开始菜单中找到 Ubuntu 的快捷方式，点击打开后第一次运行，会要求输入用户名、密码，等待几分钟后初始化完成，以后就可以直接点击快捷方式进入 Ubuntu 系统了。</p>
-<h3 id="1-3-安装-docker-desktop"><a href="#1-3-安装-docker-desktop" class="headerlink" title="1.3 安装 docker desktop"></a>1.3 安装 docker desktop</h3><p>docker desktop 基于 WSL2，所以要完成 1.1 小节所有的安装步骤，否则安装完成后无法启动。docker desktop 的安装包可以从官网下载 <a href="https://www.docker.com/products/docker-desktop">https://www.docker.com/products/docker-desktop</a> 。</p>
-<h3 id="1-4-docker-desktop-下配置-kubernetes"><a href="#1-4-docker-desktop-下配置-kubernetes" class="headerlink" title="1.4 docker desktop 下配置 kubernetes"></a>1.4 docker desktop 下配置 kubernetes</h3><p>Windows 下可以从 Docker Desktop 中直接开启 kubernetes 功能，它会通过创建 docker 容器的模式来提供 kubernetes 服务，不过由于众所周知的原因，其容器用到的镜像在国内无法下载，你需要使用这个 <a href="https://github.com/AliyunContainerService/k8s-for-docker-desktop">k8s-for-docker-desktop</a> 项目提供的解决方案。</p>
-<p>我们在设置里找到当前 docker-desktop 的版本</p>
-<p><img src="/images/docker_desktop_k8s.png"></p>
-<p><strong>图 1.4.1</strong></p>
-<p>笔者安装的是 1.21.5 版本，clone 一下 k8s-for-docker-desktop 项目，切换到 v1.21.5 分支</p>
-<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell"><span class="token function">git</span> clone https://github.com/AliyunContainerService/k8s-for-docker-desktop.git
-<span class="token function">git</span> checkout v1.21.5
-.<span class="token punctuation">\</span>load_images.ps1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p><strong>代码 1.4.1</strong></p>
-<p>接着还是在项目 k8s-for-docker-desktop 目录中，执行下述命令来配置 kubernetes 控制台：</p>
-<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell">kubectl create -f kubernetes-dashboard.yaml
-kubectl proxy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p><strong>代码 1.4.2</strong></p>
-<p><code>kubectl proxy</code> 命令，会输出如下提示 <code>Starting to serve on 127.0.0.1:8001</code>，说明启动控制台成功，然后你需要在浏览器中访问下面地址</p>
-<p><a href="http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/">http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/</a></p>
-<p>这个地址会提示输入 token，在 Windows 中 token 可以通过在 powsershell 中执行如下命令获得：</p>
-<pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell"><span class="token variable">$TOKEN</span>=<span class="token punctuation">(</span><span class="token punctuation">(</span>kubectl <span class="token operator">-</span>n kube<span class="token operator">-</span>system describe secret default <span class="token punctuation">|</span> <span class="token function">Select-String</span> <span class="token string">"token:"</span><span class="token punctuation">)</span> <span class="token operator">-</span>split <span class="token string">" +"</span><span class="token punctuation">)</span><span class="token punctuation">[</span>1<span class="token punctuation">]</span>
-kubectl config <span class="token function">set-credentials</span> docker<span class="token operator">-</span><span class="token keyword">for</span><span class="token operator">-</span>desktop <span class="token operator">--</span>token=<span class="token string">"$&#123;TOKEN&#125;"</span>
-<span class="token function">echo</span> <span class="token variable">$TOKEN</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="2-问题总结"><a href="#2-问题总结" class="headerlink" title="2 问题总结"></a>2 问题总结</h2><h3 id="2-1-Win10-下-WSL2-预留端口"><a href="#2-1-Win10-下-WSL2-预留端口" class="headerlink" title="2.1 Win10 下 WSL2 预留端口"></a>2.1 Win10 下 WSL2 预留端口</h3><p>win10 下的 wsl2 默认会预留若干端口，导致我们程序中无法再使用这些端口做监听，在启动时程序会报错误 <code>listen EACCES: permission denied</code>，通过命令 <code>netsh interface ipv4 show excludedportrange protocol=tcp</code> 可以查看哪些端口被占用了。</p>
-<h3 id="2-2-WSL2-下运行-docker-命令提示无权限"><a href="#2-2-WSL2-下运行-docker-命令提示无权限" class="headerlink" title="2.2 WSL2 下运行 docker 命令提示无权限"></a>2.2 WSL2 下运行 docker 命令提示无权限</h3><p>运行 docker 命令后提示 <code>Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock</code>，则证明当前运行 docker 命令的用户不是 root 用户，需要加 sudo 来运行。</p>
-<h3 id="2-3-docker-命令在-WSL2-中找不到"><a href="#2-3-docker-命令在-WSL2-中找不到" class="headerlink" title="2.3 docker 命令在 WSL2 中找不到"></a>2.3 docker 命令在 WSL2 中找不到</h3><p>在 WSL 命令行中执行 docker 命令，如果有如下输出，则证明 docker desktop 中没有开启对于当前 WSL 系统的支持。</p>
-<pre class="line-numbers language-none"><code class="language-none">The command &#39;docker&#39; could not be found in this WSL 2 distro.
-We recommend to activate the WSL integration in Docker Desktop settings.
-
-See https:&#x2F;&#x2F;docs.docker.com&#x2F;docker-for-windows&#x2F;wsl&#x2F; for details.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>需要手动开启一下，找到  <strong>Resources</strong> &gt;  <strong>WSL Integration</strong>，选中 <strong>Enableinteration with my default WSL distro</strong>， 如果这个复选框已经处于选中状态，说明当前你用的 WSL 系统不是默认的 WSL 系统，可以通过 <code>wsl --set-default &lt;distro name&gt;</code>，或者在下面的 <strong>Enable integration with additional distros</strong> 中选中你使用的系统。最后选择 <strong>Apply &amp; Restart</strong> 按钮即可，更加详细的说明参见<a href="https://docs.docker.com/desktop/windows/wsl/#install">官方文档</a>。</p>
-<p><img src="/images/enable_docker_for_wsl.png"></p>
-<p><strong>图 2.3.1</strong></p>
-<h3 id="2-4-无法从私有镜像仓库拉取镜像"><a href="#2-4-无法从私有镜像仓库拉取镜像" class="headerlink" title="2.4 无法从私有镜像仓库拉取镜像"></a>2.4 无法从私有镜像仓库拉取镜像</h3><p>拉取私有镜像仓库时提示如下错误：</p>
-<pre class="line-numbers language-none"><code class="language-none"> &#x3D;&gt; ERROR [internal] load metadata for private-registry-domian:port&#x2F;image-name:latest                                            0.0s
-------
- &gt; [internal] load metadata for private-registry-domian:port&#x2F;image-name:latest:
-------
-failed to solve with frontend dockerfile.v0: failed to create LLB definition: failed to do request: Head https:&#x2F;&#x2F;private-registry-domian:port&#x2F;image-name&#x2F;manifests&#x2F;latest: http: server gave HTTP response to HTTPS client<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>究其原因是由于私有镜像仓库没有启用 https 文件，需要更改 docker 的配置文件，让其信任私有的镜像仓库。在 在 Docker Desktop 中，需要在设置界面中进行修改</p>
-<p><img src="/images/insecure_registries.png"></p>
-<p>在 <code>insecure-registries</code> 数组中添加公司的镜像仓库根地址。</p>
-<h3 id="2-5-WSL2-无法启动"><a href="#2-5-WSL2-无法启动" class="headerlink" title="2.5 WSL2 无法启动"></a>2.5 WSL2 无法启动</h3><p>启动时显示错误 <strong>0x80070003</strong> 或错误 <strong>0x80370102</strong>，这种情况一般出现在新出厂的电脑上，或者 BIOS 升级后的电脑上，很多品牌电脑的 BIOS 默认关闭了 CPU 的虚拟化功能，需要进入 BIOS 自己手动开启，然后才能启动 WSL2。</p>
-<h3 id="2-6-WSL2-内的-DNS-不稳定"><a href="#2-6-WSL2-内的-DNS-不稳定" class="headerlink" title="2.6 WSL2 内的 DNS 不稳定"></a>2.6 WSL2 内的 DNS 不稳定</h3><p>wsl2 算是新出的技术，很多方面并不稳定，DNS 解析也隔三岔五会出现问题。通过查看 &#x2F;etc&#x2F;resolv.conf 发现里面配置的是一个内网 DNS 服务地址</p>
-<pre class="line-numbers language-none"><code class="language-none"># This file was automatically generated by WSL. To stop automatic generation of this file, add the following entry to &#x2F;etc&#x2F;wsl.conf:
-# [network]
-# generateResolvConf &#x3D; false
-nameserver 172.29.48.1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>如果你使用 WSL 的时候，只解析公网域名的话，比较简单，直接改成公网的域名服务地址即可，比如说 114.114.114.114 ；不过如果你有解析内网域名的需求话，也可以将其改成你的内网 DNS 的服务地址。但是如果你的电脑是移动电脑，同时会在内网环境下和外网环境下都使用，那么配置成内网 DNS 的话，出了内网就没法解析域名了(当然你可以通过播 VPN 来解决，不过那样会比较麻烦)。这个时候就需要派上我们的 Dnsmasq 这个工具了，它是一个 DNS 分流工具，可以根据不同域名后缀来使用不同 DNS server 进行解析。以下的教程同样以 Ubuntu 为例进行讲解。</p>
-<blockquote>
-<p>类似的工具还有好多，比如 <a href="https://coredns.io/">CoreDns</a> 这个工具也能实现 DNS 分流的工作。</p>
-</blockquote>
-<p>首先我们需要卸载 systemd-resolved，这个程序默认会占用 53 端口，跟我们的 Dnsmasq 是冲突的。</p>
-<pre class="line-numbers language-shell" data-language="shell"><code class="language-shell"><span class="token function">sudo</span> systemctl disable systemd-resolved 
-<span class="token function">sudo</span> systemctl stop systemd-resolved<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>按理来说，我们需要修改 &#x2F;etc&#x2F;resolv.conf 文件，不过在 wsl 中 &#x2F;etc&#x2F;resolv.conf 默认会在 WSL 启动的时候被重写，所以需要先修改 &#x2F;etc&#x2F;wsl.conf 文件。这个文件默认不存在，所以不存在的时候，可以创建一个：</p>
-<pre class="line-numbers language-none"><code class="language-none">[network]
-generateResolvConf &#x3D; false<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p>修改完配置后，还需要在 Windows 命令中执行 <code>wsl.exe --shutdown</code>，然后重新打开 wsl 命令行才能生效。</p>
-</blockquote>
-<p>接下来运行 <code>sudo apt-get install dnsmasq</code> 来安装 Dnsmasq ，安装完之后，会生成一个 &#x2F;etc&#x2F;dnsmasq.conf  文件。我们可以在其最后追加一行配置</p>
-<pre class="line-numbers language-none"><code class="language-none">conf-dir&#x3D;&#x2F;etc&#x2F;dnsmasq.d&#x2F;,*.conf<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p> 这样我们自定义的域名配置，就可以都放在 &#x2F;etc&#x2F;dnsmasq.d 目录下，在这个目录下创建一个文件 mydns.conf ，然后写入如下配置</p>
-<pre class="line-numbers language-none"><code class="language-none">server&#x3D;&#x2F;your_inner_domian&#x2F;your_inner_dns_server
-server&#x3D;&#x2F;your_inner_domian&#x2F;::
-server&#x3D;119.29.29.29
-server&#x3D;223.5.5.5<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>上面配置文件的第一行代表如果要解析的域名中包含 your_inner_domian 字符，则使用 dns 服务器 your_inner_dns_server 进行解析。这是一个子字符串匹配，不论你的域名为 <code>your_inner_domian.com</code> 或者 <code>your_inner_domain.net</code>，使用 your_inner_domian 都可匹配成功。 如果你的 your_inner_dns_server 不支持 ipv6，记得要加入第二行配置，它是用来禁用 ipv6 dns 解析用的（如果你的内网 DNS 服务器不支持 ipv6 协议的话，这个配置特别有用），不过这个功能仅支持 dnsmasq 2.80 及以上版本（使用 Ubuntu 20.02 安装的 Dnsmasq 是 2.80 版本，可以放心使用）。最后一行是留一个默认的 DNS 服务器（<code>119.29.29.29</code> 是腾讯的公共 DNS，<code>223.5.5.5</code> 是阿里的公共 DNS，这里之所有没有使用常用的 114 DNS，是由于它解析国外域名的时候，经常会失败），用来解析公网域名。</p>
-<p>配置完成后，修改 &#x2F;etc&#x2F;resolv.conf，将里面的 <code>nameserver</code> 修改为 <code>127.0.0.1</code>。最后执行  <code>service dnsmasq start</code> 来启动 dnsmasq，就可以测试我们的配置了。执行 <code>dig baidu.com</code>，正常情况下会有如下输出：</p>
-<pre class="line-numbers language-none"><code class="language-none">; &lt;&lt;&gt;&gt; DiG 9.16.1-Ubuntu &lt;&lt;&gt;&gt; baidu.com
-;; global options: +cmd
-;; Got answer:
-;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 56800
-;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1
-
-;; OPT PSEUDOSECTION:
-; EDNS: version: 0, flags:; udp: 4096
-;; QUESTION SECTION:
-;baidu.com.                     IN      A
-
-;; ANSWER SECTION:
-baidu.com.              200     IN      A       220.181.38.148
-baidu.com.              200     IN      A       220.181.38.251
-
-;; Query time: 0 msec
-;; SERVER: 127.0.0.1#53(127.0.0.1)
-;; WHEN: Mon Sep 13 14:52:44 CST 2021
-;; MSG SIZE  rcvd: 70<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>上面输出中 <code>ANSWER SECTION</code> 中列出来了解析出来的 IP，代表解析成功。同样执行 dig 内网域名，也能被正常解析则证明配置正确。</p>
-<p>最后需要说明的是 wsl 不好做 service 的开机自启动，下次启动后需要手动执行 <code>sudo service dnsmasq start</code> 才能启动 dnsmasq 。这样就显得不是很友好，可以修改 &#x2F;etc&#x2F;resolv.conf，在 <code>nameserver 127.0.0.1</code> 的后面再追加一行 <code>nameserver 119.29.29.29</code> 这样 dnsmasq 没有启动时，可以保证公网域名能解析。</p>
-]]></content>
-      <categories>
-        <category>Cloud Native</category>
-        <category>Docker</category>
       </categories>
   </entry>
 </search>
