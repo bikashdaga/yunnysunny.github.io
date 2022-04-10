@@ -221,7 +221,7 @@ c85a7f7e1a68   none                   null      local<span aria-hidden="true" cl
 <h3 id="2-3-举个例子"><a href="#2-3-举个例子" class="headerlink" title="2.3 举个例子"></a>2.3 举个例子</h3><pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">version</span><span class="token punctuation">:</span> <span class="token string">"3"</span>
 <span class="token key atrule">services</span><span class="token punctuation">:</span>
   <span class="token key atrule">elasticsearch</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> <span class="token string">'elastic/elasticsearch:8.1.0'</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> <span class="token string">'elastic/elasticsearch'</span>
     <span class="token key atrule">restart</span><span class="token punctuation">:</span> always
     <span class="token key atrule">container_name</span><span class="token punctuation">:</span> elasticsearch
     <span class="token key atrule">ulimits</span><span class="token punctuation">:</span>
@@ -238,7 +238,7 @@ c85a7f7e1a68   none                   null      local<span aria-hidden="true" cl
       <span class="token punctuation">-</span> ./log<span class="token punctuation">:</span>/usr/share/elasticsearch/logs
 
   <span class="token key atrule">logstash</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> <span class="token string">'elastic/logstash:8.1.0'</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> <span class="token string">'elastic/logstash'</span>
     <span class="token key atrule">user</span><span class="token punctuation">:</span> root
     <span class="token key atrule">restart</span><span class="token punctuation">:</span> always
     <span class="token key atrule">container_name</span><span class="token punctuation">:</span> logstash
@@ -255,7 +255,7 @@ c85a7f7e1a68   none                   null      local<span aria-hidden="true" cl
     <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
       <span class="token punctuation">-</span> elasticsearch
   <span class="token key atrule">kibana</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> elastic/kibana<span class="token punctuation">:</span>8.1.0
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> elastic/kibana
     <span class="token key atrule">restart</span><span class="token punctuation">:</span> always
     <span class="token key atrule">container_name</span><span class="token punctuation">:</span> kibana
     <span class="token key atrule">ports</span><span class="token punctuation">:</span>
@@ -640,7 +640,7 @@ password 你内网 gitlab 的密码<span aria-hidden="true" class="line-numbers-
     insteadOf &#x3D; https:&#x2F;&#x2F;gitlab.your-company.com&#x2F;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p><strong>代码 1.2</strong></p>
-<p>如果你的 git 服务器使用的端口号并不是标准的 22 端口，你可能对于上述配置比较疑惑，为何配置中不需要加端口号呢，其实一个默认的 ssh 格式的 git 链接是这种格式的 <a href="mailto:&#103;&#105;&#x74;&#64;&#103;&#105;&#116;&#104;&#117;&#98;&#x2e;&#99;&#x6f;&#x6d;">&#103;&#105;&#x74;&#64;&#103;&#105;&#116;&#104;&#117;&#98;&#x2e;&#99;&#x6f;&#x6d;</a>:yunnysunny&#x2F;nodebook.git 这里拿 github 上的一个项目举例，其中 yunnysunny 为账号，nodebook 为项目名。假设 git 没有开启默认的端口 22 作为 ssh 访问端口，而是使用 1234 的话，我们的 ssh 地址应该是这样子：<a href="mailto:&#103;&#105;&#x74;&#64;&#x67;&#x69;&#x74;&#104;&#x75;&#98;&#x2e;&#99;&#111;&#109;">&#103;&#105;&#x74;&#64;&#x67;&#x69;&#x74;&#104;&#x75;&#98;&#x2e;&#99;&#111;&#109;</a>:1234&#x2F;yunnysunny&#x2F;nodebook.git，也就是说  <a href="mailto:&#103;&#x69;&#116;&#x40;&#x67;&#x69;&#x74;&#104;&#x75;&#x62;&#46;&#x63;&#111;&#109;">&#103;&#x69;&#116;&#x40;&#x67;&#x69;&#x74;&#104;&#x75;&#x62;&#46;&#x63;&#111;&#109;</a>: 是固定格式，那端口号的配置从哪里获取呢，答案是 .ssh 目录（此目录在 Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）下的 config 文件，如果你的 git 服务开启的是 1234 的，应该会有如下配置</p>
+<p>如果你的 git 服务器使用的端口号并不是标准的 22 端口，你可能对于上述配置比较疑惑，为何配置中不需要加端口号呢，其实一个默认的 ssh 格式的 git 链接是这种格式的 <a href="mailto:&#103;&#105;&#x74;&#64;&#103;&#105;&#116;&#104;&#117;&#x62;&#46;&#x63;&#x6f;&#x6d;">&#103;&#105;&#x74;&#64;&#103;&#105;&#116;&#104;&#117;&#x62;&#46;&#x63;&#x6f;&#x6d;</a>:yunnysunny&#x2F;nodebook.git 这里拿 github 上的一个项目举例，其中 yunnysunny 为账号，nodebook 为项目名。假设 git 没有开启默认的端口 22 作为 ssh 访问端口，而是使用 1234 的话，我们的 ssh 地址应该是这样子：<a href="mailto:&#103;&#105;&#116;&#x40;&#x67;&#105;&#116;&#x68;&#x75;&#x62;&#x2e;&#x63;&#111;&#109;">&#103;&#105;&#116;&#x40;&#x67;&#105;&#116;&#x68;&#x75;&#x62;&#x2e;&#x63;&#111;&#109;</a>:1234&#x2F;yunnysunny&#x2F;nodebook.git，也就是说  <a href="mailto:&#x67;&#x69;&#116;&#x40;&#103;&#105;&#116;&#x68;&#117;&#x62;&#46;&#x63;&#x6f;&#x6d;">&#x67;&#x69;&#116;&#x40;&#103;&#105;&#116;&#x68;&#117;&#x62;&#46;&#x63;&#x6f;&#x6d;</a>: 是固定格式，那端口号的配置从哪里获取呢，答案是 .ssh 目录（此目录在 Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）下的 config 文件，如果你的 git 服务开启的是 1234 的，应该会有如下配置</p>
 <pre class="line-numbers language-none"><code class="language-none">Host gitlab.your-company.com
   Hostname gitlab.your-company.com
   User 你内网 gitlab 的用户名
