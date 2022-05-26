@@ -29,7 +29,7 @@
 <meta property="og:description" content="主要讲述如何在NDK中使用第三方库">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2015-12-31T00:00:00.000Z">
-<meta property="article:modified_time" content="2022-04-30T08:22:51.011Z">
+<meta property="article:modified_time" content="2022-05-26T01:18:42.291Z">
 <meta property="article:author" content="yunnysunny">
 <meta property="article:tag" content="白一梓 IT技术 博客 Node Go Java SSO TCP">
 <meta name="twitter:card" content="summary">
@@ -260,7 +260,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2022-04-30 08:22:51" itemprop="dateModified" datetime="2022-04-30T08:22:51+00:00">2022-04-30</time>
+      <time title="修改时间：2022-05-26 01:18:42" itemprop="dateModified" datetime="2022-05-26T01:18:42+00:00">2022-05-26</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -370,7 +370,7 @@ TARGET_PLATFORM :&#x3D; android-3<span aria-hidden="true" class="line-numbers-ro
 <blockquote>
 <p>其实libcrypto.so在安卓系统的<code>/system/lib</code>就存在了，虽然编译完成之后libcrypto.so会被拷贝到安卓项目的libs目录的armeabi下，但是在APP运行时读取的还是<code>/system/lib</code>下的libcrypto.so。可以把libcrypto.so和openssl文件目录分别拷贝到NDK目录下的<code>platforms\android-3\arch-arm\usr</code>中的<code>lib</code>和<code>include</code>目录，这样不需要写<code>include $(PREBUILT_SHARED_LIBRARY)</code>代码块了。</p>
 </blockquote>
-<pre><code>本文用的代码可以从http://git.oschina.net/yunnysunny/ndk/tree/master/chapter4 获取。
+<pre><code>本文用的代码可以从https://gitlab.com/yunnysunny/ndk/-/tree/master/chapter4 获取。
 </code></pre>
 
     </div>

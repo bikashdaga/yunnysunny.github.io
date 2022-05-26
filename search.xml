@@ -640,7 +640,7 @@ password 你内网 gitlab 的密码<span aria-hidden="true" class="line-numbers-
     insteadOf &#x3D; https:&#x2F;&#x2F;gitlab.your-company.com&#x2F;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p><strong>代码 1.2</strong></p>
-<p>如果你的 git 服务器使用的端口号并不是标准的 22 端口，你可能对于上述配置比较疑惑，为何配置中不需要加端口号呢，其实一个默认的 ssh 格式的 git 链接是这种格式的 <a href="mailto:&#103;&#x69;&#x74;&#x40;&#103;&#105;&#x74;&#104;&#x75;&#x62;&#46;&#99;&#111;&#109;">&#103;&#x69;&#x74;&#x40;&#103;&#105;&#x74;&#104;&#x75;&#x62;&#46;&#99;&#111;&#109;</a>:yunnysunny&#x2F;nodebook.git 这里拿 github 上的一个项目举例，其中 yunnysunny 为账号，nodebook 为项目名。假设 git 没有开启默认的端口 22 作为 ssh 访问端口，而是使用 1234 的话，我们的 ssh 地址应该是这样子：<a href="mailto:&#103;&#105;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#46;&#99;&#x6f;&#109;">&#103;&#105;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#46;&#99;&#x6f;&#109;</a>:1234&#x2F;yunnysunny&#x2F;nodebook.git，也就是说  <a href="mailto:&#103;&#105;&#116;&#x40;&#103;&#105;&#116;&#104;&#x75;&#98;&#46;&#x63;&#111;&#x6d;">&#103;&#105;&#116;&#x40;&#103;&#105;&#116;&#104;&#x75;&#98;&#46;&#x63;&#111;&#x6d;</a>: 是固定格式，那端口号的配置从哪里获取呢，答案是 .ssh 目录（此目录在 Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）下的 config 文件，如果你的 git 服务开启的是 1234 的，应该会有如下配置</p>
+<p>如果你的 git 服务器使用的端口号并不是标准的 22 端口，你可能对于上述配置比较疑惑，为何配置中不需要加端口号呢，其实一个默认的 ssh 格式的 git 链接是这种格式的 <a href="mailto:&#103;&#x69;&#116;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#x62;&#46;&#99;&#x6f;&#109;">&#103;&#x69;&#116;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#x62;&#46;&#99;&#x6f;&#109;</a>:yunnysunny&#x2F;nodebook.git 这里拿 github 上的一个项目举例，其中 yunnysunny 为账号，nodebook 为项目名。假设 git 没有开启默认的端口 22 作为 ssh 访问端口，而是使用 1234 的话，我们的 ssh 地址应该是这样子：<a href="mailto:&#x67;&#105;&#x74;&#x40;&#103;&#105;&#116;&#104;&#x75;&#x62;&#x2e;&#x63;&#x6f;&#109;">&#x67;&#105;&#x74;&#x40;&#103;&#105;&#116;&#104;&#x75;&#x62;&#x2e;&#x63;&#x6f;&#109;</a>:1234&#x2F;yunnysunny&#x2F;nodebook.git，也就是说  <a href="mailto:&#x67;&#105;&#x74;&#x40;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#x2e;&#99;&#111;&#109;">&#x67;&#105;&#x74;&#x40;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#x2e;&#99;&#111;&#109;</a>: 是固定格式，那端口号的配置从哪里获取呢，答案是 .ssh 目录（此目录在 Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）下的 config 文件，如果你的 git 服务开启的是 1234 的，应该会有如下配置</p>
 <pre class="line-numbers language-none"><code class="language-none">Host gitlab.your-company.com
   Hostname gitlab.your-company.com
   User 你内网 gitlab 的用户名
@@ -1036,7 +1036,7 @@ gcc -g -Wall -I $JAVA_HOME&#x2F;include&#x2F; -I $JAVA_HOME&#x2F;include&#x2F;li
 <pre><code>num:1,string:the first demo.
 </code></pre>
 <blockquote>
-<p>本文用到的源代码可以从<a href="http://git.oschina.net/yunnysunny/jni">http://git.oschina.net/yunnysunny/jni</a> 获得到</p>
+<p>本文用到的源代码可以从<a href="https://gitlab.com/yunnysunny/jni">https://gitlab.com/yunnysunny/jni</a> 获得到</p>
 </blockquote>
 ]]></content>
       <categories>
@@ -1166,7 +1166,7 @@ TARGET_PLATFORM :&#x3D; android-3<span aria-hidden="true" class="line-numbers-ro
 <blockquote>
 <p>其实libcrypto.so在安卓系统的<code>/system/lib</code>就存在了，虽然编译完成之后libcrypto.so会被拷贝到安卓项目的libs目录的armeabi下，但是在APP运行时读取的还是<code>/system/lib</code>下的libcrypto.so。可以把libcrypto.so和openssl文件目录分别拷贝到NDK目录下的<code>platforms\android-3\arch-arm\usr</code>中的<code>lib</code>和<code>include</code>目录，这样不需要写<code>include $(PREBUILT_SHARED_LIBRARY)</code>代码块了。</p>
 </blockquote>
-<pre><code>本文用的代码可以从http://git.oschina.net/yunnysunny/ndk/tree/master/chapter4 获取。
+<pre><code>本文用的代码可以从https://gitlab.com/yunnysunny/ndk/-/tree/master/chapter4 获取。
 </code></pre>
 ]]></content>
       <categories>
@@ -2598,7 +2598,7 @@ NAN_METHOD(CalculateAsync) &#123;
   NanReturnUndefined();
 &#125;
 </code></pre>
-<p><strong>代码2.4 async.cc</strong><br><a href="http://git.oschina.net/yunnysunny/async-tutorial-code/tree/master/addon">这里</a>有一个利用<a href="https://github.com/nodejs/nan">nan</a>和node0.10&#x2F;0.12来完成异步操作的对比。</p>
+<p><strong>代码2.4 async.cc</strong><br><a href="https://gitlab.com/yunnysunny/async-tutorial-code/tree/master/addon">这里</a>有一个利用<a href="https://github.com/nodejs/nan">nan</a>和node0.10&#x2F;0.12来完成异步操作的对比。</p>
 <p>这篇教程仅仅是一个入门操作，就讲到这里了，详细的使用请参考nan的readme文档。</p>
 ]]></content>
       <categories>
@@ -3128,7 +3128,7 @@ head<span class="token punctuation">.</span><span class="token function">appendC
 	<span class="token function">setcookie</span><span class="token punctuation">(</span><span class="token variable">$sess_name</span><span class="token punctuation">,</span> <span class="token function">session_id</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token constant">null</span><span class="token punctuation">,</span> <span class="token string single-quoted-string">'/'</span><span class="token punctuation">,</span> <span class="token constant">null</span><span class="token punctuation">,</span> <span class="token constant">null</span><span class="token punctuation">,</span> <span class="token constant boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">&#125;</span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p><strong>代码3.1 设置httponly属性为true</strong></p>
-<p>本文源代码地址：<a href="http://git.oschina.net/yunnysunny/hack">源码git库</a></p>
+<p>本文源代码地址：<a href="https://gitlab.com/yunnysunny/session-hack">源码git库</a></p>
 ]]></content>
       <categories>
         <category>HTTP</category>
@@ -3200,7 +3200,7 @@ head<span class="token punctuation">.</span><span class="token function">appendC
 #endif
 </code></pre>
 <p>代码片段1.2</p>
-<p><img src="http://git.oschina.net/yunnysunny/socket_close/raw/master/doc/close1.png" alt="socket的关闭流程1"></p>
+<p><img src="https://gitlab.com/yunnysunny/socket_close/-/raw/master/doc/close1.png" alt="socket的关闭流程1"></p>
 <p>图1.1 CLOSE_WAIT出现流程</p>
 <p>客户端调用了CloseSocket之后，发送FIN信号到服务器端，告诉socket程序，连接已经断开。服务器端接收到FIN信号后，会将自身的TCP状态置为<code>CLOSE_WAIT</code>,同时回复 一个ACK信号给客户端，客户端接收到这个ACK信号后，自身将处于<code>FIN_WAIT_2</code>状态。</p>
 <p>但是tcp是全双工的通信协议，虽然客户端关闭了连接，但是服务器端对于这个关闭动作不予理睬怎么办。对于服务器端来说，这是个不幸的消息，因为它将一直处于<code>CLOSE_WAIT</code>状态，虽然客户端已经不需要和服务器间进行通信了，但是服务器端的socket连接句柄一直得不到释放；如果老是有这种情况出现，久而久之服务器端的连接句柄就会被耗尽。对于发起关闭的客户端来说，他处于<code>FIN_WAIT_2</code>状态，如果出现服务器端一直处于<code>CLOSE_WATI</code>状态的情况，客户端并不会一直处在<code>FIN_WAIT_2</code>状态，因为这个状态有一个超时时间，这个值可以在&#x2F;etc&#x2F;sysctl.conf中进行配置。在这个文件中配置<code>net.ipv4.tcp_fin_timeout=30</code>即可保证<code>FIN_WAIT_2</code>状态最多保持30秒，超过这个时间后就进入TIME_WAIT状态（下面要讲到这个状态）。</p>
@@ -3224,7 +3224,7 @@ clear<span class="token operator">:</span>
 	<span class="token punctuation">&#125;</span>
 	<span class="token function">closesocket</span><span class="token punctuation">(</span>client<span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>代码片段1.3</p>
-<p>这里摘录了服务器端部分代码，注意这个recv函数，这个函数在连接建立时，会堵塞住当前代码，等有数据接收成功后才返回，返回值为接收到的字节数；但是对于连接对方socket关闭情况，它能立即感应到，并且返回0.所以对于返回0的时候，可以跳出循环，结束当前socket处理，进行一些垃圾回收工作，注意最后一句closesocket操作是很重要的，假设没有写这句话，服务器端会一直处于CLOSE_WAIT状态。如果写了这句话，那么socket的流程就会是这样的：<br><img src="http://git.oschina.net/yunnysunny/socket_close/raw/master/doc/close2.png" alt="socket的关闭流程2"></p>
+<p>这里摘录了服务器端部分代码，注意这个recv函数，这个函数在连接建立时，会堵塞住当前代码，等有数据接收成功后才返回，返回值为接收到的字节数；但是对于连接对方socket关闭情况，它能立即感应到，并且返回0.所以对于返回0的时候，可以跳出循环，结束当前socket处理，进行一些垃圾回收工作，注意最后一句closesocket操作是很重要的，假设没有写这句话，服务器端会一直处于CLOSE_WAIT状态。如果写了这句话，那么socket的流程就会是这样的：<br><img src="https://gitlab.com/yunnysunny/socket_close/-/raw/master/doc/close2.png" alt="socket的关闭流程2"></p>
 <p>图1.2 <code>TIME_WAIT</code>出现流程</p>
 <h2 id="TIME-WAIT分析"><a href="#TIME-WAIT分析" class="headerlink" title="TIME_WAIT分析"></a>TIME_WAIT分析</h2><p>服务器端调用了CloseSocket操作后，会发送一个FIN信号给客户端，客户端进入<code>TIME_WAIT</code>状态，而且将维持在这个状态一段时间，这个时间也被成为2MSL(MSL是maximum segment lifetime的缩写，意指最大分节生命周期，这是IP数据包能在互联网上生存的最长时间，超过这个时间将在互联网上消失)，在这个时间段内如果客户端的发出的数据还没有被服务器端确认接收的话，可以趁这个时间等待服务端的确认消息。注意，客户端最后发出的ACK N+1消息，是一进入<code>TIME_WAIT</code>状态后就发出的，并不是在<code>TIME_WAIT</code>状态结束后发出的。如果在发送ACK N+1的时候，由于某种原因服务器端没有收到，那么服务器端会重新发送FIN N消息，这个时候如果客户端还处于<code>TIME_WAIT</code>状态的，会重新发送ACK N+1消息，否则客户端会直接发送一个RST消息，告诉服务器端socket连接已经不存在了。</p>
 <p>有时，我们在使用netstat命令查看web服务器端的tcp状态的时候，会发现有成千上万的连接句柄处在<code>TIME_WAIT</code>状态。web服务器的socket连接一般都是服务器端主动关闭的，当web服务器的并发访问量过大的时候，由于web服务器大多情况下是短连接，socket句柄的生命周期比较短，于是乎就出现了大量的句柄堵在<code>TIME_WAIT</code>状态，等待系统回收的情况。如果这种情况太过频繁，又由于操作系统本身的连接数就有限，势必会影响正常的socket连接的建立。在linux下对于这种情况倒是有解救措施，方法就是修改&#x2F;etc&#x2F;sysctl.conf文件，保证里面含有以下三行配置：</p>
@@ -3260,7 +3260,7 @@ if (setsockopt(socketfd,SOL_SOCKET,SO_LINGER,(char *)&amp;so_linger,sizeof(struc
 <pre class="line-numbers language-c" data-language="c"><code class="language-c">so_linger<span class="token punctuation">.</span>l_onoff <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
 so_linger<span class="token punctuation">.</span>l_linger <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
-<p>如果客户端的socket是这么设置的那么socket的关闭流程就直接是这个样子了：<br><img src="http://git.oschina.net/yunnysunny/socket_close/raw/master/doc/close3.png" alt="socket的关闭流程3"></p>
+<p>如果客户端的socket是这么设置的那么socket的关闭流程就直接是这个样子了：<br><img src="https://gitlab.com/yunnysunny/socket_close/-/raw/master/doc/close3.png" alt="socket的关闭流程3"></p>
 <p>图2.1 RST关闭流程</p>
 <p>这相当于客户端直接告诉服务器端，我这边异常终止了，对于我稍后给出的所有数据包你都可以丢弃掉。服务器端如果接受到这种RST消息，会直接把对应的socket句柄回收掉。有一些socket程序不想让TCP出现<code>TIME_WAIT</code>状态，会选择直接使用RST方式关闭socket，以保证socket句柄在最短的时间内得到回收，当然前提是接受有可能被丢弃老的数据包这种情况的出现。如果socket通信的前后数据包的关联性不是很强的话，换句话说每次通信都是一个单独的事务，那么可以考虑直接发送RST信号来快速关闭连接。</p>
 <h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><p>1.文中提到的修改&#x2F;etc&#x2F;sysctl.conf文件的情况，修改完成之后需要运行<code>/sbin/sysctl -p</code>后才能生效。<br>2.图1中发送完FIN M信号后，被动关闭端的socket程序中输入流会接收到一个EOF标示，是在C代码中处理时recv函数返回0代表对方关闭，在java代码中会在InputStream的read函数中接收到-1：</p>
@@ -3353,7 +3353,7 @@ so_linger<span class="token punctuation">.</span>l_linger <span class="token ope
 <p><strong>代码 1.1 tao.com 登陆状态获取</strong></p>
 <p>这里我们用 ticket 来表示登陆成功之后写入 sso.com 的 cookie 的变量。上面代码的逻辑还是比较清晰的，首先通过 jsonp 获取 ticket ：如果获取到了就到了就在 tao.com 的后端，通过 ticket 查询出对应的用户 ID 回来，然后将登陆用户数据写入 tao.com 本身的 session中；如果没有获取到 ticket，就跳转到 sso.com 完成登陆，并生产成 ticket，登陆完成后再跳转会 tao.com。</p>
 <blockquote>
-<p>本教程关联的完整代码，参见这里 <a href="https://gitee.com/yunnysunny/sso-demo">https://gitee.com/yunnysunny/sso-demo</a></p>
+<p>本教程关联的完整代码，参见这里 <a href="https://gitlab.com/yunnysunny/sso-demo">https://gitlab.com/yunnysunny/sso-demo</a></p>
 </blockquote>
 ]]></content>
       <categories>
