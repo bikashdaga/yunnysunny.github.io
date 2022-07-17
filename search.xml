@@ -407,8 +407,8 @@ ZOOKEEPER_DOWNLOAD_ADDRESS&#x3D;https:&#x2F;&#x2F;mirrors.bfsu.edu.cn&#x2F;apach
 <p><strong>代码 1.2.4</strong></p>
 <p>如果单条命令比较长，也可以使用换行</p>
 <pre class="line-numbers language-dockerfile" data-language="dockerfile"><code class="language-dockerfile">RUN command1 \
-	&amp;&amp; command2 \
-	&amp;&amp; command3<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+    &amp;&amp; command2 \
+    &amp;&amp; command3<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p><strong>代码 1.2.5</strong></p>
 <p>docker 默认启动时，是使用 root 用户进行登录，但是有一些第三方程序在设计的时候，不支持使用 root 用户来执行，这时候你必须切换到一个非 root 用户。以下代码节选自 nodebook 项目中的 <a href="https://github.com/yunnysunny/nodebook/blob/master/Dockerfile">Dockerfile</a> 文件：</p>
@@ -623,131 +623,6 @@ RUN yum install wget curl make tcpdump net-tools bind-utils telnet \
       </categories>
   </entry>
   <entry>
-    <title>go 私有化包构建路</title>
-    <url>/posts/go-private-package/</url>
-    <content><![CDATA[<p>一般学习一门新的编程语言的时候，都要顺便学习一下它的包管理知识。go 语言起步的时候，包管理还比较粗糙，从 1.11 版本开始逐步引入 GO Module 机制，通过设置环境 <code>GO111MODULE=on</code> 来开启其支持，从 1.16 开始这个环境变量默认为 <code>on</code>。如果不确定可以通过 <code>go env | grep GO111MODULE</code> 来查看下。</p>
-<p>按理来说通过 go get 就能下载托管在 github 上的包，但是很多时候，我们想将自己的某一部分代码抽离出来做成一个包，但是这部分代码又不能公开，最适合就是托管到公司代码仓库上去，比如说 gitlab。那么从私有镜像仓库下载 go 包，就成为一个特别紧迫的需求。</p>
-<h2 id="1-git-配置"><a href="#1-git-配置" class="headerlink" title="1. git 配置"></a>1. git 配置</h2><p>其实 go 官方是支持这种功能的。假设你公司的 gitlab 域名为 gitlab.your-company.com ，首先我们要设置环境变量 <code>GOPRIVATE</code>，通过命令 </p>
-<p> <code>go env -w GOPRIVATE=gitlab.your-company.com</code> </p>
-<p><strong>代码 1.0</strong></p>
-<p>即可设置完成。然后就是配置 git 授权，让 go 能够正确的从 git 仓库中下载源代码。go 默认使用 https 协议来跟 git 服务器通信，所以通过再 .netrc 文件（此文件在 HOME 目录下，Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）中增加如下配置，可以让 go 可以跟 git 服务正确的通信。</p>
-<pre class="line-numbers language-none"><code class="language-none">machine gitlab.your-company.com
-login 你内网 gitlab 的用户名
-password 你内网 gitlab 的密码<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-<p><strong>代码 1.1</strong></p>
-<p>然后大家 git 的惯用用法是使用 ssh 模式跟 git 服务器通信。所以单独配置一个 https 的访问模式显得不伦不类，可以使用 git 自带的 url 替换配置，强制让 go 在跟 git 服务器端通信的时候，修改 .gitconfig 文件（此文件在用户根目录下，Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）就能达到这种目的。</p>
-<pre class="line-numbers language-none"><code class="language-none">[url &quot;git@gitlab.your-company.com:&quot;]
-    insteadOf &#x3D; https:&#x2F;&#x2F;gitlab.your-company.com&#x2F;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p><strong>代码 1.2</strong></p>
-<p>如果你的 git 服务器使用的端口号并不是标准的 22 端口，你可能对于上述配置比较疑惑，为何配置中不需要加端口号呢，其实一个默认的 ssh 格式的 git 链接是这种格式的 <a href="mailto:&#103;&#x69;&#116;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#x62;&#46;&#99;&#x6f;&#109;">&#103;&#x69;&#116;&#x40;&#x67;&#x69;&#116;&#104;&#117;&#x62;&#46;&#99;&#x6f;&#109;</a>:yunnysunny&#x2F;nodebook.git 这里拿 github 上的一个项目举例，其中 yunnysunny 为账号，nodebook 为项目名。假设 git 没有开启默认的端口 22 作为 ssh 访问端口，而是使用 1234 的话，我们的 ssh 地址应该是这样子：<a href="mailto:&#x67;&#105;&#x74;&#x40;&#103;&#105;&#116;&#104;&#x75;&#x62;&#x2e;&#x63;&#x6f;&#109;">&#x67;&#105;&#x74;&#x40;&#103;&#105;&#116;&#104;&#x75;&#x62;&#x2e;&#x63;&#x6f;&#109;</a>:1234&#x2F;yunnysunny&#x2F;nodebook.git，也就是说  <a href="mailto:&#x67;&#105;&#x74;&#x40;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#x2e;&#99;&#111;&#109;">&#x67;&#105;&#x74;&#x40;&#x67;&#x69;&#116;&#104;&#x75;&#98;&#x2e;&#99;&#111;&#109;</a>: 是固定格式，那端口号的配置从哪里获取呢，答案是 .ssh 目录（此目录在 Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）下的 config 文件，如果你的 git 服务开启的是 1234 的，应该会有如下配置</p>
-<pre class="line-numbers language-none"><code class="language-none">Host gitlab.your-company.com
-  Hostname gitlab.your-company.com
-  User 你内网 gitlab 的用户名
-  IdentityFile ~&#x2F;.ssh&#x2F;私钥文件
-  Port 1234<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p><strong>代码 1.3</strong></p>
-<p>git 程序最终在 config 这个文件中读取的端口号，你也可以通过 <code>ssh -vT gitlab.your-company.com</code> 来手动验证这个过程，不出意外的话，最终会有如下输出：</p>
-<pre class="line-numbers language-none"><code class="language-none">Welcome to GitLab, @你内网 gitlab 的用户名!
-debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
-debug1: client_input_channel_req: channel 0 rtype eow@openssh.com reply 0
-debug1: channel 0: free: client-session, nchannels 1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="2-编写模块"><a href="#2-编写模块" class="headerlink" title="2. 编写模块"></a>2. 编写模块</h2><p>在内网 gitlab 上你的账号域下创建一个 mod-test 的项目，然后我们就得到了这么一个项目 <a href="http://gitlab.your-company.com/your-account/mod-test">http://gitlab.your-company.com/your-account/mod-test</a> 其中 your-account 为你的内网 gitlab 账号名。</p>
-<p>接着在本地任意目录中执行</p>
-<pre class="line-numbers language-none"><code class="language-none">git clone ssh:&#x2F;&#x2F;git@gitlab.your-company.com:your-account&#x2F;mod-test<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>然后进入文件夹 mod-test，执行 </p>
-<pre class="line-numbers language-none"><code class="language-none">go mod init  gitlab.your-company.com&#x2F;your-account&#x2F;mod-test<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>其中 your-account 为你的本地 gitlab 账号</p>
-<p>接下来就是写一个测试模块</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
-<span class="token keyword">import</span> <span class="token punctuation">(</span>
-    <span class="token string">"fmt"</span>
-<span class="token punctuation">)</span>
-<span class="token keyword">func</span> <span class="token function">MyShow</span><span class="token punctuation">(</span>param <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"the param is"</span><span class="token punctuation">,</span> param<span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p><strong>代码 2.1 my.go</strong></p>
-<p>我们将代码 push 到本地 gitlab，然后打一个 tag，起名 v0.0.0。</p>
-<p>接着写一个测试用的项目来引用这个 mod-test 模块，新建目录 use-mod，进入后执行 <code>go mod init use-mod</code>。接着我们使用命令 <code>go get gitlab.your-company.com/your-account/mod-test</code> 来安装依赖包，然后会翻车：</p>
-<pre class="line-numbers language-none"><code class="language-none">go get: unrecognized import path &quot;gitlab.your-company.com&#x2F;your-account&#x2F;mod-test&quot;: parse https:&#x2F;&#x2F;gitlab.your-company.com&#x2F;your-account&#x2F;mod-test?go-get&#x3D;1: no go-import meta tags (meta tag gitlab.your-company.com:1234&#x2F;your-account&#x2F;mod-test did not match import path gitlab.your-company.com&#x2F;your-account&#x2F;mod-test)<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>顺蔓摸瓜 ，<code>curl  https://gitlab.your-company.com/your-account/mod-test?go-get=1</code> 会发现他有如下输出：</p>
-<pre class="line-numbers language-html" data-language="html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>head</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>go-import<span class="token punctuation">"</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>gitlab.your-company.com:1234/your-account/mod-test git http://gitlab.your-company.com:1234/your-account/mod-test.git<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>head</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-<p>究其原因应该是由于我们公司的 gitlab 搭建在 docker 中，内部端口开启的是 1234，然后内置一个 nginx 做反向代理，nginx 对外开放 80 和 443。</p>
-<p>如果你使用的内网 gitlab 没有这种幺蛾子，刚才的操作就已经成功了。如果你非要在这种模式下使用，也不是没有办法，只不过步骤会复杂些。首先我们手动编辑 use-mod 项目中的 go.mod:</p>
-<pre class="line-numbers language-none"><code class="language-none">module use-mod
-
-go 1.17
-
-require gitlab.your-company.com&#x2F;your-account&#x2F;mod-test v0.0.0
-
-replace gitlab.your-company.com&#x2F;your-account&#x2F;mod-test v0.0.0 &#x3D;&gt; gitlab.your-company.com&#x2F;your-account&#x2F;mod-test.git v0.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p><strong>代码 2.2</strong></p>
-<p>然后编写我们的 go 代码</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
-
-<span class="token keyword">import</span> <span class="token punctuation">(</span>
-	<span class="token string">"fmt"</span>
-	<span class="token string">"gitlab.your-company.com/your-account/mod-test"</span>
-<span class="token punctuation">)</span>
-
-<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"begin"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p><strong>代码 2.3</strong></p>
-<p>执行 <code>go mod tidy</code> 发现依赖包终于可以正常下载了，不过执行 <code>go run test.go</code> 又报错了：</p>
-<pre class="line-numbers language-none"><code class="language-none">test.go:5:2: import &quot;gitlab.your-company.com&#x2F;your-account&#x2F;mod-test&quot; is a program, not an importable package<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>我们不能 import 一个 module 中 main 包中的代码，需要修改项目 mod-test，新建一个文件夹 my，把 <strong>代码 2.1</strong> 移动到 my 文件夹，然后修改第一行为 <code>package my</code>。</p>
-<p>重新对项目 mod-test 打 tag ，tag 名字为 <code>v0.0.1</code>，然后修改 <strong>代码 2.2</strong> ，将里面的版本号相应的改为 <code>v0.0.1</code>。</p>
-<p>修改 <strong>代码 2.3</strong> 改为如下：</p>
-<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
-
-<span class="token keyword">import</span> <span class="token punctuation">(</span>
-	<span class="token string">"fmt"</span>
-	<span class="token string">"gitlab.your-company.com/your-account/mod-test/my"</span>
-<span class="token punctuation">)</span>
-
-<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-	my<span class="token punctuation">.</span><span class="token function">MyShow</span><span class="token punctuation">(</span><span class="token string">"bcd"</span><span class="token punctuation">)</span>
-	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"begin"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p><strong>代码 2.4</strong></p>
-<p>执行 go mod tidy 来安装依赖包，然后执行 go build 就能正常生成的可执行程序。</p>
-<h2 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h2><p>通过 <strong>代码 1.0</strong> 设置完 GO_PRIVATE 环境变量之后，go 在下载前缀符合 GO_PRIVATE 值的 module 的时候，会尝试请求地址 <a href="https://gitlab.your-company.com/your-account/your-mod-name?go-get=1">https://gitlab.your-company.com/your-account/your-mod-name?go-get=1</a> ，正常情况下会返回如下格式</p>
-<pre class="line-numbers language-html" data-language="html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>head</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>go-import<span class="token punctuation">"</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>gitlab.your-company.com/your-account/your-mod-name git http://gitlab.your-company.com/your-account/your-mod-name.git<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>head</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p><strong>代码 3.0</strong></p>
-<p>返回的<strong>代码 3.0</strong> 中，如果域名后面没有跟端口号，是比较简单的，调用者直接使用 <code>go get gitlab.your-company.com/your-account/your-mod-name</code> 进行安装就行。但如果含有端口号，则需要手动编辑调用项目的 go.mod 文件，保证有如下 <strong>代码 3.1</strong> 配置，然后通过 go mod download 或者 go mod tidy 安装（后者需要起码在代码中有一处 import 该私有 module 中包的声明）</p>
-<pre class="line-numbers language-none"><code class="language-none"># 这里假设你使用的版本号为v0.0.0
-require gitlab.your-company.com&#x2F;your-account&#x2F;your-mod-name v0.0.0
-
-replace gitlab.your-company.com&#x2F;your-account&#x2F;your-mod-name v0.0.0 &#x3D;&gt; gitlab.your-company.com&#x2F;your-account&#x2F;your-mod-name.git v0.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p><strong>代码 3.1</strong></p>
-<p>由于在 <strong>代码 3.0</strong> 中指示了 go 要使用 git 方式下载代码，所以要正确的使用 <strong>代码 1.1</strong> 或者 <strong>代码1.2</strong> 做配置，保证 go 能过正常和 git 服务器做通信。</p>
-<p>最后需要留意的是，你的调用某一个 module 时，只能调用其非 main 包中的代码。</p>
-<blockquote>
-<p>初学者还容易搞混的一个概念，就是 go 中的 module 和 package 的概念，使用 go get 下载的单元为一个 module，在代码中调用的时候，是调用 module 中的某一个 package。换句话说，就是一个 module 可以包含多一个 package （每个 package 的代码放置在同一个文件夹中）。 </p>
-</blockquote>
-<h2 id="4-其他问题"><a href="#4-其他问题" class="headerlink" title="4. 其他问题"></a>4. 其他问题</h2><p>如果在下载私有 module 的时候，出现如下问题：</p>
-<pre class="line-numbers language-none"><code class="language-none">go mod download: gitlab.your-company.com&#x2F;your-account&#x2F;mod-test.git@v0.0.3: invalid version: git ls-remote -q origin in &#x2F;root&#x2F;go&#x2F;pkg&#x2F;mod&#x2F;cache&#x2F;vcs&#x2F;49e4f4ef52d3227f1c09bb8a8db5321ccf5cd277662d5a9ad607ffd2ff57b32d: exit status 128:
-        fatal: unable to connect to gitlab.17zuoye.net:
-        gitlab.your-company.com[0: 192.168.1.10]: errno&#x3D;Connection refused<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>通过提示信息上来看是版本号找不到，但是真实的原因可能并不如此。需要做两方面的检查，一方面确认 git 仓库上是否有 <code>v0.0.3</code> 这个 tag；另一方面也需要确认当前系统中配置的 ssh 私钥（<strong>代码 1.3</strong> 中的配置）是否有访问 mod-test 这个项目的权限，如果没有权限，同样会报 <code>invalid version</code> 这个错误。</p>
-]]></content>
-      <categories>
-        <category>Golang</category>
-      </categories>
-  </entry>
-  <entry>
     <title>docker 容器的优雅重启方案</title>
     <url>/posts/gracefully-restart-on-docker/</url>
     <content><![CDATA[<p>当我们将编写的程序部署到服务器之后，免不了会面临未知 bug 导致的程序崩溃退出问题，这个时候快速的将程序进行重启，显得尤为重要，特别是那种在后端和用户之间维持会话的服务。这篇文章就是讲一下，如果你的程序部署到 docker 后，如何做到优雅重启。</p>
@@ -941,6 +816,131 @@ ENTRYPOINT [ &quot;&#x2F;entrypoint.sh&quot; ]<span aria-hidden="true" class="li
       <categories>
         <category>Cloud Native</category>
         <category>Docker</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>go 私有化包构建路</title>
+    <url>/posts/go-private-package/</url>
+    <content><![CDATA[<p>一般学习一门新的编程语言的时候，都要顺便学习一下它的包管理知识。go 语言起步的时候，包管理还比较粗糙，从 1.11 版本开始逐步引入 GO Module 机制，通过设置环境 <code>GO111MODULE=on</code> 来开启其支持，从 1.16 开始这个环境变量默认为 <code>on</code>。如果不确定可以通过 <code>go env | grep GO111MODULE</code> 来查看下。</p>
+<p>按理来说通过 go get 就能下载托管在 github 上的包，但是很多时候，我们想将自己的某一部分代码抽离出来做成一个包，但是这部分代码又不能公开，最适合就是托管到公司代码仓库上去，比如说 gitlab。那么从私有镜像仓库下载 go 包，就成为一个特别紧迫的需求。</p>
+<h2 id="1-git-配置"><a href="#1-git-配置" class="headerlink" title="1. git 配置"></a>1. git 配置</h2><p>其实 go 官方是支持这种功能的。假设你公司的 gitlab 域名为 gitlab.your-company.com ，首先我们要设置环境变量 <code>GOPRIVATE</code>，通过命令 </p>
+<p> <code>go env -w GOPRIVATE=gitlab.your-company.com</code> </p>
+<p><strong>代码 1.0</strong></p>
+<p>即可设置完成。然后就是配置 git 授权，让 go 能够正确的从 git 仓库中下载源代码。go 默认使用 https 协议来跟 git 服务器通信，所以通过再 .netrc 文件（此文件在 HOME 目录下，Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）中增加如下配置，可以让 go 可以跟 git 服务正确的通信。</p>
+<pre class="line-numbers language-none"><code class="language-none">machine gitlab.your-company.com
+login 你内网 gitlab 的用户名
+password 你内网 gitlab 的密码<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p><strong>代码 1.1</strong></p>
+<p>然后大家 git 的惯用用法是使用 ssh 模式跟 git 服务器通信。所以单独配置一个 https 的访问模式显得不伦不类，可以使用 git 自带的 url 替换配置，强制让 go 在跟 git 服务器端通信的时候，修改 .gitconfig 文件（此文件在用户根目录下，Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）就能达到这种目的。</p>
+<pre class="line-numbers language-none"><code class="language-none">[url &quot;git@gitlab.your-company.com:&quot;]
+    insteadOf &#x3D; https:&#x2F;&#x2F;gitlab.your-company.com&#x2F;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.2</strong></p>
+<p>如果你的 git 服务器使用的端口号并不是标准的 22 端口，你可能对于上述配置比较疑惑，为何配置中不需要加端口号呢，其实一个默认的 ssh 格式的 git 链接是这种格式的 <a href="mailto:&#x67;&#105;&#x74;&#x40;&#x67;&#x69;&#116;&#x68;&#117;&#98;&#x2e;&#99;&#x6f;&#x6d;">&#x67;&#105;&#x74;&#x40;&#x67;&#x69;&#116;&#x68;&#117;&#98;&#x2e;&#99;&#x6f;&#x6d;</a>:yunnysunny&#x2F;nodebook.git 这里拿 github 上的一个项目举例，其中 yunnysunny 为账号，nodebook 为项目名。假设 git 没有开启默认的端口 22 作为 ssh 访问端口，而是使用 1234 的话，我们的 ssh 地址应该是这样子：<a href="mailto:&#x67;&#105;&#116;&#64;&#103;&#x69;&#116;&#104;&#117;&#x62;&#46;&#99;&#111;&#109;">&#x67;&#105;&#116;&#64;&#103;&#x69;&#116;&#104;&#117;&#x62;&#46;&#99;&#111;&#109;</a>:1234&#x2F;yunnysunny&#x2F;nodebook.git，也就是说  <a href="mailto:&#103;&#105;&#x74;&#x40;&#103;&#105;&#x74;&#x68;&#117;&#x62;&#46;&#x63;&#111;&#109;">&#103;&#105;&#x74;&#x40;&#103;&#105;&#x74;&#x68;&#117;&#x62;&#46;&#x63;&#111;&#109;</a>: 是固定格式，那端口号的配置从哪里获取呢，答案是 .ssh 目录（此目录在 Linux 下在 $HOME 中，Windows 下在 %USERPROFILE% 中）下的 config 文件，如果你的 git 服务开启的是 1234 的，应该会有如下配置</p>
+<pre class="line-numbers language-none"><code class="language-none">Host gitlab.your-company.com
+  Hostname gitlab.your-company.com
+  User 你内网 gitlab 的用户名
+  IdentityFile ~&#x2F;.ssh&#x2F;私钥文件
+  Port 1234<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 1.3</strong></p>
+<p>git 程序最终在 config 这个文件中读取的端口号，你也可以通过 <code>ssh -vT gitlab.your-company.com</code> 来手动验证这个过程，不出意外的话，最终会有如下输出：</p>
+<pre class="line-numbers language-none"><code class="language-none">Welcome to GitLab, @你内网 gitlab 的用户名!
+debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+debug1: client_input_channel_req: channel 0 rtype eow@openssh.com reply 0
+debug1: channel 0: free: client-session, nchannels 1<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="2-编写模块"><a href="#2-编写模块" class="headerlink" title="2. 编写模块"></a>2. 编写模块</h2><p>在内网 gitlab 上你的账号域下创建一个 mod-test 的项目，然后我们就得到了这么一个项目 <a href="http://gitlab.your-company.com/your-account/mod-test">http://gitlab.your-company.com/your-account/mod-test</a> 其中 your-account 为你的内网 gitlab 账号名。</p>
+<p>接着在本地任意目录中执行</p>
+<pre class="line-numbers language-none"><code class="language-none">git clone ssh:&#x2F;&#x2F;git@gitlab.your-company.com:your-account&#x2F;mod-test<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>然后进入文件夹 mod-test，执行 </p>
+<pre class="line-numbers language-none"><code class="language-none">go mod init  gitlab.your-company.com&#x2F;your-account&#x2F;mod-test<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>其中 your-account 为你的本地 gitlab 账号</p>
+<p>接下来就是写一个测试模块</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">func</span> <span class="token function">MyShow</span><span class="token punctuation">(</span>param <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"the param is"</span><span class="token punctuation">,</span> param<span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 2.1 my.go</strong></p>
+<p>我们将代码 push 到本地 gitlab，然后打一个 tag，起名 v0.0.0。</p>
+<p>接着写一个测试用的项目来引用这个 mod-test 模块，新建目录 use-mod，进入后执行 <code>go mod init use-mod</code>。接着我们使用命令 <code>go get gitlab.your-company.com/your-account/mod-test</code> 来安装依赖包，然后会翻车：</p>
+<pre class="line-numbers language-none"><code class="language-none">go get: unrecognized import path &quot;gitlab.your-company.com&#x2F;your-account&#x2F;mod-test&quot;: parse https:&#x2F;&#x2F;gitlab.your-company.com&#x2F;your-account&#x2F;mod-test?go-get&#x3D;1: no go-import meta tags (meta tag gitlab.your-company.com:1234&#x2F;your-account&#x2F;mod-test did not match import path gitlab.your-company.com&#x2F;your-account&#x2F;mod-test)<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>顺蔓摸瓜 ，<code>curl  https://gitlab.your-company.com/your-account/mod-test?go-get=1</code> 会发现他有如下输出：</p>
+<pre class="line-numbers language-html" data-language="html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>head</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>go-import<span class="token punctuation">"</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>gitlab.your-company.com:1234/your-account/mod-test git http://gitlab.your-company.com:1234/your-account/mod-test.git<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>head</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>究其原因应该是由于我们公司的 gitlab 搭建在 docker 中，内部端口开启的是 1234，然后内置一个 nginx 做反向代理，nginx 对外开放 80 和 443。</p>
+<p>如果你使用的内网 gitlab 没有这种幺蛾子，刚才的操作就已经成功了。如果你非要在这种模式下使用，也不是没有办法，只不过步骤会复杂些。首先我们手动编辑 use-mod 项目中的 go.mod:</p>
+<pre class="line-numbers language-none"><code class="language-none">module use-mod
+
+go 1.17
+
+require gitlab.your-company.com&#x2F;your-account&#x2F;mod-test v0.0.0
+
+replace gitlab.your-company.com&#x2F;your-account&#x2F;mod-test v0.0.0 &#x3D;&gt; gitlab.your-company.com&#x2F;your-account&#x2F;mod-test.git v0.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>代码 2.2</strong></p>
+<p>然后编写我们的 go 代码</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"fmt"</span>
+	<span class="token string">"gitlab.your-company.com/your-account/mod-test"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"begin"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>代码 2.3</strong></p>
+<p>执行 <code>go mod tidy</code> 发现依赖包终于可以正常下载了，不过执行 <code>go run test.go</code> 又报错了：</p>
+<pre class="line-numbers language-none"><code class="language-none">test.go:5:2: import &quot;gitlab.your-company.com&#x2F;your-account&#x2F;mod-test&quot; is a program, not an importable package<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>我们不能 import 一个 module 中 main 包中的代码，需要修改项目 mod-test，新建一个文件夹 my，把 <strong>代码 2.1</strong> 移动到 my 文件夹，然后修改第一行为 <code>package my</code>。</p>
+<p>重新对项目 mod-test 打 tag ，tag 名字为 <code>v0.0.1</code>，然后修改 <strong>代码 2.2</strong> ，将里面的版本号相应的改为 <code>v0.0.1</code>。</p>
+<p>修改 <strong>代码 2.3</strong> 改为如下：</p>
+<pre class="line-numbers language-go" data-language="go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+	<span class="token string">"fmt"</span>
+	<span class="token string">"gitlab.your-company.com/your-account/mod-test/my"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+	my<span class="token punctuation">.</span><span class="token function">MyShow</span><span class="token punctuation">(</span><span class="token string">"bcd"</span><span class="token punctuation">)</span>
+	fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"begin"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 2.4</strong></p>
+<p>执行 go mod tidy 来安装依赖包，然后执行 go build 就能正常生成的可执行程序。</p>
+<h2 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h2><p>通过 <strong>代码 1.0</strong> 设置完 GO_PRIVATE 环境变量之后，go 在下载前缀符合 GO_PRIVATE 值的 module 的时候，会尝试请求地址 <a href="https://gitlab.your-company.com/your-account/your-mod-name?go-get=1">https://gitlab.your-company.com/your-account/your-mod-name?go-get=1</a> ，正常情况下会返回如下格式</p>
+<pre class="line-numbers language-html" data-language="html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>head</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>go-import<span class="token punctuation">"</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>gitlab.your-company.com/your-account/your-mod-name git http://gitlab.your-company.com/your-account/your-mod-name.git<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>head</span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p><strong>代码 3.0</strong></p>
+<p>返回的<strong>代码 3.0</strong> 中，如果域名后面没有跟端口号，是比较简单的，调用者直接使用 <code>go get gitlab.your-company.com/your-account/your-mod-name</code> 进行安装就行。但如果含有端口号，则需要手动编辑调用项目的 go.mod 文件，保证有如下 <strong>代码 3.1</strong> 配置，然后通过 go mod download 或者 go mod tidy 安装（后者需要起码在代码中有一处 import 该私有 module 中包的声明）</p>
+<pre class="line-numbers language-none"><code class="language-none"># 这里假设你使用的版本号为v0.0.0
+require gitlab.your-company.com&#x2F;your-account&#x2F;your-mod-name v0.0.0
+
+replace gitlab.your-company.com&#x2F;your-account&#x2F;your-mod-name v0.0.0 &#x3D;&gt; gitlab.your-company.com&#x2F;your-account&#x2F;your-mod-name.git v0.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><strong>代码 3.1</strong></p>
+<p>由于在 <strong>代码 3.0</strong> 中指示了 go 要使用 git 方式下载代码，所以要正确的使用 <strong>代码 1.1</strong> 或者 <strong>代码1.2</strong> 做配置，保证 go 能过正常和 git 服务器做通信。</p>
+<p>最后需要留意的是，你的调用某一个 module 时，只能调用其非 main 包中的代码。</p>
+<blockquote>
+<p>初学者还容易搞混的一个概念，就是 go 中的 module 和 package 的概念，使用 go get 下载的单元为一个 module，在代码中调用的时候，是调用 module 中的某一个 package。换句话说，就是一个 module 可以包含多一个 package （每个 package 的代码放置在同一个文件夹中）。 </p>
+</blockquote>
+<h2 id="4-其他问题"><a href="#4-其他问题" class="headerlink" title="4. 其他问题"></a>4. 其他问题</h2><p>如果在下载私有 module 的时候，出现如下问题：</p>
+<pre class="line-numbers language-none"><code class="language-none">go mod download: gitlab.your-company.com&#x2F;your-account&#x2F;mod-test.git@v0.0.3: invalid version: git ls-remote -q origin in &#x2F;root&#x2F;go&#x2F;pkg&#x2F;mod&#x2F;cache&#x2F;vcs&#x2F;49e4f4ef52d3227f1c09bb8a8db5321ccf5cd277662d5a9ad607ffd2ff57b32d: exit status 128:
+        fatal: unable to connect to gitlab.17zuoye.net:
+        gitlab.your-company.com[0: 192.168.1.10]: errno&#x3D;Connection refused<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>通过提示信息上来看是版本号找不到，但是真实的原因可能并不如此。需要做两方面的检查，一方面确认 git 仓库上是否有 <code>v0.0.3</code> 这个 tag；另一方面也需要确认当前系统中配置的 ssh 私钥（<strong>代码 1.3</strong> 中的配置）是否有访问 mod-test 这个项目的权限，如果没有权限，同样会报 <code>invalid version</code> 这个错误。</p>
+]]></content>
+      <categories>
+        <category>Golang</category>
       </categories>
   </entry>
   <entry>
@@ -1403,6 +1403,73 @@ JNIEXPORT <span class="token keyword">void</span> JNICALL <span class="token fun
       </categories>
   </entry>
   <entry>
+    <title>内外网 DNS 分流解决方案</title>
+    <url>/posts/local-dns-masq/</url>
+    <content><![CDATA[<p>一般公司内部都会有内部 DNS 服务器，由于托管公司内网域名，且会当成公司内部上网的专用 DNS，同时承载外网的域名解析工作。但是有时候公司内网的 DNS 服务不稳定时，就比较尴尬，不用吧，解析不了内网域名，用吧，上不了外网。这时候用 DNS 的分流工具就是解决这个问题的好办法。这篇文章会拿 win10 举例，讲解 coredns 的简单配置，来解决 DNS 分流问题。</p>
+<p>首先下载 coredns 安装包 <a href="https://github.com/coredns/coredns/releases/latest">https://github.com/coredns/coredns/releases/latest</a> 将其解压到本地磁盘</p>
+<img src="/images/image-20211213114300975.png" alt="image-20211213114300975" style="zoom:50%;" />
+
+<p><strong>图 1.1</strong></p>
+<p>这里解压到的是 D:\program2\coredns_1.8.6_windows_amd64\ 这个目录。然后在这个目录中编写 coredns 的配置文件</p>
+<pre class="line-numbers language-none"><code class="language-none">(inner) &#123;
+    errors
+    # 禁用ipv6解析
+    rewrite stop type AAAA A
+    cache 3
+    forward  . 内网DNS服务的IP
+    reload
+    log
+&#125;
+ 
+17zuoye.net &#123;
+    import inner
+&#125;
+ 
+. &#123;
+    any
+    errors
+    health &#123;
+        lameduck 5s
+    &#125;
+    ready
+    forward . 119.29.29.29 223.5.5.5
+    cache 30
+    reload
+    log
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>为了保证 coredns 能够在windows中开机自启动，还要借助 winsw 这个工具，从 <a href="https://github.com/winsw/winsw/releases">https://github.com/winsw/winsw/releases</a> 中下载最新版本，其中 win10 对应的二进制文件 WinSW.NET461.exe。将 winsw 的二进制文件拷贝到刚才的工作目录，然后重命名为 <strong>coredns-service.exe</strong> 。</p>
+<p>接着在刚才的工作目录中创建 coredns-service.xml，输入以下内容</p>
+<pre class="line-numbers language-xml" data-language="xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>service</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>id</span><span class="token punctuation">></span></span>CoreDNS<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>id</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>name</span><span class="token punctuation">></span></span>CoreDNS Service (powered by WinSW)<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>name</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>description</span><span class="token punctuation">></span></span>This service is a CoreDNS service<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>description</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>executable</span><span class="token punctuation">></span></span>D:\program2\coredns_1.8.6_windows_amd64\coredns.exe<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>executable</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>workingdirectory</span><span class="token punctuation">></span></span>D:\program2\coredns_1.8.6_windows_amd64\<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>workingdirectory</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>onfailure</span> <span class="token attr-name">action</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>restart<span class="token punctuation">"</span></span> <span class="token attr-name">delay</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>10 sec<span class="token punctuation">"</span></span><span class="token punctuation">/></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>startmode</span><span class="token punctuation">></span></span>Automatic<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>startmode</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>log</span> <span class="token attr-name">mode</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>reset<span class="token punctuation">"</span></span><span class="token punctuation">/></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>service</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>通过命令 D:\program2\coredns_1.8.6_windows_amd64\coredns-service.exe install 可以在 windows 中将 coredns 安装为系统服务，通过命令 D:\program2\coredns_1.8.6_windows_amd64\coredns-service.exe start 可以在后台启动这个系统服务。上面两个命令只需要在初始化安装的时候执行一次即可，下次开机的时候，就能自动启动 coredns 了，不过需要注意的是运行需要的超管权限。通过命令 D:\program2\coredns_1.8.6_windows_amd64\coredns-service.exe status 可以查看服务状态。</p>
+<p>通过命令 nslookup <a href="http://www.baidu.com/">www.baidu.com</a> 127.0.0.1 ，如果返回如下内容</p>
+<pre class="line-numbers language-none"><code class="language-none">服务器: localhost
+Address: 127.0.0.1
+非权威应答:
+名称:  www.a.shifen.com
+Addresses: 163.177.151.109
+     163.177.151.110
+Aliases: www.baidu.com<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>代表配置成功。</p>
+<p>最后一步，修改本地上网网卡所用的 DNS 为 127.0.0.1，在 <strong>控制面板\所有控制面板项\网络连接</strong> 中找到你所用的网卡，右键选择属性，在打开的面板中选择双击 <strong>Internet 协议版本 4</strong> ，填写首选 DNS 为 127.0.0.1</p>
+<p><img src="/images/image-20211219170741299.png" alt="image-20211219170741299"></p>
+]]></content>
+      <categories>
+        <category>DNS</category>
+      </categories>
+  </entry>
+  <entry>
     <title>k8s 部署文件简谈</title>
     <url>/posts/k8s-yaml/</url>
     <content><![CDATA[<p>在之前的教程 <a href="https://blog.whyun.com/posts/k8s-startup/">k8s 网络原理入门</a> 中，我们了解到更多的是 k8s 如何保证集群内部各个服务在网络上互通。而这篇教程主要是讲实操的内容，会讲如何在 k8s 内部部署服务。</p>
@@ -1623,70 +1690,42 @@ Commercial support is available at
       </categories>
   </entry>
   <entry>
-    <title>内外网 DNS 分流解决方案</title>
-    <url>/posts/local-dns-masq/</url>
-    <content><![CDATA[<p>一般公司内部都会有内部 DNS 服务器，由于托管公司内网域名，且会当成公司内部上网的专用 DNS，同时承载外网的域名解析工作。但是有时候公司内网的 DNS 服务不稳定时，就比较尴尬，不用吧，解析不了内网域名，用吧，上不了外网。这时候用 DNS 的分流工具就是解决这个问题的好办法。这篇文章会拿 win10 举例，讲解 coredns 的简单配置，来解决 DNS 分流问题。</p>
-<p>首先下载 coredns 安装包 <a href="https://github.com/coredns/coredns/releases/latest">https://github.com/coredns/coredns/releases/latest</a> 将其解压到本地磁盘</p>
-<img src="/images/image-20211213114300975.png" alt="image-20211213114300975" style="zoom:50%;" />
-
-<p><strong>图 1.1</strong></p>
-<p>这里解压到的是 D:\program2\coredns_1.8.6_windows_amd64\ 这个目录。然后在这个目录中编写 coredns 的配置文件</p>
-<pre class="line-numbers language-none"><code class="language-none">(inner) &#123;
-    errors
-    # 禁用ipv6解析
-    rewrite stop type AAAA A
-    cache 3
-    forward  . 内网DNS服务的IP
-    reload
-    log
-&#125;
- 
-17zuoye.net &#123;
-    import inner
-&#125;
- 
-. &#123;
-    any
-    errors
-    health &#123;
-        lameduck 5s
-    &#125;
-    ready
-    forward . 119.29.29.29 223.5.5.5
-    cache 30
-    reload
-    log
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>为了保证 coredns 能够在windows中开机自启动，还要借助 winsw 这个工具，从 <a href="https://github.com/winsw/winsw/releases">https://github.com/winsw/winsw/releases</a> 中下载最新版本，其中 win10 对应的二进制文件 WinSW.NET461.exe。将 winsw 的二进制文件拷贝到刚才的工作目录，然后重命名为 <strong>coredns-service.exe</strong> 。</p>
-<p>接着在刚才的工作目录中创建 coredns-service.xml，输入以下内容</p>
-<pre class="line-numbers language-xml" data-language="xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>service</span><span class="token punctuation">></span></span>
-  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>id</span><span class="token punctuation">></span></span>CoreDNS<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>id</span><span class="token punctuation">></span></span>
-  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>name</span><span class="token punctuation">></span></span>CoreDNS Service (powered by WinSW)<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>name</span><span class="token punctuation">></span></span>
-  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>description</span><span class="token punctuation">></span></span>This service is a CoreDNS service<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>description</span><span class="token punctuation">></span></span>
-  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>executable</span><span class="token punctuation">></span></span>D:\program2\coredns_1.8.6_windows_amd64\coredns.exe<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>executable</span><span class="token punctuation">></span></span>
-  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>workingdirectory</span><span class="token punctuation">></span></span>D:\program2\coredns_1.8.6_windows_amd64\<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>workingdirectory</span><span class="token punctuation">></span></span>
-  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>onfailure</span> <span class="token attr-name">action</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>restart<span class="token punctuation">"</span></span> <span class="token attr-name">delay</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>10 sec<span class="token punctuation">"</span></span><span class="token punctuation">/></span></span>
-  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>startmode</span><span class="token punctuation">></span></span>Automatic<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>startmode</span><span class="token punctuation">></span></span>
-  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>log</span> <span class="token attr-name">mode</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>reset<span class="token punctuation">"</span></span><span class="token punctuation">/></span></span>
-<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>service</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>通过命令 D:\program2\coredns_1.8.6_windows_amd64\coredns-service.exe install 可以在 windows 中将 coredns 安装为系统服务，通过命令 D:\program2\coredns_1.8.6_windows_amd64\coredns-service.exe start 可以在后台启动这个系统服务。上面两个命令只需要在初始化安装的时候执行一次即可，下次开机的时候，就能自动启动 coredns 了，不过需要注意的是运行需要的超管权限。通过命令 D:\program2\coredns_1.8.6_windows_amd64\coredns-service.exe status 可以查看服务状态。</p>
-<p>通过命令 nslookup <a href="http://www.baidu.com/">www.baidu.com</a> 127.0.0.1 ，如果返回如下内容</p>
-<pre class="line-numbers language-none"><code class="language-none">服务器: localhost
-Address: 127.0.0.1
-非权威应答:
-名称:  www.a.shifen.com
-Addresses: 163.177.151.109
-     163.177.151.110
-Aliases: www.baidu.com<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>代表配置成功。</p>
-<p>最后一步，修改本地上网网卡所用的 DNS 为 127.0.0.1，在 <strong>控制面板\所有控制面板项\网络连接</strong> 中找到你所用的网卡，右键选择属性，在打开的面板中选择双击 <strong>Internet 协议版本 4</strong> ，填写首选 DNS 为 127.0.0.1</p>
-<p><img src="/images/image-20211219170741299.png" alt="image-20211219170741299"></p>
+    <title>微服务改造心路历程</title>
+    <url>/posts/micro-reform-milestones/</url>
+    <content><![CDATA[<h2 id="1-改造前现状"><a href="#1-改造前现状" class="headerlink" title="1. 改造前现状"></a>1. 改造前现状</h2><p>直播间逻辑服务，包含了直播间内答题互动、聊天、抢红包等消息的逻辑处理。刚开始设计的时候，所有的消息混在一起处理，后来为了给优先级高的请求让路，逻辑服务后期根据消息类型拆分成了三类服务，很长一段时间内逻辑服务的拓扑结构是这样的：</p>
+<p><img src="/images/current_service_cell.png"></p>
+<p><strong>图 1.1 基于优先级的服务拓扑结构</strong></p>
+<p>不过随着业务的深入发展，具体到某一个消息类型的处理流程可能会越来越复杂。拿答题上报来说，我们第一版的流程是这样的：</p>
+<p><img src="/images/answer_report_flow1.png"></p>
+<p><strong>图 1.2 第一版的答题上报流程</strong></p>
+<p>不过随着后期需求的改进增加了以班组为单位的答题正确率的排行榜、学生在班组内的答题时间排行榜、学生在直播间内的答题时间排行榜等需求，流程图就变成了这个样子：</p>
+<p><img src="/images/answer_report_flow2.png"></p>
+<p><strong>图 1.3 第二版答题上报流程</strong></p>
+<p>最近答题的需求还要进行改进，增加诸如给连续答对的用户打标签的逻辑，这样最终演变的逻辑将会比 <strong>图 1.3</strong> 中的流程更加复杂，这样就会导致答题处理的后端代码越来越臃肿，难以为继。</p>
+<h2 id="2-初步改造方案"><a href="#2-初步改造方案" class="headerlink" title="2. 初步改造方案"></a>2. 初步改造方案</h2><p>重新分析一下答题上报流程，以上报者的视角来看，其实只关心上报是否成功，至于各个选项、各种人数的统计，上报者自身并不关心。将上报流程再次进行一次抽象，那么数据处理的答题分为两类：一类是学生自己关心的，比如说是否重复答题、同班同学都在学的提示语；一类是老师关心的，比如说各种统计。根据这个思路我们可以在答题流程中仅仅处理学生关心的流程，然后将统计处理丢到另外一个服务中进行处理。基于这个思想对现有服务拓扑结构做改造：</p>
+<p><img src="/images/future_service_cell.png"></p>
+<p><strong>图 2.1 未来的服务器拓扑结构</strong></p>
+<h2 id="3-演进过程"><a href="#3-演进过程" class="headerlink" title="3. 演进过程"></a>3. 演进过程</h2><p>首先的挑战是重构带来的时间成本，第二个就是新增服务后，维护成本会上升。同时由于对微服务的理解不是很完善，当中也历经了几次比较大的改进过程。</p>
+<h3 id="3-1-全部使用消息队列进行通信"><a href="#3-1-全部使用消息队列进行通信" class="headerlink" title="3.1 全部使用消息队列进行通信"></a>3.1 全部使用消息队列进行通信</h3><p><img src="/images/all_kafka.png"></p>
+<p><strong>图 3.1.1</strong></p>
+<blockquote>
+<p>图中 logical 代表逻辑服务，micro 代表微服务，下同。</p>
+</blockquote>
+<p>由于做微服务的初衷是将可以异步处理的部分抽离出来，所以很容易想到的就是在 logical 和 micro 之间假设一个消息队列。考虑一个答题连对的场景</p>
+<p><img src="/images/right_continue_flow.png"></p>
+<p><strong>图 3.1.2</strong></p>
+<p>一个老师触发答题时，logical 服务要做三个动作，发送开始答题消息到micro、给老师端答题响应、广播消息给学生，学生端收到广播后进行答题，如果答题正确服务器端会下发连对的提醒。正常情况下，这个时序是没有问题的，但是由于我们 logical 和 micro 之间使用的是异步通信，理论上 <code>2.1</code> 和 <code>2.3</code> 的时序是不能得到保证的。这个服务在上线后也遇到了问题，在极小概率下，用户答对了题，但是连对却没有出现，究其原因就是因为 <code>2.1</code>这一步出现了延迟。</p>
+<h3 id="3-2-引入-RPC"><a href="#3-2-引入-RPC" class="headerlink" title="3.2 引入 RPC"></a>3.2 引入 RPC</h3><p>将 <code>2.1</code> 步做成带有事务的 grpc 调用，等待当前调用返回数据时，再触发 <code>2.2</code> 和 <code>2.3</code> 步。这样解决了异步操作没有事务的问题。看上去一切都很完美了，但是随着业务的迭代，微服务越来越多，可能老师端做一个操作的时候，流程变成这样。</p>
+<p><img src="/images/add_rpc.png"></p>
+<p><strong>图 3.2.1 引入rpc</strong></p>
+<p>细品这个流程，其实跟 <strong>图 1.3</strong> 会面临同样的问题，请求处理函数代码会越写越长，最终难以维护。</p>
+<h3 id="3-3-引入消息总线"><a href="#3-3-引入消息总线" class="headerlink" title="3.3 引入消息总线"></a>3.3 引入消息总线</h3><p>后来总结了一下，一个上行消息到达后，我们通知各个微服务的请求的数据内容其实是相同的，这时候其实可以直接引入一条消息总线，会让代码简洁很多。微服务只需要监听自己关心的消息总线即可。</p>
+<p><img src="/images/add_event_bus.png"></p>
+<p><strong>图 3.3.1</strong></p>
+<p>不过这样同样会导致一个问题，就是数据流重新回到了类似使用消息队列的模式，所有的 logical 和 micro 之间的通信又变成了异步的了。目前解决的方法就是在微服务端增加 <strong>待处理</strong> 队列，如果在一个事务中学生的消息先到，就先先加入待处理带队中，等待老师的消息到来后，一并处理。</p>
 ]]></content>
       <categories>
-        <category>DNS</category>
+        <category>Micro Service</category>
       </categories>
   </entry>
   <entry>
@@ -1801,234 +1840,6 @@ Aliases: www.baidu.com<span aria-hidden="true" class="line-numbers-rows"><span><
       <categories>
         <category>Micro Service</category>
         <category>Engineering Design</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>微服务改造心路历程</title>
-    <url>/posts/micro-reform-milestones/</url>
-    <content><![CDATA[<h2 id="1-改造前现状"><a href="#1-改造前现状" class="headerlink" title="1. 改造前现状"></a>1. 改造前现状</h2><p>直播间逻辑服务，包含了直播间内答题互动、聊天、抢红包等消息的逻辑处理。刚开始设计的时候，所有的消息混在一起处理，后来为了给优先级高的请求让路，逻辑服务后期根据消息类型拆分成了三类服务，很长一段时间内逻辑服务的拓扑结构是这样的：</p>
-<p><img src="/images/current_service_cell.png"></p>
-<p><strong>图 1.1 基于优先级的服务拓扑结构</strong></p>
-<p>不过随着业务的深入发展，具体到某一个消息类型的处理流程可能会越来越复杂。拿答题上报来说，我们第一版的流程是这样的：</p>
-<p><img src="/images/answer_report_flow1.png"></p>
-<p><strong>图 1.2 第一版的答题上报流程</strong></p>
-<p>不过随着后期需求的改进增加了以班组为单位的答题正确率的排行榜、学生在班组内的答题时间排行榜、学生在直播间内的答题时间排行榜等需求，流程图就变成了这个样子：</p>
-<p><img src="/images/answer_report_flow2.png"></p>
-<p><strong>图 1.3 第二版答题上报流程</strong></p>
-<p>最近答题的需求还要进行改进，增加诸如给连续答对的用户打标签的逻辑，这样最终演变的逻辑将会比 <strong>图 1.3</strong> 中的流程更加复杂，这样就会导致答题处理的后端代码越来越臃肿，难以为继。</p>
-<h2 id="2-初步改造方案"><a href="#2-初步改造方案" class="headerlink" title="2. 初步改造方案"></a>2. 初步改造方案</h2><p>重新分析一下答题上报流程，以上报者的视角来看，其实只关心上报是否成功，至于各个选项、各种人数的统计，上报者自身并不关心。将上报流程再次进行一次抽象，那么数据处理的答题分为两类：一类是学生自己关心的，比如说是否重复答题、同班同学都在学的提示语；一类是老师关心的，比如说各种统计。根据这个思路我们可以在答题流程中仅仅处理学生关心的流程，然后将统计处理丢到另外一个服务中进行处理。基于这个思想对现有服务拓扑结构做改造：</p>
-<p><img src="/images/future_service_cell.png"></p>
-<p><strong>图 2.1 未来的服务器拓扑结构</strong></p>
-<h2 id="3-演进过程"><a href="#3-演进过程" class="headerlink" title="3. 演进过程"></a>3. 演进过程</h2><p>首先的挑战是重构带来的时间成本，第二个就是新增服务后，维护成本会上升。同时由于对微服务的理解不是很完善，当中也历经了几次比较大的改进过程。</p>
-<h3 id="3-1-全部使用消息队列进行通信"><a href="#3-1-全部使用消息队列进行通信" class="headerlink" title="3.1 全部使用消息队列进行通信"></a>3.1 全部使用消息队列进行通信</h3><p><img src="/images/all_kafka.png"></p>
-<p><strong>图 3.1.1</strong></p>
-<blockquote>
-<p>图中 logical 代表逻辑服务，micro 代表微服务，下同。</p>
-</blockquote>
-<p>由于做微服务的初衷是将可以异步处理的部分抽离出来，所以很容易想到的就是在 logical 和 micro 之间假设一个消息队列。考虑一个答题连对的场景</p>
-<p><img src="/images/right_continue_flow.png"></p>
-<p><strong>图 3.1.2</strong></p>
-<p>一个老师触发答题时，logical 服务要做三个动作，发送开始答题消息到micro、给老师端答题响应、广播消息给学生，学生端收到广播后进行答题，如果答题正确服务器端会下发连对的提醒。正常情况下，这个时序是没有问题的，但是由于我们 logical 和 micro 之间使用的是异步通信，理论上 <code>2.1</code> 和 <code>2.3</code> 的时序是不能得到保证的。这个服务在上线后也遇到了问题，在极小概率下，用户答对了题，但是连对却没有出现，究其原因就是因为 <code>2.1</code>这一步出现了延迟。</p>
-<h3 id="3-2-引入-RPC"><a href="#3-2-引入-RPC" class="headerlink" title="3.2 引入 RPC"></a>3.2 引入 RPC</h3><p>将 <code>2.1</code> 步做成带有事务的 grpc 调用，等待当前调用返回数据时，再触发 <code>2.2</code> 和 <code>2.3</code> 步。这样解决了异步操作没有事务的问题。看上去一切都很完美了，但是随着业务的迭代，微服务越来越多，可能老师端做一个操作的时候，流程变成这样。</p>
-<p><img src="/images/add_rpc.png"></p>
-<p><strong>图 3.2.1 引入rpc</strong></p>
-<p>细品这个流程，其实跟 <strong>图 1.3</strong> 会面临同样的问题，请求处理函数代码会越写越长，最终难以维护。</p>
-<h3 id="3-3-引入消息总线"><a href="#3-3-引入消息总线" class="headerlink" title="3.3 引入消息总线"></a>3.3 引入消息总线</h3><p>后来总结了一下，一个上行消息到达后，我们通知各个微服务的请求的数据内容其实是相同的，这时候其实可以直接引入一条消息总线，会让代码简洁很多。微服务只需要监听自己关心的消息总线即可。</p>
-<p><img src="/images/add_event_bus.png"></p>
-<p><strong>图 3.3.1</strong></p>
-<p>不过这样同样会导致一个问题，就是数据流重新回到了类似使用消息队列的模式，所有的 logical 和 micro 之间的通信又变成了异步的了。目前解决的方法就是在微服务端增加 <strong>待处理</strong> 队列，如果在一个事务中学生的消息先到，就先先加入待处理带队中，等待老师的消息到来后，一并处理。</p>
-]]></content>
-      <categories>
-        <category>Micro Service</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>即将面临的Node0.12中的C++API的改变</title>
-    <url>/posts/node0-12capi/</url>
-    <content><![CDATA[<p>原文地址：<a href="https://strongloop.com/strongblog/node-js-v0-12-c-apis-breaking/">https://strongloop.com/strongblog/node-js-v0-12-c-apis-breaking/</a></p>
-<blockquote>
-<p>编者注：欢迎阅读旨在帮你快速了解，在即将发布的node0.12中（ <em>作者写这篇文章的时候Node0.12还没有发布，译者注</em> ）的API变化三系列教程的第三部分。在<a href="http://strongloop.com/strongblog/node-js-v0-12-new-apis/">第一部分</a>，<a href="https://github.com/alexgorbatchev">Alex Gorbatchev</a>列出来没有变化的API，在<a href="http://strongloop.com/strongblog/node-js-v0-12-apis-breaking/">第二部分</a>中他指出了变化的部分。在第三部分，<a href="http://strongloop.com/strongblog/node-js-v0-12-apis-breaking/">Ben Noordhuis</a>将会详细描述C++API部分的差别。  </p>
-</blockquote>
-<p>在Node v0.10和v0.12之间有大量的差异。我不会试图把每一个细节都点出来，我将把这些差异分类，按照从“更重要”到“次重要”的次序进行排序，然后解释怎样合理的更新你的代码。<br>本文大部分讲述V8 API，因为这正是大量差异出现的地方。欢迎通过<a href="mailto:ben@strongloop.com">ben at strongloop.com</a>来给我提供建议和反馈。  </p>
-<h2 id="原生函数的参数已经被更改"><a href="#原生函数的参数已经被更改" class="headerlink" title="原生函数的参数已经被更改"></a>原生函数的参数已经被更改</h2><p>在node v0.10中你这么写： </p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Handle&lt;v8::Value&gt;FortyTwo(const v8::Arguments&amp;args)&#123;
-  v8::HandleScope handle_scope;
-  returnhandle_scope.Close(v8::Integer::New(42));
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-<p>在node v0.12中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void FortyTwo(const v8::FunctionCallbackInfo&lt;v8::Value&gt;&amp;info)&#123;
-  &#x2F;&#x2F; Don&#39;t need a HandleScope in this particular example.
-  info.GetReturnValue().Set(42);
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-<p>一些重要的变化如下:  </p>
-<ol>
-<li>返回类型是<code>void</code>。</li>
-<li>返回值通过<code>v8::ReturnValue::Set()</code>,<code>v8::ReturnValue::SetEmptyString()</code>,<code>v8::ReturnValue::SetNull()</code>,<code>v8::ReturnValue::SetUndefined()</code>来设置。</li>
-<li>如果没有显式的设置返回值，将会返回<code>undefined</code>。</li>
-</ol>
-<p><code>v8::ReturnValue::Set()</code>拥有一个数字类型的重载函数可以是使用不同的数据类型。如果你的编译器处理时出现问题或者报歧义错误，那么就是使用<code>static_cast&lt;&gt;</code>来将参数转为支持的类型：  </p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void FortyTwo(const v8::FunctionCallbackInfo&lt;v8::Value&gt;&amp; info) &#123;
-  const int64_t value &#x3D; 42;
-  &#x2F;&#x2F; error: call of overloaded &#39;Set(const int64_t&amp;)&#39; is ambiguous
-  info.GetReturnValue().Set(value);
-  &#x2F;&#x2F; but this works
-  info.GetReturnValue().Set(static_cast&lt;int32_t&gt;(value));
-  &#x2F;&#x2F; as does this
-  info.GetReturnValue().Set(static_cast&lt;double&gt;(value));
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>当然你需要挑选合适的类型来转换。当转化为窄数据类型，以至于无法承载原始数据据时，将会产生不可预期的结果。<br>注意，<code>v8::FunctionCallbackInfo&lt;v8::Value&gt;</code>是对于<code>v8::Arguments</code>的重命名和参数化（parameterized ）。除了名字和额外的<code>GetReturnValue()</code>函数，他们没有表面上的差别。</p>
-<h2 id="大部分V8-API现在需要使用v8-Isolate"><a href="#大部分V8-API现在需要使用v8-Isolate" class="headerlink" title="大部分V8 API现在需要使用v8::Isolate*"></a>大部分V8 API现在需要使用v8::Isolate*</h2><p>在Node v0.10中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Integer&gt; a &#x3D; v8::Integer::New(42);
-v8::Local&lt;v8::Number&gt; b &#x3D; v8::Number::New(13.37);
-v8::Local&lt;v8::FunctionTemplate&gt; ft &#x3D; v8::FunctionTemplate::New(Foo);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-<p>在Node v0.12中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
-v8::Local&lt;v8::Integer&gt; a &#x3D; v8::Integer::New(isolate, 42);
-v8::Local&lt;v8::Number&gt; b &#x3D; v8::Number::New(isolate, 13.37);
-v8::Local&lt;v8::FunctionTemplate&gt; ft &#x3D; v8::FunctionTemplate::New(isolate, Foo);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-<p>你可以通过若干的方法获取当前的<code>v8::Isolate</code>的指针：  </p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void FortyTwo(const v8::FunctionCallbackInfo&lt;v8::Value&gt;&amp; info) &#123;
-  v8::Isolate* isolate;
-  isolate &#x3D; info.GetIsolate();
-  &#x2F;&#x2F; or:
-  isolate &#x3D; info.GetReturnValue().GetIsolate();
-  &#x2F;&#x2F; or even:
-  isolate &#x3D; v8::Isolate::GetCurrent();
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>注意，V8团队已经指出，<code>v8::Isolate::GetCurrent()</code>将会被逐步淘汰。如果你想编写向后兼容的代码，你最好显式的传递isolate参数。</p>
-<h2 id="V8-string函数现在需要显式声明编码"><a href="#V8-string函数现在需要显式声明编码" class="headerlink" title="V8 string函数现在需要显式声明编码"></a>V8 string函数现在需要显式声明编码</h2><p>在Node v0.10中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; create a UTF-8 string
-v8::Local&lt;v8::String&gt; utf8 &#x3D; v8::String::New(&quot;42&quot;);
-&#x2F;&#x2F; create a UTF-16 string from input in system endianness
-static const uint16_t chars[] &#x3D; &#123; &#39;4&#39;, &#39;2&#39;, 0 &#125;;
-v8::Local&lt;v8::String&gt; utf16 &#x3D; v8::String::New(chars);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>在Node v0.12中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
-&#x2F;&#x2F; create a UTF-8 string
-v8::Local&lt;v8::String&gt; utf8 &#x3D; v8::String::NewFromUtf8(isolate, &quot;42&quot;);
-&#x2F;&#x2F; create a UTF-16 string from input in system endianness
-static const uint16_t chars[] &#x3D; &#123; &#39;4&#39;, &#39;2&#39;, 0 &#125;;
-v8::Local&lt;v8::String&gt; utf16 &#x3D; v8::String::NewFromTwoByte(isolate, chars);
-&#x2F;&#x2F; create a ISO-8859-1 a.k.a. Latin1 string
-const uint8_t* octets &#x3D; reinterpret_cast&lt;const uint8_t*&gt;(&quot;42&quot;);
-v8::Local&lt;v8::String&gt; latin1 &#x3D; v8::String::NewFromOneByte(isolate, octets);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p><code>v8::String::NewFromTwoByte()</code>稍微有点命名的不合适，因为他并不是一个严格的双字节编码。他能够识别surrogate pairs【 链接：<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/dd374069(v=vs.85).aspx">https://msdn.microsoft.com/en-us/library/windows/desktop/dd374069(v=vs.85).aspx</a> 】， 所以它应该被称作<a href="https://zh.wikipedia.org/wiki/UTF-16">UTF-16</a>，而不是<a href="https://zh.wikipedia.org/wiki/Universal_Character_Set">UCS-2</a>。</p>
-<h2 id="去除了v8-String-NewSymbol-和v8-String-NewUndetectable"><a href="#去除了v8-String-NewSymbol-和v8-String-NewUndetectable" class="headerlink" title="去除了v8::String::NewSymbol()和v8::String::NewUndetectable()"></a>去除了v8::String::NewSymbol()和v8::String::NewUndetectable()</h2><p>在Node v0.10中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::String&gt; symbol &#x3D; v8::String::NewSymbol(&quot;42&quot;);
-v8::Local&lt;v8::String&gt; hidden &#x3D; v8::String::NewUndetectable(&quot;42&quot;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-<p>在Node v0.12中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
-v8::Local&lt;v8::String&gt; symbol &#x3D;
-    v8::String::NewFromUtf8(isolate, &quot;42&quot;, v8::String::kInternalizedString);
-v8::Local&lt;v8::String&gt; hidden &#x3D;
-    v8::String::NewFromUtf8(isolate, &quot;42&quot;, v8::String::kUndetectableString);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<h2 id="去除了v8-String-AsciiValue"><a href="#去除了v8-String-AsciiValue" class="headerlink" title="去除了v8::String::AsciiValue"></a>去除了v8::String::AsciiValue</h2><p>在Node v0.10中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::String&gt; string &#x3D; &#x2F;* ... *&#x2F;;
-v8::String::AsciiValue s(string);
-puts(s);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-<p>在Node v0.12中你这么写：<br>Nothing! <code>v8::String::AsciiValue</code>本来就有问题：它的名字告诉大家要返回7比特的ASCII数据，但是实际上返回8比特的二进制数据。同时它搞混了多字节字符的字节序。<br>使用<code>v8::String::Utf8Value</code>或者<code>v8::String::Value</code>(适用于UTF-16)来进行替代。如果你想获取一个字符串的原始二进制数据，你可以这么做：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::String&gt; string &#x3D; &#x2F;* ... *&#x2F;;
-const int length &#x3D; string-&gt;Utf8Length() + 1;  &#x2F;&#x2F; Add one for trailing zero byte.
-uint8_t* buffer &#x3D; new uint8_t[length];
-string-&gt;WriteOneByte(buffer, &#x2F;* start *&#x2F; 0, length);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-<p>注意：<code>v8::String::Utf8Length()</code>会迭代字符串中的每一个字符，这就是为啥对于大字符串来说会(很)慢的原因。</p>
-<h2 id="去除了v8-HandleScope-Close"><a href="#去除了v8-HandleScope-Close" class="headerlink" title="去除了v8::HandleScope::Close()"></a>去除了v8::HandleScope::Close()</h2><p>在Node v0.10中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; Example() &#123;
-  v8::HandleScope handle_scope;
-  return handle_scope.Close(v8::Integer::New(42));
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-<p>在Node v0.12中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; Example(v8::Isolate* isolate) &#123;
-  v8::EscapableHandleScope handle_scope(isolate);
-  return handle_scope.Escape(v8::Integer::New(isolate, 42));
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-<h2 id="v8-Persistent不再继承自v8-Handle"><a href="#v8-Persistent不再继承自v8-Handle" class="headerlink" title="v8::Persistent不再继承自v8::Handle"></a>v8::Persistent<T>不再继承自v8::Handle<T></h2><p><code>v8::Persistent&lt;T&gt;</code>不再是<code>v8::Handle&lt;T&gt;</code>类型的对象。这就意味着，你不能在直接访问指向的句柄了。做出如此大变革的动机是由于在v0.10中这么操作太容易导致资源泄露或者导致在释放之后再访问其存储的内容。<br>在Node v0.10中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
-v8::Persistent&lt;v8::Value&gt; persistent &#x3D; v8::Persistent&lt;v8::Value&gt;::New(value);
-&#x2F;&#x2F; ...
-v8::Local&lt;v8::Value&gt; value_again &#x3D; *persistent;
-&#x2F;&#x2F; ...
-persistent.Dispose();
-persistent.Clear();<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>在Node v0.12中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;
-v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
-v8::Persistent&lt;v8::Value&gt; persistent(isolate, value);
-&#x2F;&#x2F; or:
-v8::Persistent&lt;v8::Value&gt; persistent;
-persistent.Reset(isolate, value);
-&#x2F;&#x2F; ...
-v8::Local&lt;v8::Value&gt; value_again &#x3D;
-    v8::Local&lt;v8::Value&gt;::New(isolate, persistent);  &#x2F;&#x2F; rematerialize handle
-&#x2F;&#x2F; ...
-persistent.Reset();<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>另外一个变化是，persistent 句柄现在不能被拷贝。在Node v0.10中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
-v8::Persistent&lt;v8::Value&gt; a &#x3D; v8::Persistent&lt;v8::Value&gt;::New(value);
-v8::Persistent&lt;v8::Value&gt; b &#x3D; a;  &#x2F;&#x2F; a and b now point to |value|<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-<p>在Node v0.12中你这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;
-v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
-v8::Persistent&lt;v8::Value&gt; a(isolate, value);
-v8::Persistent&lt;v8::Value&gt; b(isolate, a);
-&#x2F;&#x2F; or:
-v8::Persistent&lt;v8::Value&gt; b;
-b.Reset(isolate, a);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>由于<code>v8::Persistent&lt;T&gt;</code>没有在语法上提供拷贝功能，所以现在使用STL容器类的时候会更困难。鉴于此，V8在<code>v8-util.h</code>中提供了若干工具类。</p>
-<p>举个例子：  </p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">#include &quot;v8-util.h&quot;
- 
-void Example(v8:Isolate* isolate) &#123;
-  v8::StdPersistentValueMap&lt;int, v8::String&gt; map(isolate);
-  v8::Local&lt;v8::String&gt; value &#x3D; v8::String::NewFromUtf8(isolate, &quot;fortytwo&quot;);
-  map.Set(42, value);
-  assert(map.Contains(42));
-  assert(map.Get(42)-&gt;StrictEquals(value));
-  assert(map.Get(21).IsEmpty());
-  assert(1 &#x3D;&#x3D; map.Size());
-  map.Remove(42);
-  assert(0 &#x3D;&#x3D; map.Size());
-  map.Clear();  &#x2F;&#x2F; or we could just call .Clear()
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>如果你使用<code>[C++](https://zh.wikipedia.org/wiki/CBB11 &quot;%3&quot;)</code>,你可以在标准容器类的<a href="http://www.cprogramming.com/c++11/rvalue-references-and-move-semantics-in-c++11.html">移动语义</a>中使用<code>v8::UniquePersistent&lt;T&gt;</code>。<br>或者，你可以通过具有拷贝特性的<code>v8::Persistent&lt;T&gt;</code>,但是要保证这么做不会导致资源泄露或者在释放后再使用的问题：  </p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
-v8::CopyablePersistentTraits&lt;v8::Value&gt;::CopyablePersistent persistent;
-persistent.Reset(isolate, &#x2F;* ... *&#x2F;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-<h2 id="弱引用persistent句柄的回调函数参数更改"><a href="#弱引用persistent句柄的回调函数参数更改" class="headerlink" title="弱引用persistent句柄的回调函数参数更改"></a>弱引用persistent句柄的回调函数参数更改</h2><p>一个正常的persistent句柄会被垃圾回收器忽略掉，一直到程序手动释放才会被回收。<br>相反，弱引用persistent句柄会被垃圾回收器跟踪，当需要回收时，回收器会通过回调函数通知程序。接着程序释放掉关联的资源或者复用这个句柄如果对象还要在后续使用的话。<br>在Node v0.10中这么写：  </p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void WeakCallback(v8::Persistent&lt;v8::Value&gt; object, void* arg) &#123;
-  puts(static_cast&lt;const char*&gt;(arg));
-  object.Dispose();  &#x2F;&#x2F; or .ClearWeak() if you want to keep it around
-&#125;
- 
-void Example() &#123;
-  v8::HandleScope handle_scope;
-  v8::Local&lt;v8::Object&gt; object &#x3D; v8::Object::New();
-  v8::Persistent&lt;v8::Object&gt; persistent &#x3D;
-      v8::Persistent&lt;v8::Object&gt;::New(object);
-  persistent.MakeWeak(const_cast&lt;char*&gt;(&quot;fortytwo&quot;), WeakCallback);
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>在Node v0.12中这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void WeakCallback(const v8::WeakCallbackData&lt;v8::Value, const char*&gt;&amp; data) &#123;
-  puts(data.GetParameter());
-  &#x2F;&#x2F;persistent的存储单元将会自动清除。
-  &#x2F;&#x2F;如果你想保持对原始v8::Persistent&lt;T&gt;的引用，你可以使用.ClearWeak()来复用它。
-&#125;
- 
-void Example(v8::Isolate* isolate) &#123;
-  v8::HandleScope handle_scope(isolate);
-  v8::Local&lt;v8::Object&gt; object &#x3D; v8::Object::New(isolate);
-  v8::Persistent&lt;v8::Object&gt; persistent(isolate, object);
-  persistent.SetWeak(&quot;fortytwo&quot;, WeakCallback);
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<h2 id="v8-ThrowException-现在变成了-v8-Isolate-ThrowException"><a href="#v8-ThrowException-现在变成了-v8-Isolate-ThrowException" class="headerlink" title="v8::ThrowException()现在变成了 v8::Isolate::ThrowException()"></a>v8::ThrowException()现在变成了 v8::Isolate::ThrowException()</h2><p>在Node v0.10中这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; exception &#x3D; &#x2F;* ... *&#x2F;;
-v8::ThrowException(exception);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-<p>在Node v0.12中这么写：</p>
-<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;
-v8::Local&lt;v8::Value&gt; exception &#x3D; &#x2F;* ... *&#x2F;;
-isolate-&gt;ThrowException(exception);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>]]></content>
-      <categories>
-        <category>Node</category>
       </categories>
   </entry>
   <entry>
@@ -2348,6 +2159,195 @@ node addon result good---&gt;hello world from c++
 ]]></content>
       <categories>
         <category>Javascript</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>即将面临的Node0.12中的C++API的改变</title>
+    <url>/posts/node0-12capi/</url>
+    <content><![CDATA[<p>原文地址：<a href="https://strongloop.com/strongblog/node-js-v0-12-c-apis-breaking/">https://strongloop.com/strongblog/node-js-v0-12-c-apis-breaking/</a></p>
+<blockquote>
+<p>编者注：欢迎阅读旨在帮你快速了解，在即将发布的node0.12中（ <em>作者写这篇文章的时候Node0.12还没有发布，译者注</em> ）的API变化三系列教程的第三部分。在<a href="http://strongloop.com/strongblog/node-js-v0-12-new-apis/">第一部分</a>，<a href="https://github.com/alexgorbatchev">Alex Gorbatchev</a>列出来没有变化的API，在<a href="http://strongloop.com/strongblog/node-js-v0-12-apis-breaking/">第二部分</a>中他指出了变化的部分。在第三部分，<a href="http://strongloop.com/strongblog/node-js-v0-12-apis-breaking/">Ben Noordhuis</a>将会详细描述C++API部分的差别。  </p>
+</blockquote>
+<p>在Node v0.10和v0.12之间有大量的差异。我不会试图把每一个细节都点出来，我将把这些差异分类，按照从“更重要”到“次重要”的次序进行排序，然后解释怎样合理的更新你的代码。<br>本文大部分讲述V8 API，因为这正是大量差异出现的地方。欢迎通过<a href="mailto:ben@strongloop.com">ben at strongloop.com</a>来给我提供建议和反馈。  </p>
+<h2 id="原生函数的参数已经被更改"><a href="#原生函数的参数已经被更改" class="headerlink" title="原生函数的参数已经被更改"></a>原生函数的参数已经被更改</h2><p>在node v0.10中你这么写： </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Handle&lt;v8::Value&gt;FortyTwo(const v8::Arguments&amp;args)&#123;
+  v8::HandleScope handle_scope;
+  returnhandle_scope.Close(v8::Integer::New(42));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void FortyTwo(const v8::FunctionCallbackInfo&lt;v8::Value&gt;&amp;info)&#123;
+  &#x2F;&#x2F; Don&#39;t need a HandleScope in this particular example.
+  info.GetReturnValue().Set(42);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>一些重要的变化如下:  </p>
+<ol>
+<li>返回类型是<code>void</code>。</li>
+<li>返回值通过<code>v8::ReturnValue::Set()</code>,<code>v8::ReturnValue::SetEmptyString()</code>,<code>v8::ReturnValue::SetNull()</code>,<code>v8::ReturnValue::SetUndefined()</code>来设置。</li>
+<li>如果没有显式的设置返回值，将会返回<code>undefined</code>。</li>
+</ol>
+<p><code>v8::ReturnValue::Set()</code>拥有一个数字类型的重载函数可以是使用不同的数据类型。如果你的编译器处理时出现问题或者报歧义错误，那么就是使用<code>static_cast&lt;&gt;</code>来将参数转为支持的类型：  </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void FortyTwo(const v8::FunctionCallbackInfo&lt;v8::Value&gt;&amp; info) &#123;
+  const int64_t value &#x3D; 42;
+  &#x2F;&#x2F; error: call of overloaded &#39;Set(const int64_t&amp;)&#39; is ambiguous
+  info.GetReturnValue().Set(value);
+  &#x2F;&#x2F; but this works
+  info.GetReturnValue().Set(static_cast&lt;int32_t&gt;(value));
+  &#x2F;&#x2F; as does this
+  info.GetReturnValue().Set(static_cast&lt;double&gt;(value));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>当然你需要挑选合适的类型来转换。当转化为窄数据类型，以至于无法承载原始数据据时，将会产生不可预期的结果。<br>注意，<code>v8::FunctionCallbackInfo&lt;v8::Value&gt;</code>是对于<code>v8::Arguments</code>的重命名和参数化（parameterized ）。除了名字和额外的<code>GetReturnValue()</code>函数，他们没有表面上的差别。</p>
+<h2 id="大部分V8-API现在需要使用v8-Isolate"><a href="#大部分V8-API现在需要使用v8-Isolate" class="headerlink" title="大部分V8 API现在需要使用v8::Isolate*"></a>大部分V8 API现在需要使用v8::Isolate*</h2><p>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Integer&gt; a &#x3D; v8::Integer::New(42);
+v8::Local&lt;v8::Number&gt; b &#x3D; v8::Number::New(13.37);
+v8::Local&lt;v8::FunctionTemplate&gt; ft &#x3D; v8::FunctionTemplate::New(Foo);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
+v8::Local&lt;v8::Integer&gt; a &#x3D; v8::Integer::New(isolate, 42);
+v8::Local&lt;v8::Number&gt; b &#x3D; v8::Number::New(isolate, 13.37);
+v8::Local&lt;v8::FunctionTemplate&gt; ft &#x3D; v8::FunctionTemplate::New(isolate, Foo);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>你可以通过若干的方法获取当前的<code>v8::Isolate</code>的指针：  </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void FortyTwo(const v8::FunctionCallbackInfo&lt;v8::Value&gt;&amp; info) &#123;
+  v8::Isolate* isolate;
+  isolate &#x3D; info.GetIsolate();
+  &#x2F;&#x2F; or:
+  isolate &#x3D; info.GetReturnValue().GetIsolate();
+  &#x2F;&#x2F; or even:
+  isolate &#x3D; v8::Isolate::GetCurrent();
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意，V8团队已经指出，<code>v8::Isolate::GetCurrent()</code>将会被逐步淘汰。如果你想编写向后兼容的代码，你最好显式的传递isolate参数。</p>
+<h2 id="V8-string函数现在需要显式声明编码"><a href="#V8-string函数现在需要显式声明编码" class="headerlink" title="V8 string函数现在需要显式声明编码"></a>V8 string函数现在需要显式声明编码</h2><p>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">&#x2F;&#x2F; create a UTF-8 string
+v8::Local&lt;v8::String&gt; utf8 &#x3D; v8::String::New(&quot;42&quot;);
+&#x2F;&#x2F; create a UTF-16 string from input in system endianness
+static const uint16_t chars[] &#x3D; &#123; &#39;4&#39;, &#39;2&#39;, 0 &#125;;
+v8::Local&lt;v8::String&gt; utf16 &#x3D; v8::String::New(chars);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
+&#x2F;&#x2F; create a UTF-8 string
+v8::Local&lt;v8::String&gt; utf8 &#x3D; v8::String::NewFromUtf8(isolate, &quot;42&quot;);
+&#x2F;&#x2F; create a UTF-16 string from input in system endianness
+static const uint16_t chars[] &#x3D; &#123; &#39;4&#39;, &#39;2&#39;, 0 &#125;;
+v8::Local&lt;v8::String&gt; utf16 &#x3D; v8::String::NewFromTwoByte(isolate, chars);
+&#x2F;&#x2F; create a ISO-8859-1 a.k.a. Latin1 string
+const uint8_t* octets &#x3D; reinterpret_cast&lt;const uint8_t*&gt;(&quot;42&quot;);
+v8::Local&lt;v8::String&gt; latin1 &#x3D; v8::String::NewFromOneByte(isolate, octets);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><code>v8::String::NewFromTwoByte()</code>稍微有点命名的不合适，因为他并不是一个严格的双字节编码。他能够识别surrogate pairs【 链接：<a href="https://msdn.microsoft.com/en-us/library/windows/desktop/dd374069(v=vs.85).aspx">https://msdn.microsoft.com/en-us/library/windows/desktop/dd374069(v=vs.85).aspx</a> 】， 所以它应该被称作<a href="https://zh.wikipedia.org/wiki/UTF-16">UTF-16</a>，而不是<a href="https://zh.wikipedia.org/wiki/Universal_Character_Set">UCS-2</a>。</p>
+<h2 id="去除了v8-String-NewSymbol-和v8-String-NewUndetectable"><a href="#去除了v8-String-NewSymbol-和v8-String-NewUndetectable" class="headerlink" title="去除了v8::String::NewSymbol()和v8::String::NewUndetectable()"></a>去除了v8::String::NewSymbol()和v8::String::NewUndetectable()</h2><p>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::String&gt; symbol &#x3D; v8::String::NewSymbol(&quot;42&quot;);
+v8::Local&lt;v8::String&gt; hidden &#x3D; v8::String::NewUndetectable(&quot;42&quot;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
+v8::Local&lt;v8::String&gt; symbol &#x3D;
+    v8::String::NewFromUtf8(isolate, &quot;42&quot;, v8::String::kInternalizedString);
+v8::Local&lt;v8::String&gt; hidden &#x3D;
+    v8::String::NewFromUtf8(isolate, &quot;42&quot;, v8::String::kUndetectableString);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="去除了v8-String-AsciiValue"><a href="#去除了v8-String-AsciiValue" class="headerlink" title="去除了v8::String::AsciiValue"></a>去除了v8::String::AsciiValue</h2><p>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::String&gt; string &#x3D; &#x2F;* ... *&#x2F;;
+v8::String::AsciiValue s(string);
+puts(s);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：<br>Nothing! <code>v8::String::AsciiValue</code>本来就有问题：它的名字告诉大家要返回7比特的ASCII数据，但是实际上返回8比特的二进制数据。同时它搞混了多字节字符的字节序。<br>使用<code>v8::String::Utf8Value</code>或者<code>v8::String::Value</code>(适用于UTF-16)来进行替代。如果你想获取一个字符串的原始二进制数据，你可以这么做：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::String&gt; string &#x3D; &#x2F;* ... *&#x2F;;
+const int length &#x3D; string-&gt;Utf8Length() + 1;  &#x2F;&#x2F; Add one for trailing zero byte.
+uint8_t* buffer &#x3D; new uint8_t[length];
+string-&gt;WriteOneByte(buffer, &#x2F;* start *&#x2F; 0, length);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>注意：<code>v8::String::Utf8Length()</code>会迭代字符串中的每一个字符，这就是为啥对于大字符串来说会(很)慢的原因。</p>
+<h2 id="去除了v8-HandleScope-Close"><a href="#去除了v8-HandleScope-Close" class="headerlink" title="去除了v8::HandleScope::Close()"></a>去除了v8::HandleScope::Close()</h2><p>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; Example() &#123;
+  v8::HandleScope handle_scope;
+  return handle_scope.Close(v8::Integer::New(42));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; Example(v8::Isolate* isolate) &#123;
+  v8::EscapableHandleScope handle_scope(isolate);
+  return handle_scope.Escape(v8::Integer::New(isolate, 42));
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="v8-Persistent不再继承自v8-Handle"><a href="#v8-Persistent不再继承自v8-Handle" class="headerlink" title="v8::Persistent不再继承自v8::Handle"></a>v8::Persistent<T>不再继承自v8::Handle<T></h2><p><code>v8::Persistent&lt;T&gt;</code>不再是<code>v8::Handle&lt;T&gt;</code>类型的对象。这就意味着，你不能在直接访问指向的句柄了。做出如此大变革的动机是由于在v0.10中这么操作太容易导致资源泄露或者导致在释放之后再访问其存储的内容。<br>在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
+v8::Persistent&lt;v8::Value&gt; persistent &#x3D; v8::Persistent&lt;v8::Value&gt;::New(value);
+&#x2F;&#x2F; ...
+v8::Local&lt;v8::Value&gt; value_again &#x3D; *persistent;
+&#x2F;&#x2F; ...
+persistent.Dispose();
+persistent.Clear();<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;
+v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
+v8::Persistent&lt;v8::Value&gt; persistent(isolate, value);
+&#x2F;&#x2F; or:
+v8::Persistent&lt;v8::Value&gt; persistent;
+persistent.Reset(isolate, value);
+&#x2F;&#x2F; ...
+v8::Local&lt;v8::Value&gt; value_again &#x3D;
+    v8::Local&lt;v8::Value&gt;::New(isolate, persistent);  &#x2F;&#x2F; rematerialize handle
+&#x2F;&#x2F; ...
+persistent.Reset();<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>另外一个变化是，persistent 句柄现在不能被拷贝。在Node v0.10中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
+v8::Persistent&lt;v8::Value&gt; a &#x3D; v8::Persistent&lt;v8::Value&gt;::New(value);
+v8::Persistent&lt;v8::Value&gt; b &#x3D; a;  &#x2F;&#x2F; a and b now point to |value|<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中你这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;
+v8::Local&lt;v8::Value&gt; value &#x3D; &#x2F;* ... *&#x2F;;
+v8::Persistent&lt;v8::Value&gt; a(isolate, value);
+v8::Persistent&lt;v8::Value&gt; b(isolate, a);
+&#x2F;&#x2F; or:
+v8::Persistent&lt;v8::Value&gt; b;
+b.Reset(isolate, a);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>由于<code>v8::Persistent&lt;T&gt;</code>没有在语法上提供拷贝功能，所以现在使用STL容器类的时候会更困难。鉴于此，V8在<code>v8-util.h</code>中提供了若干工具类。</p>
+<p>举个例子：  </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">#include &quot;v8-util.h&quot;
+ 
+void Example(v8:Isolate* isolate) &#123;
+  v8::StdPersistentValueMap&lt;int, v8::String&gt; map(isolate);
+  v8::Local&lt;v8::String&gt; value &#x3D; v8::String::NewFromUtf8(isolate, &quot;fortytwo&quot;);
+  map.Set(42, value);
+  assert(map.Contains(42));
+  assert(map.Get(42)-&gt;StrictEquals(value));
+  assert(map.Get(21).IsEmpty());
+  assert(1 &#x3D;&#x3D; map.Size());
+  map.Remove(42);
+  assert(0 &#x3D;&#x3D; map.Size());
+  map.Clear();  &#x2F;&#x2F; or we could just call .Clear()
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如果你使用<code>[C++](https://zh.wikipedia.org/wiki/CBB11 &quot;%3&quot;)</code>,你可以在标准容器类的<a href="http://www.cprogramming.com/c++11/rvalue-references-and-move-semantics-in-c++11.html">移动语义</a>中使用<code>v8::UniquePersistent&lt;T&gt;</code>。<br>或者，你可以通过具有拷贝特性的<code>v8::Persistent&lt;T&gt;</code>,但是要保证这么做不会导致资源泄露或者在释放后再使用的问题：  </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;;
+v8::CopyablePersistentTraits&lt;v8::Value&gt;::CopyablePersistent persistent;
+persistent.Reset(isolate, &#x2F;* ... *&#x2F;);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h2 id="弱引用persistent句柄的回调函数参数更改"><a href="#弱引用persistent句柄的回调函数参数更改" class="headerlink" title="弱引用persistent句柄的回调函数参数更改"></a>弱引用persistent句柄的回调函数参数更改</h2><p>一个正常的persistent句柄会被垃圾回收器忽略掉，一直到程序手动释放才会被回收。<br>相反，弱引用persistent句柄会被垃圾回收器跟踪，当需要回收时，回收器会通过回调函数通知程序。接着程序释放掉关联的资源或者复用这个句柄如果对象还要在后续使用的话。<br>在Node v0.10中这么写：  </p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void WeakCallback(v8::Persistent&lt;v8::Value&gt; object, void* arg) &#123;
+  puts(static_cast&lt;const char*&gt;(arg));
+  object.Dispose();  &#x2F;&#x2F; or .ClearWeak() if you want to keep it around
+&#125;
+ 
+void Example() &#123;
+  v8::HandleScope handle_scope;
+  v8::Local&lt;v8::Object&gt; object &#x3D; v8::Object::New();
+  v8::Persistent&lt;v8::Object&gt; persistent &#x3D;
+      v8::Persistent&lt;v8::Object&gt;::New(object);
+  persistent.MakeWeak(const_cast&lt;char*&gt;(&quot;fortytwo&quot;), WeakCallback);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在Node v0.12中这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">void WeakCallback(const v8::WeakCallbackData&lt;v8::Value, const char*&gt;&amp; data) &#123;
+  puts(data.GetParameter());
+  &#x2F;&#x2F;persistent的存储单元将会自动清除。
+  &#x2F;&#x2F;如果你想保持对原始v8::Persistent&lt;T&gt;的引用，你可以使用.ClearWeak()来复用它。
+&#125;
+ 
+void Example(v8::Isolate* isolate) &#123;
+  v8::HandleScope handle_scope(isolate);
+  v8::Local&lt;v8::Object&gt; object &#x3D; v8::Object::New(isolate);
+  v8::Persistent&lt;v8::Object&gt; persistent(isolate, object);
+  persistent.SetWeak(&quot;fortytwo&quot;, WeakCallback);
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="v8-ThrowException-现在变成了-v8-Isolate-ThrowException"><a href="#v8-ThrowException-现在变成了-v8-Isolate-ThrowException" class="headerlink" title="v8::ThrowException()现在变成了 v8::Isolate::ThrowException()"></a>v8::ThrowException()现在变成了 v8::Isolate::ThrowException()</h2><p>在Node v0.10中这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Local&lt;v8::Value&gt; exception &#x3D; &#x2F;* ... *&#x2F;;
+v8::ThrowException(exception);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>在Node v0.12中这么写：</p>
+<pre class="line-numbers language-c++" data-language="c++"><code class="language-c++">v8::Isolate* isolate &#x3D; &#x2F;* ... *&#x2F;
+v8::Local&lt;v8::Value&gt; exception &#x3D; &#x2F;* ... *&#x2F;;
+isolate-&gt;ThrowException(exception);<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>]]></content>
+      <categories>
+        <category>Node</category>
       </categories>
   </entry>
   <entry>
@@ -3729,7 +3729,8 @@ console<span class="token punctuation">.</span><span class="token function">log<
     <title>wsl 和 docker desktop 的安装教程</title>
     <url>/posts/wsl-and-docker-desktop-install/</url>
     <content><![CDATA[<p>win10 中提供了 wsl 的解决方案，可以在 Windows 中直接开启 linux 子系统，十分方便开发者使用。同时一些重要的功能也要依赖于 wsl 才能启动，比如说 docker desktop。本教程就是演示一下如何在 win10 中配置 wsl ，并且如何正常使用 docker desktop。</p>
-<h2 id="1-安装"><a href="#1-安装" class="headerlink" title="1. 安装"></a>1. 安装</h2><h3 id="1-1-安装-wsl"><a href="#1-1-安装-wsl" class="headerlink" title="1.1 安装 wsl"></a>1.1 安装 wsl</h3><h4 id="1-1-1-启用-linux-子系统"><a href="#1-1-1-启用-linux-子系统" class="headerlink" title="1.1.1 启用 linux 子系统"></a>1.1.1 启用 linux 子系统</h4><p>用管理员身份打开 powershell ，然后输入如下命令回车：</p>
+<h2 id="1-安装"><a href="#1-安装" class="headerlink" title="1. 安装"></a>1. 安装</h2><h3 id="1-1-安装-wsl"><a href="#1-1-安装-wsl" class="headerlink" title="1.1 安装 wsl"></a>1.1 安装 wsl</h3><p>如果是 Windows 10 2004 版本及以上，通过超级管理员使用命令 <code>wsl --install</code> 即可安装，否则则需要使用如下流程进行手动安装。</p>
+<h4 id="1-1-1-启用-linux-子系统"><a href="#1-1-1-启用-linux-子系统" class="headerlink" title="1.1.1 启用 linux 子系统"></a>1.1.1 启用 linux 子系统</h4><p>用管理员身份打开 powershell ，然后输入如下命令回车：</p>
 <pre class="line-numbers language-powershell" data-language="powershell"><code class="language-powershell">dism<span class="token punctuation">.</span>exe <span class="token operator">/</span>online <span class="token operator">/</span><span class="token function">enable-feature</span> <span class="token operator">/</span>featurename:Microsoft<span class="token operator">-</span>Windows<span class="token operator">-</span>Subsystem<span class="token operator">-</span>Linux <span class="token operator">/</span>all <span class="token operator">/</span>norestart<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <h4 id="1-1-2-启动虚拟机功能"><a href="#1-1-2-启动虚拟机功能" class="headerlink" title="1.1.2 启动虚拟机功能"></a>1.1.2 启动虚拟机功能</h4><p>由于我们后续要安装 docker desktop，需要依赖于 wsl 2，所以需要启动 Windows 自带的虚拟机平台功能，同样是管理员身份打开 powershell，然后输入如下命令：</p>
